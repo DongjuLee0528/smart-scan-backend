@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select, and_
-from typing import List, Optional
+from typing import List, Optional, Set
 from backend.models.item import Item
 
 
@@ -30,6 +30,16 @@ class ItemRepository:
             )
         )
         return self.db.execute(stmt).scalar_one_or_none()
+
+    def get_used_tag_uids_by_user_device_id(self, user_device_id: int) -> Set[str]:
+        stmt = select(Item.tag_uid).where(
+            and_(
+                Item.user_device_id == user_device_id,
+                Item.is_active == True
+            )
+        )
+        result = self.db.execute(stmt).scalars().all()
+        return set(result)
 
     def create(self, user_device_id: int, name: str, tag_uid: str) -> Item:
         item = Item(
