@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from typing import Optional
+from typing import Optional, List
 from backend.models.master_tag import MasterTag
 
 
@@ -28,3 +28,9 @@ class MasterTagRepository:
         )
         result = self.db.execute(stmt).scalar_one_or_none()
         return result
+
+    def get_all_by_device_id(self, device_id: int) -> List[MasterTag]:
+        stmt = select(MasterTag).where(
+            MasterTag.device_id == device_id
+        )
+        return self.db.execute(stmt).scalars().all()
