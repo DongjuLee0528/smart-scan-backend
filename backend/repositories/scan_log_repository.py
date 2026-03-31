@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 from backend.models.scan_log import ScanLog
 from backend.schemas.scan_log_schema import ScanStatus
-from datetime import datetime
 
 
 class ScanLogRepository:
@@ -12,10 +12,12 @@ class ScanLogRepository:
         scan_log = ScanLog(
             user_device_id=user_device_id,
             item_id=item_id,
-            status=status.value,
-            scanned_at=datetime.now()
+            status=status.value
         )
         self.db.add(scan_log)
-        self.db.commit()
-        self.db.refresh(scan_log)
+        self.db.flush()
         return scan_log
+
+    def exists_by_user_device_id(self, user_device_id: int) -> bool:
+        stmt = select(ScanLog.id).where(ScanLog.user_device_id == user_device_id).limit(1)
+        return self.db.execute(stmt).scalar_one_or_none() is not None
