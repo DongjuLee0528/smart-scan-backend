@@ -1,46 +1,23 @@
-try:
-    from pydantic_settings import BaseSettings, SettingsConfigDict
+import os
+from pydantic import BaseModel, ConfigDict
 
-    class Settings(BaseSettings):
-        # Database
-        DB_HOST: str = "localhost"
-        DB_PORT: int = 3306
-        DB_USER: str = "root"
-        DB_PASSWORD: str = ""
-        DB_NAME: str = "smart_scan"
 
-        # CORS
-        ALLOWED_ORIGIN: str = "http://localhost:3000"
+class Settings(BaseModel):
+    # Database
+    DB_HOST: str = os.getenv("DB_HOST", "localhost")
+    DB_PORT: int = int(os.getenv("DB_PORT", "3306"))
+    DB_USER: str = os.getenv("DB_USER", "root")
+    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
+    DB_NAME: str = os.getenv("DB_NAME", "smart_scan")
 
-        # Environment
-        ENV: str = "development"
-        LOG_LEVEL: str = "INFO"
+    # CORS
+    ALLOWED_ORIGIN: str = os.getenv("ALLOWED_ORIGIN", "http://localhost:3000")
 
-        model_config = SettingsConfigDict(
-            env_file=".env",
-            case_sensitive=True,
-        )
-except ModuleNotFoundError:
-    from pydantic.v1 import BaseSettings
+    # Environment
+    ENV: str = os.getenv("ENV", "development")
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
-    class Settings(BaseSettings):
-        # Database
-        DB_HOST: str = "localhost"
-        DB_PORT: int = 3306
-        DB_USER: str = "root"
-        DB_PASSWORD: str = ""
-        DB_NAME: str = "smart_scan"
-
-        # CORS
-        ALLOWED_ORIGIN: str = "http://localhost:3000"
-
-        # Environment
-        ENV: str = "development"
-        LOG_LEVEL: str = "INFO"
-
-        class Config:
-            env_file = ".env"
-            case_sensitive = True
+    model_config = ConfigDict(frozen=True)
 
 
 settings = Settings()
