@@ -25,16 +25,21 @@ class ScanLogService:
         if item.user_device_id != user_device.id:
             raise ForbiddenException("본인 소유 물품이 아닙니다")
 
-        scan_log = self.scan_log_repository.create(
-            user_device_id=user_device.id,
-            item_id=item_id,
-            status=status
-        )
-
-        return ScanLogResponse(
-            id=scan_log.id,
-            user_device_id=scan_log.user_device_id,
-            item_id=scan_log.item_id,
-            status=ScanStatus(scan_log.status),
-            scanned_at=scan_log.scanned_at
-        )
+        try:
+            scan_log = self.scan_log_repository.create(
+                user_device_id=user_device.id,
+                item_id=item_id,
+                status=status
+            )
+            self.db.commit()
+            self.db.refresh(scan_log)
+            return ScanLogResponse(
+                id=scan_log.id,
+                user_device_id=scan_log.user_device_id,
+                item_id=scan_log.item_id,
+                status=ScanStatus(scan_log.status),
+                scanned_at=scan_log.scanned_at
+            )
+        except Exception:
+            self.db.rollback()
+            raise
