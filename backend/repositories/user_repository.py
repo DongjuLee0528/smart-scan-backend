@@ -13,8 +13,7 @@ class UserRepository:
     def create(self, kakao_user_id: str) -> User:
         user = User(kakao_user_id=kakao_user_id)
         self.db.add(user)
-        self.db.commit()
-        self.db.refresh(user)
+        self.db.flush()
         return user
 
     def get_or_create(self, kakao_user_id: str) -> User:
