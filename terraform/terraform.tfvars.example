@@ -1,0 +1,9 @@
+aws_region               = "ap-northeast-2"
+github_repository        = "DongjuLee0528/smart-scan-backend"
+github_actions_role_name = "github-actions-role"
+
+lambda_function_names = [
+  "inbound-scanner",
+  "outbound-notifier",
+  "chatbot-skill-server",
+]
