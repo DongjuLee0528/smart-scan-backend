@@ -1,14 +1,10 @@
-name: Deploy Inbound Lambda
+name: Deploy Inbound-Scanner
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
-      # Keep these paths in sync with LAMBDA_DIRECTORY below if the repo structure changes.
-      - "lambdas/inbound-scanner/**"
-      - ".github/workflows/deploy-inbound.yml"
-  workflow_dispatch:
+      - 'lambdas/inbound-scanner/**'
 
 permissions:
   id-token: write
@@ -24,69 +20,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+      - uses: actions/checkout@v4
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.GITHUB_ACTIONS_ROLE_ARN }}
-          role-session-name: deploy-inbound-${{ github.run_id }}
-          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-northeast-2
 
-      - name: Validate Lambda source directory
-        shell: bash
+      - name: Package and Deploy
         run: |
-          set -euo pipefail
-
-          if [ ! -d "${LAMBDA_DIRECTORY}" ]; then
-            echo "::error::Lambda source directory not found: ${LAMBDA_DIRECTORY}"
-            echo "::error::Update LAMBDA_DIRECTORY and the workflow path filters to match the actual repository structure."
-            exit 1
-          fi
-
-      - name: Build deployment package
-        id: package
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          if [ ! -d "${LAMBDA_DIRECTORY}" ]; then
-            echo "::error::Cannot package Lambda because the source directory does not exist: ${LAMBDA_DIRECTORY}"
-            echo "::error::Check the repository structure and update LAMBDA_DIRECTORY before running this workflow."
-            exit 1
-          fi
-
-          ARTIFACT_DIR="$(mktemp -d)"
-          PACKAGE_DIR="$ARTIFACT_DIR/package"
-          mkdir -p "$PACKAGE_DIR"
-
-          python -m pip install --upgrade pip
-
-          if [ -f "${LAMBDA_DIRECTORY}/requirements.txt" ]; then
-            python -m pip install -r "${LAMBDA_DIRECTORY}/requirements.txt" -t "$PACKAGE_DIR"
-          fi
-
-          cp -R "${LAMBDA_DIRECTORY}/." "$PACKAGE_DIR/"
-
-          cd "$PACKAGE_DIR"
-          zip -qr "$ARTIFACT_DIR/function.zip" .
-
-          echo "artifact=$ARTIFACT_DIR/function.zip" >> "$GITHUB_OUTPUT"
-
-      - name: Deploy Lambda code
-        shell: bash
-        run: |
-          set -euo pipefail
-
+          cd lambdas/inbound-scanner
+          pip install -r requirements.txt -t ./package --quiet
+          cp lambda_function.py ./package/
+          cd package && zip -r ../function.zip . -q
           aws lambda update-function-code \
-            --function-name "${LAMBDA_FUNCTION_NAME}" \
-            --zip-file "fileb://${{ steps.package.outputs.artifact }}"
-
-          aws lambda wait function-updated \
-            --function-name "${LAMBDA_FUNCTION_NAME}"
+            --function-name Inbound-Scanner \
+            --zip-file fileb://../function.zip
