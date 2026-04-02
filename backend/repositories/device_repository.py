@@ -16,6 +16,5 @@ class DeviceRepository:
     def create(self, serial_number: str) -> Device:
         device = Device(serial_number=serial_number)
         self.db.add(device)
-        self.db.commit()
-        self.db.refresh(device)
+        self.db.flush()
         return device

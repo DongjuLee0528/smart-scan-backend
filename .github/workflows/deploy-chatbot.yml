@@ -10,9 +10,15 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  AWS_REGION: ap-northeast-2
+  LAMBDA_FUNCTION_NAME: chatbot-skill-server
+  LAMBDA_DIRECTORY: lambdas/chatbot-skill-server
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 

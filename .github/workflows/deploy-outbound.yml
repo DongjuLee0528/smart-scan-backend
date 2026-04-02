@@ -10,9 +10,15 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  AWS_REGION: ap-northeast-2
+  LAMBDA_FUNCTION_NAME: outbound-notifier
+  LAMBDA_DIRECTORY: lambdas/outbound-notifier
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 

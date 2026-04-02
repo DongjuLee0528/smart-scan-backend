@@ -11,16 +11,16 @@ def make_res(success, message, is_kakao=False, buttons=None):
         "Access-Control-Allow-Headers": "Content-Type, X-Requested-With",
         "Access-Control-Allow-Methods": "POST, OPTIONS"
     }
-    
+
     if not is_kakao:
         return {
-            "statusCode": 200, 
-            "headers": res_headers, 
+            "statusCode": 200,
+            "headers": res_headers,
             "body": json.dumps({"success": success, "message": str(message)}, ensure_ascii=False)
         }
-    
+
     # 카카오 챗봇 응답 구조 (썸네일 포함 가이드 준수)
-    img_url = "https://cdn-icons-png.flaticon.com/512/553/553376.png" 
+    img_url = "https://cdn-icons-png.flaticon.com/512/553/553376.png"
     res_body = {
         "version": "2.0",
         "template": {
@@ -43,10 +43,10 @@ def lambda_handler(event, context):
     request_context = event.get('requestContext', {})
     http_info = request_context.get('http', {})
     method = event.get('httpMethod') or http_info.get('method')
-    
+
     # Web 요청 여부 판별
     is_web = 'httpMethod' in event or 'http' in request_context
-    
+
     try:
         if method == 'OPTIONS':
             return make_res(True, "CORS OK")
@@ -93,13 +93,13 @@ def lambda_handler(event, context):
 
             cursor.execute("SELECT serial_number FROM users WHERE user_id = %s", (user_id,))
             res = cursor.fetchone()
-            
-            if not res: 
+
+            if not res:
                 # ✅ [수정] 버튼 링크를 정식 도메인 주소로 변경
                 web_url = f"{ALLOWED_ORIGIN}?user_id={user_id}"
-                return make_res(True, "연결된 기기가 없습니다. 아래 버튼을 눌러 기기를 먼저 등록해주세요.", True, 
+                return make_res(True, "연결된 기기가 없습니다. 아래 버튼을 눌러 기기를 먼저 등록해주세요.", True,
                                 [{"action": "webLink", "label": "기기 등록하기", "webLinkUrl": web_url}])
-            
+
             reg_sn = res[0]
 
             if "목록" in utterance:
@@ -112,7 +112,7 @@ def lambda_handler(event, context):
                 """
                 cursor.execute(sql_items, (user_id,))
                 items = cursor.fetchall()
-                
+
                 sql_empty = """
                     SELECT m.label_id FROM master_tags m 
                     LEFT JOIN items i ON m.tag_uid = i.sticker_id AND i.user_id = %s AND i.is_active = 1
@@ -121,7 +121,7 @@ def lambda_handler(event, context):
                 """
                 cursor.execute(sql_empty, (user_id, reg_sn))
                 empty_list = [str(r[0]) for r in cursor.fetchall()]
-                
+
                 msg = f"🏠 [{reg_sn}] 허브 상태\n\n✅ 등록된 물건:\n"
                 msg += ("\n".join([f"- {i[0]} ({i[1]}번)" for i in items]) if items else "- 등록된 물건 없음")
                 msg += f"\n\n✨ 사용 가능 번호:\n{', '.join(empty_list) if empty_list else '모두 사용 중'}"
@@ -138,7 +138,7 @@ def lambda_handler(event, context):
                     """, (user_id, l_id))
                     if cursor.fetchone():
                         return make_res(True, f"❌ {l_id}번 스티커는 이미 사용 중입니다.", True)
-                    
+
                     cursor.execute("SELECT tag_uid FROM master_tags WHERE device_sn = %s AND label_id = %s", (reg_sn, l_id))
                     tag_row = cursor.fetchone()
                     if tag_row:
@@ -151,7 +151,7 @@ def lambda_handler(event, context):
             elif any(word in utterance for word in ["삭제", "제거"]):
                 target = utterance.replace("삭제", "").replace("제거", "").replace("물품", "").replace("❌", "").strip()
                 if not target: return make_res(True, "❓ 삭제할 물건 이름을 알려주세요.\n예: 지갑 삭제", True)
-                
+
                 cursor.execute("UPDATE items SET is_active = 0 WHERE user_id = %s AND item_name = %s AND is_active = 1", (user_id, target))
                 conn.commit()
                 msg = f"🗑️ [{target}] 삭제 완료!" if cursor.rowcount > 0 else f"❌ 등록된 물건 중 '{target}'을(를) 찾을 수 없습니다."

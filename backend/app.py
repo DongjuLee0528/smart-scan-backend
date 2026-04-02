@@ -32,12 +32,12 @@ def create_app() -> FastAPI:
     app.add_exception_handler(HTTPException, http_exception_handler)
     app.add_exception_handler(Exception, general_exception_handler)
 
-    # 라우터 등록 (추후 추가 예정)
-    # from backend.routes import device_route, item_route, label_route, scan_log_route
-    # app.include_router(device_route.router, prefix="/api/devices", tags=["devices"])
-    # app.include_router(item_route.router, prefix="/api/items", tags=["items"])
-    # app.include_router(label_route.router, prefix="/api/labels", tags=["labels"])
-    # app.include_router(scan_log_route.router, prefix="/api/scan-logs", tags=["scan-logs"])
+    from backend.routes import device_route, item_route, label_route, scan_log_route
+
+    app.include_router(device_route.router, prefix="/api/devices")
+    app.include_router(item_route.router, prefix="/api/items")
+    app.include_router(label_route.router, prefix="/api/labels")
+    app.include_router(scan_log_route.router, prefix="/api/scan-logs")
 
     @app.get("/")
     async def root():

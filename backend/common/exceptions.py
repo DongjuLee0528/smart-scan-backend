@@ -10,22 +10,27 @@ class CustomException(Exception):
         self.detail = detail
 
 
-class NotFoundError(CustomException):
+class NotFoundException(CustomException):
     def __init__(self, message: str = "Resource not found", detail: str = None):
         super().__init__(404, message, detail)
 
 
-class ValidationError(CustomException):
+class BadRequestException(CustomException):
     def __init__(self, message: str = "Validation failed", detail: str = None):
         super().__init__(400, message, detail)
 
 
-class DatabaseError(CustomException):
+class ForbiddenException(CustomException):
+    def __init__(self, message: str = "Forbidden", detail: str = None):
+        super().__init__(403, message, detail)
+
+
+class DatabaseException(CustomException):
     def __init__(self, message: str = "Database error", detail: str = None):
         super().__init__(500, message, detail)
 
 
-class DuplicateError(CustomException):
+class ConflictException(CustomException):
     def __init__(self, message: str = "Resource already exists", detail: str = None):
         super().__init__(409, message, detail)
 

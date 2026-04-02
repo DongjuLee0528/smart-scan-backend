@@ -25,24 +25,24 @@ def get_access_token():
         "client_secret": "M5rS2S2Mzjqj2SL1CrUGuy6iAzq5HyFD"
     }
     response = requests.post(url, data=data).json()
-    
+
     # 만약 카카오가 새 리프레시 토큰을 줬다면 금고 업데이트 (무한 동력 핵심)
     if 'refresh_token' in response:
         update_refresh_token(response['refresh_token'])
-    
+
     return response['access_token']
 
 def handler(event, context):
     # 1. EventBridge로부터 누락 물건 정보 받기
     detail = event.get('detail', {})
     missing_items = detail.get('missing_items', [])
-    
+
     if not missing_items:
         return "No missing items."
 
     # 2. 카톡 메시지 내용 만들기
     message_text = f"🚨 [스마트홈 알림]\n외출 시 물건을 확인하세요!\n누락 품목: {', '.join(missing_items)}"
-    
+
     # 3. 카카오 API 호출 (나에게 보내기)
     access_token = get_access_token()
     header = {"Authorization": f"Bearer {access_token}"}
@@ -55,9 +55,9 @@ def handler(event, context):
             "button_title": "확인하기"
         })
     }
-    
+
     res = requests.post(url, headers=header, data=post_data)
-    
+
     if res.status_code == 200:
         print("✅ 카톡 발송 성공!")
         return "Success"

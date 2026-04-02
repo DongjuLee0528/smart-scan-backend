@@ -8,7 +8,7 @@ class MasterTag(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     tag_uid = Column(String(255), unique=True, nullable=False, index=True)
-    label_id = Column(String(255), nullable=False, index=True)
+    label_id = Column(Integer, nullable=False, index=True)
     device_id = Column(Integer, ForeignKey("devices.id"), nullable=False)
 
     # relationships

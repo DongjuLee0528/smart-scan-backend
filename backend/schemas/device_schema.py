@@ -1,22 +1,23 @@
-from pydantic import BaseModel, validator
 from datetime import datetime
-from typing import Optional
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class DeviceRegisterRequest(BaseModel):
     kakao_user_id: str
     serial_number: str
 
-    @validator('kakao_user_id')
-    def validate_kakao_user_id(cls, v):
+    @field_validator("kakao_user_id")
+    @classmethod
+    def validate_kakao_user_id(cls, v: str) -> str:
         if not v or not v.strip():
-            raise ValueError('kakao_user_id is required')
+            raise ValueError("kakao_user_id is required")
         return v.strip()
 
-    @validator('serial_number')
-    def validate_serial_number(cls, v):
+    @field_validator("serial_number")
+    @classmethod
+    def validate_serial_number(cls, v: str) -> str:
         if not v or not v.strip():
-            raise ValueError('serial_number is required')
+            raise ValueError("serial_number is required")
         return v.strip()
 
 
@@ -25,8 +26,7 @@ class DeviceResponse(BaseModel):
     serial_number: str
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserDeviceResponse(BaseModel):
@@ -36,15 +36,15 @@ class UserDeviceResponse(BaseModel):
     created_at: datetime
     device: DeviceResponse
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DeviceUnlinkRequest(BaseModel):
     kakao_user_id: str
 
-    @validator('kakao_user_id')
-    def validate_kakao_user_id(cls, v):
+    @field_validator("kakao_user_id")
+    @classmethod
+    def validate_kakao_user_id(cls, v: str) -> str:
         if not v or not v.strip():
-            raise ValueError('kakao_user_id is required')
+            raise ValueError("kakao_user_id is required")
         return v.strip()
