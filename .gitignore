@@ -40,3 +40,6 @@ terraform/dummy_payload.zip
 # OS
 .DS_Store
 Thumbs.db
+
+# Git worktrees
+.worktrees/

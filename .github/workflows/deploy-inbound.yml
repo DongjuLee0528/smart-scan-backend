@@ -35,5 +35,5 @@ jobs:
           cp lambda_function.py ./package/
           cd package && zip -r ../function.zip . -q
           aws lambda update-function-code \
-            --function-name Inbound-Scanner \
+            --function-name smartscan-inbound \
             --zip-file fileb://../function.zip

@@ -35,5 +35,5 @@ jobs:
           cp lambda_function.py ./package/
           cd package && zip -r ../function.zip . -q
           aws lambda update-function-code \
-            --function-name Outbound-Notifier \
+            --function-name smartscan-outbound \
             --zip-file fileb://../function.zip
