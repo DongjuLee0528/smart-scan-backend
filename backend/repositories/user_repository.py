@@ -10,6 +10,9 @@ class UserRepository:
     def find_by_kakao_user_id(self, kakao_user_id: str) -> Optional[User]:
         return self.db.query(User).filter(User.kakao_user_id == kakao_user_id).first()
 
+    def find_by_id(self, user_id: int) -> Optional[User]:
+        return self.db.query(User).filter(User.id == user_id).first()
+
     def find_by_email(self, email: str) -> Optional[User]:
         return self.db.query(User).filter(User.email == email).first()
 
