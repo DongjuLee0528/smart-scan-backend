@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'lambdas/inbound-scanner/**'
+  workflow_dispatch:
 
 permissions:
   id-token: write

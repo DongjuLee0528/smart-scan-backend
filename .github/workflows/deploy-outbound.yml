@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'lambdas/outbound-notifier/**'
+  workflow_dispatch:
 
 permissions:
   id-token: write

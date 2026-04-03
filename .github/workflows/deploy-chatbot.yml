@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'lambdas/chatbot-skill-server/**'
+  workflow_dispatch:
 
 permissions:
   id-token: write
