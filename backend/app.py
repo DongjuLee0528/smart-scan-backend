@@ -32,10 +32,19 @@ def create_app() -> FastAPI:
     app.add_exception_handler(HTTPException, http_exception_handler)
     app.add_exception_handler(Exception, general_exception_handler)
 
-    from backend.routes import auth_route, device_route, item_route, label_route, scan_log_route, tag_route
+    from backend.routes import (
+        auth_route,
+        device_route,
+        family_member_route,
+        item_route,
+        label_route,
+        scan_log_route,
+        tag_route,
+    )
 
     app.include_router(auth_route.router, prefix="/api/auth")
     app.include_router(device_route.router, prefix="/api/devices")
+    app.include_router(family_member_route.router, prefix="/api/families/members")
     app.include_router(item_route.router, prefix="/api/items")
     app.include_router(label_route.router, prefix="/api/labels")
     app.include_router(scan_log_route.router, prefix="/api/scan-logs")
