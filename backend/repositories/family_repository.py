@@ -11,3 +11,6 @@ class FamilyRepository:
         self.db.add(family)
         self.db.flush()
         return family
+
+    def find_by_id(self, family_id: int) -> Family | None:
+        return self.db.query(Family).filter(Family.id == family_id).first()
