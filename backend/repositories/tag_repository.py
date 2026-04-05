@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from backend.models.tag import Tag
 
@@ -16,8 +16,19 @@ class TagRepository:
         return self.db.query(Tag).filter(Tag.tag_uid == tag_uid).first()
 
     def find_active_by_family_id(self, family_id: int) -> list[Tag]:
-        return self.db.query(Tag).filter(
+        return self.db.query(Tag).options(
+            joinedload(Tag.owner)
+        ).filter(
             Tag.family_id == family_id,
+            Tag.is_active.is_(True)
+        ).order_by(Tag.created_at.desc()).all()
+
+    def find_active_by_family_id_and_owner_user_id(self, family_id: int, owner_user_id: int) -> list[Tag]:
+        return self.db.query(Tag).options(
+            joinedload(Tag.owner)
+        ).filter(
+            Tag.family_id == family_id,
+            Tag.owner_user_id == owner_user_id,
             Tag.is_active.is_(True)
         ).order_by(Tag.created_at.desc()).all()
 
