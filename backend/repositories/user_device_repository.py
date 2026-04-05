@@ -33,6 +33,14 @@ class UserDeviceRepository:
             joinedload(UserDevice.device)
         ).filter(UserDevice.device_id == device_id).all()
 
+    def find_all_by_user_ids(self, user_ids: list[int]) -> list[UserDevice]:
+        if not user_ids:
+            return []
+
+        return self.db.query(UserDevice).options(
+            joinedload(UserDevice.device)
+        ).filter(UserDevice.user_id.in_(user_ids)).all()
+
     def create(self, user_id: int, device_id: int) -> UserDevice:
         user_device = UserDevice(user_id=user_id, device_id=device_id)
         self.db.add(user_device)
