@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from pydantic import BaseModel, ConfigDict
-
+#dasd
 
 def _load_env_file() -> None:
     env_path = Path(__file__).resolve().parents[2] / ".env"
