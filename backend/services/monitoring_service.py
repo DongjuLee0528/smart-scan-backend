@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from backend.common.config import settings
 from backend.common.exceptions import BadRequestException, ForbiddenException, NotFoundException
-from backend.common.validator import validate_kakao_user_id, validate_positive_int
+from backend.common.validator import validate_positive_int
 from backend.repositories.family_member_repository import FamilyMemberRepository
 from backend.repositories.family_repository import FamilyRepository
 from backend.repositories.item_repository import ItemRepository
@@ -35,8 +35,8 @@ class MonitoringService:
         self.scan_log_repository = ScanLogRepository(db)
         self.monitoring_found_window_minutes = settings.MONITORING_FOUND_WINDOW_MINUTES
 
-    def get_dashboard(self, kakao_user_id: str) -> MonitoringDashboardResponse:
-        actor, requester_member, family = self._get_actor_context(kakao_user_id)
+    def get_dashboard(self, user_id: int) -> MonitoringDashboardResponse:
+        actor, requester_member, family = self._get_actor_context(user_id)
         family_members, tag_statuses = self._get_family_members_and_tag_statuses(family.id)
 
         member_summaries = []
@@ -71,10 +71,11 @@ class MonitoringService:
             members=member_summaries
         )
 
-    def get_member_tags(self, kakao_user_id: str, member_id: int) -> MemberTagStatusListResponse:
+    def get_member_tags(self, user_id: int, member_id: int) -> MemberTagStatusListResponse:
+        validate_positive_int(user_id, "user_id")
         validate_positive_int(member_id, "member_id")
 
-        _, _, family = self._get_actor_context(kakao_user_id)
+        _, _, family = self._get_actor_context(user_id)
         target_member = self.family_member_repository.find_by_id(member_id)
         if not target_member:
             raise NotFoundException("Family member not found")
@@ -96,8 +97,9 @@ class MonitoringService:
             total_count=len(filtered_tags)
         )
 
-    def get_my_tag_statuses(self, kakao_user_id: str) -> MyTagStatusListResponse:
-        actor, family_member, family = self._get_actor_context(kakao_user_id)
+    def get_my_tag_statuses(self, user_id: int) -> MyTagStatusListResponse:
+        validate_positive_int(user_id, "user_id")
+        actor, family_member, family = self._get_actor_context(user_id)
         _, tag_statuses = self._get_family_members_and_tag_statuses(family.id)
         my_tags = [tag for tag in tag_statuses if tag.owner_user_id == actor.id]
 
@@ -109,10 +111,8 @@ class MonitoringService:
             total_count=len(my_tags)
         )
 
-    def _get_actor_context(self, kakao_user_id: str):
-        validate_kakao_user_id(kakao_user_id)
-
-        actor = self.user_repository.find_by_kakao_user_id(kakao_user_id.strip())
+    def _get_actor_context(self, user_id: int):
+        actor = self.user_repository.find_by_id(user_id)
         if not actor:
             raise NotFoundException("User not found")
 
