@@ -4,19 +4,36 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from backend.common.config import settings
-from backend.common.exceptions import BadRequestException, ConflictException
+from backend.common.exceptions import (
+    BadRequestException,
+    ConflictException,
+    NotFoundException,
+    UnauthorizedException,
+)
+from backend.common.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    generate_token_id,
+    hash_password,
+    verify_password,
+)
 from backend.common.validator import (
     validate_email,
     validate_kakao_user_id,
     validate_non_empty_string,
     validate_optional_age,
+    validate_password,
     validate_verification_code,
 )
 from backend.repositories.email_verification_repository import EmailVerificationRepository
 from backend.repositories.family_member_repository import FamilyMemberRepository
 from backend.repositories.family_repository import FamilyRepository
+from backend.repositories.refresh_token_repository import RefreshTokenRepository
 from backend.repositories.user_repository import UserRepository
 from backend.schemas.auth_schema import (
+    AuthTokenResponse,
+    LogoutResponse,
     RegisterResponse,
     SendVerificationEmailResponse,
     VerifyEmailResponse,
@@ -31,6 +48,7 @@ class AuthService:
         self.family_repository = FamilyRepository(db)
         self.family_member_repository = FamilyMemberRepository(db)
         self.email_verification_repository = EmailVerificationRepository(db)
+        self.refresh_token_repository = RefreshTokenRepository(db)
         self.email_service = EmailService()
 
     def send_verification_email(self, email: str) -> SendVerificationEmailResponse:
@@ -98,6 +116,7 @@ class AuthService:
         kakao_user_id: str,
         name: str,
         email: str,
+        password: str,
         phone: str | None = None,
         age: int | None = None,
         family_name: str | None = None
@@ -105,6 +124,7 @@ class AuthService:
         validate_kakao_user_id(kakao_user_id)
         validate_non_empty_string(name, "name")
         validate_email(email)
+        validate_password(password)
         validate_optional_age(age)
 
         if phone is not None:
@@ -113,6 +133,7 @@ class AuthService:
         normalized_kakao_user_id = kakao_user_id.strip()
         normalized_name = name.strip()
         normalized_email = email.strip()
+        normalized_password = password.strip()
         normalized_phone = phone.strip() if phone else None
         normalized_family_name = family_name.strip() if family_name else f"{normalized_name} 가족"
         validate_non_empty_string(normalized_family_name, "family_name")
@@ -141,6 +162,7 @@ class AuthService:
                     kakao_user_id=normalized_kakao_user_id,
                     name=normalized_name,
                     email=normalized_email,
+                    password_hash=hash_password(normalized_password),
                     phone=normalized_phone,
                     age=age
                 )
@@ -152,6 +174,7 @@ class AuthService:
                     user=user,
                     name=normalized_name,
                     email=normalized_email,
+                    password_hash=hash_password(normalized_password),
                     phone=normalized_phone,
                     age=age
                 )
@@ -179,6 +202,100 @@ class AuthService:
             self.db.rollback()
             raise
 
+    def login(self, email: str, password: str) -> AuthTokenResponse:
+        validate_email(email)
+        validate_password(password)
+
+        user = self.user_repository.find_by_email(email.strip())
+        if not user or not verify_password(password.strip(), user.password_hash):
+            raise UnauthorizedException("Invalid email or password")
+
+        try:
+            issued_tokens = self._issue_token_pair(user)
+            self.db.commit()
+            return issued_tokens
+        except Exception:
+            self.db.rollback()
+            raise
+
+    def refresh(self, refresh_token: str) -> AuthTokenResponse:
+        payload = decode_token(refresh_token.strip(), expected_type="refresh")
+        token_id = payload.get("jti")
+        user_id = payload.get("sub")
+        if not token_id or not user_id:
+            raise UnauthorizedException("Invalid refresh token payload")
+
+        refresh_token_row = self.refresh_token_repository.find_by_token_id(token_id)
+        if not refresh_token_row or refresh_token_row.is_revoked:
+            raise UnauthorizedException("Refresh token is revoked")
+
+        now = datetime.now(timezone.utc)
+        if refresh_token_row.expires_at <= now:
+            raise UnauthorizedException("Refresh token has expired")
+
+        user = self.user_repository.find_by_id(int(user_id))
+        if not user or refresh_token_row.user_id != user.id:
+            raise UnauthorizedException("Refresh token is invalid")
+
+        try:
+            self.refresh_token_repository.revoke(refresh_token_row, now)
+            issued_tokens = self._issue_token_pair(user, revoke_existing=False)
+            self.db.commit()
+            return issued_tokens
+        except Exception:
+            self.db.rollback()
+            raise
+
+    def logout(self, user_id: int, refresh_token: str) -> LogoutResponse:
+        payload = decode_token(refresh_token.strip(), expected_type="refresh")
+        token_id = payload.get("jti")
+        token_user_id = payload.get("sub")
+        if not token_id or not token_user_id or int(token_user_id) != user_id:
+            raise UnauthorizedException("Refresh token is invalid")
+
+        refresh_token_row = self.refresh_token_repository.find_by_token_id(token_id)
+        if not refresh_token_row:
+            raise NotFoundException("Refresh token not found")
+
+        if refresh_token_row.user_id != user_id:
+            raise UnauthorizedException("Refresh token is invalid")
+
+        try:
+            if not refresh_token_row.is_revoked:
+                self.refresh_token_repository.revoke(refresh_token_row, datetime.now(timezone.utc))
+            self.db.commit()
+            return LogoutResponse(logged_out=True)
+        except Exception:
+            self.db.rollback()
+            raise
+
     @staticmethod
     def _generate_verification_code() -> str:
         return str(secrets.randbelow(900000) + 100000)
+
+    def _issue_token_pair(self, user, revoke_existing: bool = True) -> AuthTokenResponse:
+        issued_at = datetime.now(timezone.utc)
+        if revoke_existing:
+            self.refresh_token_repository.revoke_all_active_by_user_id(user.id, issued_at)
+
+        refresh_token_id = generate_token_id()
+        access_token, access_token_expires_at = create_access_token(user.id)
+        refresh_token, refresh_token_expires_at = create_refresh_token(user.id, refresh_token_id)
+        self.refresh_token_repository.create(
+            user_id=user.id,
+            token_id=refresh_token_id,
+            created_at=issued_at,
+            expires_at=refresh_token_expires_at
+        )
+
+        return AuthTokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            access_token_expires_at=access_token_expires_at,
+            refresh_token_expires_at=refresh_token_expires_at,
+            user_id=user.id,
+            kakao_user_id=user.kakao_user_id,
+            email=user.email,
+            name=user.name
+        )
