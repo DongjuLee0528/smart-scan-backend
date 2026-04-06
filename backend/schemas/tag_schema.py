@@ -20,28 +20,21 @@ def _normalize_optional_text(value: Optional[str]) -> Optional[str]:
 
 
 class CreateTagRequest(BaseModel):
-    kakao_user_id: str
     tag_uid: str
     name: str
     owner_user_id: int
     device_id: int
 
-    @field_validator("kakao_user_id", "tag_uid", "name")
+    @field_validator("tag_uid", "name")
     @classmethod
     def validate_required_text(cls, v: str, info) -> str:
         return _validate_required_text(v, info.field_name)
 
 
 class UpdateTagRequest(BaseModel):
-    kakao_user_id: str
     name: Optional[str] = None
     owner_user_id: Optional[int] = None
     device_id: Optional[int] = None
-
-    @field_validator("kakao_user_id")
-    @classmethod
-    def validate_kakao_user_id(cls, v: str) -> str:
-        return _validate_required_text(v, "kakao_user_id")
 
     @field_validator("name")
     @classmethod

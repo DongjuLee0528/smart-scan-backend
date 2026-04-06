@@ -2,7 +2,6 @@ from sqlalchemy.orm import Session
 
 from backend.common.exceptions import BadRequestException, ConflictException, ForbiddenException, NotFoundException
 from backend.common.validator import (
-    validate_kakao_user_id,
     validate_non_empty_string,
     validate_positive_int,
 )
@@ -23,23 +22,22 @@ class TagService:
 
     def create_tag(
         self,
-        kakao_user_id: str,
+        user_id: int,
         tag_uid: str,
         name: str,
         owner_user_id: int,
         device_id: int
     ) -> TagResponse:
-        validate_kakao_user_id(kakao_user_id)
+        validate_positive_int(user_id, "user_id")
         validate_non_empty_string(tag_uid, "tag_uid")
         validate_non_empty_string(name, "name")
         validate_positive_int(owner_user_id, "owner_user_id")
         validate_positive_int(device_id, "device_id")
 
-        normalized_kakao_user_id = kakao_user_id.strip()
         normalized_tag_uid = tag_uid.strip()
         normalized_name = name.strip()
 
-        _, family_member = self._get_actor_and_family_member(normalized_kakao_user_id)
+        _, family_member = self._get_actor_and_family_member(user_id)
         owner = self._get_family_owner(owner_user_id, family_member.family_id)
         device = self._get_family_device(device_id, family_member.family_id)
         existing_tag = self.tag_repository.find_by_tag_uid(normalized_tag_uid)
@@ -74,10 +72,10 @@ class TagService:
             self.db.rollback()
             raise
 
-    def get_tags(self, kakao_user_id: str) -> TagListResponse:
-        validate_kakao_user_id(kakao_user_id)
+    def get_tags(self, user_id: int) -> TagListResponse:
+        validate_positive_int(user_id, "user_id")
 
-        _, family_member = self._get_actor_and_family_member(kakao_user_id.strip())
+        _, family_member = self._get_actor_and_family_member(user_id)
         tags = self.tag_repository.find_active_by_family_id(family_member.family_id)
 
         return TagListResponse(
@@ -88,13 +86,13 @@ class TagService:
     def update_tag(
         self,
         tag_id: int,
-        kakao_user_id: str,
+        user_id: int,
         name: str | None = None,
         owner_user_id: int | None = None,
         device_id: int | None = None
     ) -> TagResponse:
         validate_positive_int(tag_id, "tag_id")
-        validate_kakao_user_id(kakao_user_id)
+        validate_positive_int(user_id, "user_id")
 
         if name is not None:
             validate_non_empty_string(name, "name")
@@ -103,7 +101,7 @@ class TagService:
         if device_id is not None:
             validate_positive_int(device_id, "device_id")
 
-        _, family_member = self._get_actor_and_family_member(kakao_user_id.strip())
+        _, family_member = self._get_actor_and_family_member(user_id)
         tag = self._get_accessible_tag(tag_id, family_member.family_id)
 
         next_owner_user_id = tag.owner_user_id
@@ -131,11 +129,11 @@ class TagService:
             self.db.rollback()
             raise
 
-    def delete_tag(self, tag_id: int, kakao_user_id: str) -> bool:
+    def delete_tag(self, tag_id: int, user_id: int) -> bool:
         validate_positive_int(tag_id, "tag_id")
-        validate_kakao_user_id(kakao_user_id)
+        validate_positive_int(user_id, "user_id")
 
-        _, family_member = self._get_actor_and_family_member(kakao_user_id.strip())
+        _, family_member = self._get_actor_and_family_member(user_id)
         tag = self._get_accessible_tag(tag_id, family_member.family_id)
 
         try:
@@ -146,8 +144,8 @@ class TagService:
             self.db.rollback()
             raise
 
-    def _get_actor_and_family_member(self, kakao_user_id: str):
-        actor = self.user_repository.find_by_kakao_user_id(kakao_user_id)
+    def _get_actor_and_family_member(self, user_id: int):
+        actor = self.user_repository.find_by_id(user_id)
         if not actor:
             raise NotFoundException("User not found")
 
