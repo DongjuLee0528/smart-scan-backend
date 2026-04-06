@@ -9,7 +9,6 @@ class ScanStatus(str, Enum):
 
 
 class ScanLogCreateRequest(BaseModel):
-    kakao_user_id: str
     item_id: int
     status: ScanStatus
 
