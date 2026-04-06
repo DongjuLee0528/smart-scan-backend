@@ -68,3 +68,12 @@ def validate_optional_age(age: int | None) -> None:
 
     if not isinstance(age, int) or age <= 0 or age > 150:
         raise BadRequestException("age must be an integer between 1 and 150")
+
+
+def validate_password(password: str) -> None:
+    if not password or not isinstance(password, str):
+        raise BadRequestException("password is required")
+
+    normalized_password = password.strip()
+    if len(normalized_password) < 8:
+        raise BadRequestException("password must be at least 8 characters long")
