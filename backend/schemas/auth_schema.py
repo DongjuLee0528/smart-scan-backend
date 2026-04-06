@@ -43,11 +43,12 @@ class RegisterRequest(BaseModel):
     kakao_user_id: str
     name: str
     email: str
+    password: str
     phone: Optional[str] = None
     age: Optional[int] = None
     family_name: Optional[str] = None
 
-    @field_validator("kakao_user_id", "name", "email")
+    @field_validator("kakao_user_id", "name", "email", "password")
     @classmethod
     def validate_required_text(cls, v: str, info) -> str:
         value = v.strip()
@@ -91,3 +92,56 @@ class RegisterResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+    @field_validator("email", "password")
+    @classmethod
+    def validate_required_text(cls, v: str, info) -> str:
+        value = v.strip()
+        if not value:
+            raise ValueError(f"{info.field_name} is required")
+        return value
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+    @field_validator("refresh_token")
+    @classmethod
+    def validate_refresh_token(cls, v: str) -> str:
+        value = v.strip()
+        if not value:
+            raise ValueError("refresh_token is required")
+        return value
+
+
+class LogoutRequest(BaseModel):
+    refresh_token: str
+
+    @field_validator("refresh_token")
+    @classmethod
+    def validate_refresh_token(cls, v: str) -> str:
+        value = v.strip()
+        if not value:
+            raise ValueError("refresh_token is required")
+        return value
+
+
+class AuthTokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
+    access_token_expires_at: datetime
+    refresh_token_expires_at: datetime
+    user_id: int
+    kakao_user_id: str
+    email: Optional[str] = None
+    name: Optional[str] = None
+
+
+class LogoutResponse(BaseModel):
+    logged_out: bool
