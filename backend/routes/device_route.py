@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+
+from backend.common.dependencies import get_current_user
 from backend.common.db import get_db
 from backend.common.response import success_response
-from backend.schemas.device_schema import DeviceRegisterRequest, DeviceUnlinkRequest
+from backend.schemas.device_schema import DeviceRegisterRequest
 from backend.services.device_service import DeviceService
 
 
@@ -16,18 +18,19 @@ def get_device_service(db: Session = Depends(get_db)) -> DeviceService:
 @router.post("/register")
 async def register_device(
     request: DeviceRegisterRequest,
+    current_user=Depends(get_current_user),
     device_service: DeviceService = Depends(get_device_service)
 ):
-    user_device = device_service.register_device(request.kakao_user_id, request.serial_number)
+    user_device = device_service.register_device(current_user.id, request.serial_number)
     return success_response("Device registered successfully", user_device.model_dump())
 
 
 @router.get("/me")
 async def get_my_device(
-    kakao_user_id: str = Query(...),
+    current_user=Depends(get_current_user),
     device_service: DeviceService = Depends(get_device_service)
 ):
-    user_device = device_service.get_my_device(kakao_user_id)
+    user_device = device_service.get_my_device(current_user.id)
 
     if not user_device:
         return success_response("No device found", None)
@@ -37,10 +40,10 @@ async def get_my_device(
 
 @router.delete("/me")
 async def unlink_device(
-    request: DeviceUnlinkRequest,
+    current_user=Depends(get_current_user),
     device_service: DeviceService = Depends(get_device_service)
 ):
-    result = device_service.unlink_device(request.kakao_user_id)
+    result = device_service.unlink_device(current_user.id)
 
     if result:
         return success_response("Device unlinked successfully")
