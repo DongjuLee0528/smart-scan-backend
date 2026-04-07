@@ -25,6 +25,11 @@ class ForbiddenException(CustomException):
         super().__init__(403, message, detail)
 
 
+class UnauthorizedException(CustomException):
+    def __init__(self, message: str = "Unauthorized", detail: str = None):
+        super().__init__(401, message, detail)
+
+
 class DatabaseException(CustomException):
     def __init__(self, message: str = "Database error", detail: str = None):
         super().__init__(500, message, detail)
