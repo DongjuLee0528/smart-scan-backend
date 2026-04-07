@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from backend.common.dependencies import get_current_user
 from backend.common.db import get_db
 from backend.common.response import success_response
 from backend.schemas.family_member_schema import AddFamilyMemberRequest
@@ -17,11 +18,11 @@ def get_family_member_service(db: Session = Depends(get_db)) -> FamilyMemberServ
 @router.post("", response_model=dict)
 def add_family_member(
     request: AddFamilyMemberRequest,
-    kakao_user_id: str = Query(..., description="카카오 사용자 ID"),
+    current_user=Depends(get_current_user),
     family_member_service: FamilyMemberService = Depends(get_family_member_service)
 ):
     result = family_member_service.add_member(
-        kakao_user_id=kakao_user_id,
+        user_id=current_user.id,
         name=request.name,
         email=request.email,
         phone_number=request.phone_number,
@@ -32,18 +33,18 @@ def add_family_member(
 
 @router.get("", response_model=dict)
 def get_family_members(
-    kakao_user_id: str = Query(..., description="카카오 사용자 ID"),
+    current_user=Depends(get_current_user),
     family_member_service: FamilyMemberService = Depends(get_family_member_service)
 ):
-    result = family_member_service.get_members(kakao_user_id)
+    result = family_member_service.get_members(current_user.id)
     return success_response("Family members retrieved successfully", result.model_dump())
 
 
 @router.delete("/{member_id}", response_model=dict)
 def delete_family_member(
     member_id: int,
-    kakao_user_id: str = Query(..., description="카카오 사용자 ID"),
+    current_user=Depends(get_current_user),
     family_member_service: FamilyMemberService = Depends(get_family_member_service)
 ):
-    result = family_member_service.delete_member(kakao_user_id, member_id)
+    result = family_member_service.delete_member(current_user.id, member_id)
     return success_response("Family member deleted successfully", {"deleted": result})
