@@ -34,8 +34,7 @@ jobs:
 
       - name: Import check (app loads without error)
         run: |
-          cd backend
-          python -c "from app import app; print('App import OK')"
+          python -c "from backend.app import create_app; print('App import OK')"
         env:
           DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
           JWT_SECRET_KEY: "ci-test-secret"
