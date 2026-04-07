@@ -1,221 +1,232 @@
-# Backend API Server
+# SmartScan Hub
 
-FastAPI + SQLAlchemy + Pydantic + MySQL based backend server for Convergence Project 1.
-
----
-
-## Project Overview
-
-This project implements a RESTful API server that manages IoT device registration, item tracking via NFC/RFID tags, and scan log recording. The system identifies users through `kakao_user_id` and links them to physical devices and tagged items.
+A touchless belongings check system using UHF RFID. Automatically scans items at the doorway as you leave and sends an email alert for anything you forgot.
 
 ---
 
-## Tech Stack
-
-- Python 3.11
-- FastAPI
-- SQLAlchemy (ORM)
-- Pydantic v2
-- MySQL 8.x
-- Uvicorn
-
----
-
-## Project Structure
+## Architecture
 
 ```
-backend/
-  routes/
-    device_route.py
-    item_route.py
-    label_route.py
-    scan_log_route.py
-  services/
-    device_service.py
-    item_service.py
-    label_service.py
-    scan_log_service.py
-  repositories/
-    user_repository.py
-    device_repository.py
-    user_device_repository.py
-    item_repository.py
-    master_tag_repository.py
-    scan_log_repository.py
-  models/
-    user.py
-    device.py
-    user_device.py
-    master_tag.py
-    item.py
-    scan_log.py
-  schemas/
-    device_schema.py
-    item_schema.py
-    label_schema.py
-    scan_log_schema.py
-  common/
-    db.py
-    response.py
-    exceptions.py
-    validator.py
-    config.py
-  app.py
+Raspberry Pi (RFID Reader)
+    │ HTTPS POST /inbound
+    ▼
+API Gateway
+    ├─ /inbound      → Lambda: smartscan-inbound   (scan processing)
+    ├─ /remote-alert → Lambda: smartscan-remote    (manual alert from web)
+    └─ /chatbot      → Lambda: smartscan-chatbot   (Kakao chatbot)
+                              ↓ invoke
+                         Lambda: smartscan-outbound (email notification)
+                              ↓ Resend API
+                           Email
+
+Web Frontend (S3 + CloudFront)  →  FastAPI (Render)  →  Supabase PostgreSQL
+                                            ↑
+                                     Supabase Auth
 ```
 
-### Layer Responsibilities
-
-- **routes**: Request/response handling only. No business logic.
-- **services**: Business logic and validation.
-- **repositories**: Database access only. No business logic.
-- **models**: SQLAlchemy ORM models.
-- **schemas**: Pydantic request/response schemas.
-- **common**: Shared utilities, DB session, config, exception handlers.
+### Infrastructure
+| Component | Service |
+|---|---|
+| Database | Supabase PostgreSQL |
+| Authentication | Supabase Auth + Resend SMTP |
+| Backend API | FastAPI on Render |
+| Lambda (×4) | AWS Lambda (Python 3.11) |
+| API Gateway | AWS API Gateway (prod stage) |
+| Frontend | S3 + CloudFront |
+| Domain | smartscan-hub.com (ACM TLS) |
+| IaC | Terraform |
+| CI/CD | GitHub Actions |
 
 ---
 
-## Database Schema
+## Repository Structure
+
+```
+smart-scan-backend/
+├── backend/                   # FastAPI backend (Render)
+│   ├── app.py
+│   ├── routes/
+│   ├── services/
+│   ├── repositories/
+│   ├── models/
+│   ├── schemas/
+│   ├── common/
+│   └── requirements.txt
+│
+├── lambdas/
+│   ├── inbound-scanner/       # RFID scan handler
+│   ├── outbound-notifier/     # Email notification sender
+│   ├── remote-alert/          # Web-triggered manual alert
+│   └── chatbot-skill-server/  # Kakao chatbot handler
+│
+├── terraform/                 # AWS infrastructure (IaC)
+│   ├── main.tf
+│   ├── terraform.tfvars       # gitignored — copy from .example
+│   └── terraform.tfvars.example
+│
+└── .github/workflows/         # CI/CD pipelines
+    ├── ci-backend.yml         # Syntax + import check on push/PR
+    ├── deploy-inbound.yml
+    ├── deploy-outbound.yml
+    ├── deploy-remote.yml
+    ├── deploy-chatbot.yml
+    └── deploy-frontend.yml
+```
+
+---
+
+## Database Schema (Supabase PostgreSQL)
 
 | Table | Description |
 |---|---|
-| users | Kakao-authenticated user records |
-| devices | Registered IoT devices identified by serial number |
-| user_devices | Many-to-many join table linking users and devices |
-| master_tags | NFC/RFID tag registry with label_id and tag_uid mapping |
-| items | User-registered items linked to tags via tag_uid |
-| scan_logs | FOUND/LOST scan event records per item |
+| `profiles` | User profiles linked to Supabase Auth |
+| `families` | Family group with owner |
+| `family_members` | Members belonging to a family |
+| `devices` | UHF RFID reader devices (identified by serial number) |
+| `items` | Belongings registered per family member |
+| `tags` | RFID tag registry (tag_uid → item mapping) |
+| `scan_logs` | RFID scan event records (FOUND / LOST) |
+| `notifications` | Email notification history |
 
-### Key Design Decisions
+---
 
-- `label_id`: Human-readable tag identifier exposed in API responses.
-- `tag_uid`: Internal unique tag identifier used for actual DB storage in items.
-- Item deletion is handled as soft delete (`is_active = false`), not hard delete.
-- User identification is done via `kakao_user_id` passed directly in requests (no JWT in current phase).
+## Lambda Functions
+
+### inbound-scanner
+Triggered by API Gateway POST `/inbound`. Receives RFID scan data from the Raspberry Pi, queries missing items, and directly invokes `outbound-notifier`.
+
+### outbound-notifier
+Invoked directly by `inbound-scanner`. Sends missing item alert emails via Resend API and records notifications in the database.
+
+### remote-alert
+Triggered by API Gateway POST `/remote-alert`. Allows web users to manually send an alert to a family member. Requires Supabase Bearer JWT in the `Authorization` header.
+
+### chatbot-skill-server
+Triggered by API Gateway POST `/chatbot`. Handles Kakao chatbot utterances for device registration, item management, and device unlinking.
+
+---
+
+## Backend API (FastAPI on Render)
+
+Base URL: configured via Render environment variables.
+
+| Router | Prefix | Description |
+|---|---|---|
+| auth | `/api/auth` | Sign up, login, token refresh |
+| devices | `/api/devices` | Device registration and lookup |
+| family_members | `/api/families/members` | Family member management |
+| items | `/api/items` | Belongings CRUD |
+| labels | `/api/labels` | RFID label management |
+| tags | `/api/tags` | Tag-item mapping |
+| scan_logs | `/api/scan-logs` | Scan history |
+| notifications | `/api/notifications` | Notification history |
+| monitoring | `/api/monitoring` | Device monitoring |
+
+---
+
+## CI/CD
+
+### Automatic Deployment
+| Trigger | Action |
+|---|---|
+| Push to `main` (backend/**) | CI syntax + import check |
+| Push to `main` (lambdas/inbound-scanner/**) | Deploy `smartscan-inbound` Lambda |
+| Push to `main` (lambdas/outbound-notifier/**) | Deploy `smartscan-outbound` Lambda |
+| Push to `main` (lambdas/remote-alert/**) | Deploy `smartscan-remote` Lambda |
+| Push to `main` (lambdas/chatbot-skill-server/**) | Deploy `smartscan-chatbot` Lambda |
+| Push to `main` (frontend/**) | Sync to S3 + CloudFront invalidation |
+| CI checks pass on `main` | Render auto-deploys FastAPI |
+
+### Branch Strategy
+- `qa` — development and integration testing
+- `main` — production (protected, merge via PR)
+
+### Required GitHub Secrets
+| Secret | Description |
+|---|---|
+| `AWS_ROLE_ARN` | GitHub Actions OIDC role ARN |
+| `CLOUDFRONT_DISTRIBUTION_ID` | CloudFront distribution ID |
+
+---
+
+## Infrastructure (Terraform)
+
+Manages: API Gateway, Lambda functions, S3, CloudFront, IAM roles, OIDC provider.
+
+```bash
+cd terraform
+cp terraform.tfvars.example terraform.tfvars
+# Fill in terraform.tfvars
+
+terraform init
+terraform plan
+terraform apply
+```
+
+### Required Variables
+| Variable | Description |
+|---|---|
+| `supabase_url` | Supabase project URL |
+| `supabase_service_key` | Supabase service role key |
+| `resend_api_key` | Resend email API key |
+| `acm_cert_arn` | ACM certificate ARN (us-east-1) |
+| `github_repo` | GitHub repo in `owner/repo` format |
+
+---
+
+## Local Development
+
+### FastAPI Backend
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+# Copy and fill in environment variables
+cp .env.example .env
+
+uvicorn backend.app:app --reload
+# Swagger UI available at http://localhost:8000/docs (requires ENV=development)
+```
+
+### Lambda (local test)
+
+```bash
+cd lambdas/inbound-scanner
+pip install -r requirements.txt
+
+export SUPABASE_URL=your-url
+export SUPABASE_SERVICE_KEY=your-key
+
+python -c "from lambda_function import lambda_handler; print(lambda_handler({}, {}))"
+```
 
 ---
 
 ## Environment Variables
 
-Create a `.env` file in the project root before running.
-
-```
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=your_db_user
-DB_PASSWORD=your_db_password
-DB_NAME=your_db_name
-ALLOWED_ORIGIN=http://localhost:3000
-ENV=development
-LOG_LEVEL=info
-```
-
----
-
-## Installation and Setup
-
-1. Clone the repository.
-
-```bash
-git clone <repository-url>
-cd backend
-```
-
-2. Create and activate a virtual environment.
-
-```bash
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-```
-
-3. Install dependencies.
-
-```bash
-pip install -r requirements.txt
-```
-
-4. Configure environment variables as described above.
-
-5. Run the server.
-
-```bash
-uvicorn app:app --reload
-```
-
----
-
-## API Endpoints
-
-### Device
-
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | /devices/register | Register a device and link to user |
-| GET | /devices/me | Get the device linked to the current user |
-| DELETE | /devices/me | Unlink the device from the current user |
-
-### Item
-
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | /items | Get all active items for the current user |
-| POST | /items | Register a new item with a label |
-| PATCH | /items/{id} | Update item name or label |
-| DELETE | /items/{id} | Soft delete an item |
-
-### Label
-
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | /labels/available | Get available (unused) label list for the current device |
-
-### Scan Log
-
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | /scan-logs | Record a FOUND or LOST scan event |
-
----
-
-## Common Response Format
-
-All API responses follow a unified format.
-
-```json
-{
-  "message": "success",
-  "data": { }
-}
-```
-
----
-
-## Architecture Rules
-
-1. Routes must not contain business logic.
-2. Services must not access the database directly.
-3. Repositories must not contain business logic.
-4. `label_id` must never be stored directly in the items table.
-5. All item deletions must use soft delete (`is_active = false`).
-6. Duplicate label assignment within the same user device is not allowed.
-7. Ownership is verified at the service layer before any modification.
-
----
-
-## Development Phases
-
-| Phase | Scope |
+### FastAPI (Render)
+| Variable | Description |
 |---|---|
-| Phase 1 | Common base: config, db, response, exceptions, validator, app |
-| Phase 2 | SQLAlchemy models and DB schema |
-| Phase 3 | Device registration, lookup, and unlinking |
-| Phase 4 | Item CRUD with soft delete and label mapping |
-| Phase 5 | Available label listing |
-| Phase 6 | Scan log recording |
+| `DATABASE_URL` | Supabase PostgreSQL connection string |
+| `JWT_SECRET_KEY` | Supabase JWT secret |
+| `ALLOWED_ORIGIN` | Frontend origin for CORS |
+| `ENV` | `development` enables `/docs` |
+
+### Lambda (AWS Console / Terraform)
+| Variable | Description |
+|---|---|
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_KEY` | Supabase service role key |
+| `RESEND_API_KEY` | Resend API key (outbound / remote only) |
 
 ---
 
-## Notes
+## Hardware
 
-- JWT authentication is not implemented in the current phase.
-- User identification relies on `kakao_user_id` passed as a query parameter or request body field.
-- All timestamps use server-side defaults (`datetime.utcnow`).
+- **Raspberry Pi 4B** — RFID controller
+- **FI-805F UHF RFID Reader** (RS232) — 902–928 MHz, up to 5 m range
+- **USB-to-RS232 Converter** — connects reader to Pi via `/dev/ttyUSB0`
+- **Passive UHF Anti-Metal RFID Tags** — ISO 18000-6C, attached to belongings
