@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 from backend.common.exceptions import BadRequestException, ConflictException, ForbiddenException, NotFoundException
 from backend.common.validator import (
     validate_email,
-    validate_kakao_user_id,
     validate_non_empty_string,
     validate_optional_age,
     validate_positive_int,
@@ -31,19 +30,19 @@ class FamilyMemberService:
 
     def add_member(
         self,
-        kakao_user_id: str,
+        user_id: int,
         name: str,
         email: str,
         phone_number: str,
         age: int | None = None
     ) -> FamilyMemberResponse:
-        validate_kakao_user_id(kakao_user_id)
+        validate_positive_int(user_id, "user_id")
         validate_non_empty_string(name, "name")
         validate_email(email)
         validate_non_empty_string(phone_number, "phone_number")
         validate_optional_age(age)
 
-        actor, actor_family_member, family = self._get_actor_context(kakao_user_id.strip())
+        actor, actor_family_member, family = self._get_actor_context(user_id)
         self._ensure_owner(actor.id, actor_family_member.role, family.owner_user_id)
 
         target_user = self._resolve_existing_user(email.strip(), phone_number.strip())
@@ -73,11 +72,11 @@ class FamilyMemberService:
             self.db.rollback()
             raise
 
-    def delete_member(self, kakao_user_id: str, member_id: int) -> bool:
-        validate_kakao_user_id(kakao_user_id)
+    def delete_member(self, user_id: int, member_id: int) -> bool:
+        validate_positive_int(user_id, "user_id")
         validate_positive_int(member_id, "member_id")
 
-        actor, actor_family_member, family = self._get_actor_context(kakao_user_id.strip())
+        actor, actor_family_member, family = self._get_actor_context(user_id)
         self._ensure_owner(actor.id, actor_family_member.role, family.owner_user_id)
 
         target_member = self.family_member_repository.find_by_id(member_id)
@@ -114,10 +113,10 @@ class FamilyMemberService:
             self.db.rollback()
             raise
 
-    def get_members(self, kakao_user_id: str) -> FamilyMemberListResponse:
-        validate_kakao_user_id(kakao_user_id)
+    def get_members(self, user_id: int) -> FamilyMemberListResponse:
+        validate_positive_int(user_id, "user_id")
 
-        _, family_member, family = self._get_actor_context(kakao_user_id.strip())
+        _, family_member, family = self._get_actor_context(user_id)
         members = self.family_member_repository.find_all_by_family_id(family_member.family_id)
 
         return FamilyMemberListResponse(
@@ -127,8 +126,8 @@ class FamilyMemberService:
             total_count=len(members)
         )
 
-    def _get_actor_context(self, kakao_user_id: str):
-        actor = self.user_repository.find_by_kakao_user_id(kakao_user_id)
+    def _get_actor_context(self, user_id: int):
+        actor = self.user_repository.find_by_id(user_id)
         if not actor:
             raise NotFoundException("User not found")
 
