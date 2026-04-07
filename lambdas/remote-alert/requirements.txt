@@ -1,2 +1,2 @@
-resend
 supabase
+resend
