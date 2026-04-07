@@ -43,3 +43,9 @@ Thumbs.db
 
 # Git worktrees
 .worktrees/
+
+# Sensitive files
+환경변수값.txt
+
+# Claude Code
+.claude/
