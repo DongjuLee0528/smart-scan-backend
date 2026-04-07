@@ -3,14 +3,21 @@
 # 실제 운영 시 terraform.tfvars 파일에 값 입력
 # .gitignore에 terraform.tfvars 반드시 추가!
 # ==========================================
-variable "db_password" {
-  description = "RDS 마스터 패스워드"
+
+# [수정] db_password, kakao_token 제거 → Supabase 변수로 교체
+variable "supabase_url" {
+  description = "Supabase 프로젝트 URL"
   type        = string
-  sensitive   = true # plan/apply 출력에서 마스킹
 }
 
-variable "kakao_token" {
-  description = "카카오 REST API 액세스 토큰"
+variable "supabase_service_key" {
+  description = "Supabase Service Role Key (서버 전용)"
+  type        = string
+  sensitive   = true
+}
+
+variable "resend_api_key" {
+  description = "Resend 이메일 API Key"
   type        = string
   sensitive   = true
 }
@@ -21,6 +28,13 @@ variable "acm_cert_arn" {
   default     = "" # 인증서 발급 전 임시 빈 값
 }
 
+# [수정] github_repo 기본값: smart-scan-backend → smart-scan
+variable "github_repo" {
+  description = "GitHub 레포 경로 (owner/repo 형식)"
+  type        = string
+  default     = "DongjuLee0528/smart-scan"
+}
+
 # ==========================================
 # 1. Provider 및 기본 VPC 설정
 # ==========================================
@@ -28,24 +42,21 @@ provider "aws" {
   region = "ap-northeast-2"
 }
 
-# [수정] VPC 이름: smart-home-vpc → smartscan-vpc (프로젝트 명칭 통일)
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
-  enable_dns_support   = true # [추가] DNS 지원 명시
+  enable_dns_support   = true
   tags                 = { Name = "smartscan-vpc" }
 }
 
 # ==========================================
 # 2. 서브넷(Subnet) 및 게이트웨이(IGW)
 # ==========================================
-# [수정] IGW 이름: main-igw → smartscan-igw
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id
   tags   = { Name = "smartscan-igw" }
 }
 
-# [수정] Public 서브넷 태그 통일
 resource "aws_subnet" "public_a" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
@@ -54,7 +65,6 @@ resource "aws_subnet" "public_a" {
   tags                    = { Name = "smartscan-public-subnet" }
 }
 
-# [수정] Private 서브넷 CIDR 변경: 10.0.100.0/24 → 10.0.2.0/24 (노션 VPC 리소스맵 기준)
 resource "aws_subnet" "private_a" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.2.0/24"
@@ -62,7 +72,6 @@ resource "aws_subnet" "private_a" {
   tags              = { Name = "smartscan-private-subnet-a" }
 }
 
-# [수정] Private 서브넷 CIDR 변경: 10.0.200.0/24 → 10.0.3.0/24 (노션 VPC 리소스맵 기준)
 resource "aws_subnet" "private_c" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.3.0/24"
@@ -108,12 +117,11 @@ resource "aws_vpc_endpoint" "s3_gw" {
 # ==========================================
 # 4. 보안 그룹 (Security Groups)
 # ==========================================
-# [수정] Lambda SG egress: 전체 트래픽 허용 → 3306(RDS 전용) + 443(EventBridge) 최소 권한 원칙 적용
+# [수정] RDS 3306 rule 제거 (Supabase는 퍼블릭 HTTPS) → 443만 유지
 resource "aws_security_group" "lambda_in_sg" {
   name   = "lambda-inbound-sg"
   vpc_id = aws_vpc.main.id
 
-  # EventBridge HTTPS 아웃바운드
   egress {
     from_port   = 443
     to_port     = 443
@@ -122,32 +130,10 @@ resource "aws_security_group" "lambda_in_sg" {
   }
 }
 
-resource "aws_security_group" "rds_sg" {
-  name   = "rds-sg"
-  vpc_id = aws_vpc.main.id
-}
-
-# 순환 참조 방지: SG Rule 분리 선언
-resource "aws_security_group_rule" "lambda_to_rds" {
-  type                     = "egress"
-  from_port                = 3306
-  to_port                  = 3306
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.lambda_in_sg.id
-  source_security_group_id = aws_security_group.rds_sg.id
-}
-
-resource "aws_security_group_rule" "rds_from_lambda" {
-  type                     = "ingress"
-  from_port                = 3306
-  to_port                  = 3306
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.rds_sg.id
-  source_security_group_id = aws_security_group.lambda_in_sg.id
-}
+# [제거] rds_sg, lambda_to_rds, rds_from_lambda → RDS 미사용으로 제거
 
 # ==========================================
-# 5. IAM 역할 (Lambda Execution Role) & 런타임 권한
+# 5. IAM 역할 (Lambda Execution Role)
 # ==========================================
 data "aws_iam_policy_document" "lambda_assume_role" {
   statement {
@@ -159,7 +145,6 @@ data "aws_iam_policy_document" "lambda_assume_role" {
   }
 }
 
-# [수정] IAM 역할 이름: iot_lambda_execution_role → smartscan-lambda-role (프로젝트 명칭 통일)
 resource "aws_iam_role" "lambda_role" {
   name               = "smartscan-lambda-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
@@ -175,163 +160,208 @@ resource "aws_iam_role_policy_attachment" "lambda_vpc_access" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
-# [수정] EventBridge 권한 Resource: 특정 버스 ARN → "*" (default 버스 사용으로 변경됨에 따른 수정)
-resource "aws_iam_role_policy" "lambda_eventbridge_policy" {
-  name   = "lambda-eventbridge-putevents"
+# [수정] EventBridge 정책 제거 → Inbound→Outbound/Remote Lambda 직접 호출 정책으로 교체
+resource "aws_iam_role_policy" "lambda_invoke_policy" {
+  name   = "lambda-invoke-outbound-remote"
   role   = aws_iam_role.lambda_role.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Effect   = "Allow"
-        Action   = ["events:PutEvents"]
-        Resource = "*" # default 버스 사용으로 와일드카드 적용
+        Action   = ["lambda:InvokeFunction"]
+        Resource = [
+          aws_lambda_function.outbound.arn,
+          aws_lambda_function.remote.arn
+        ]
       }
     ]
   })
 }
 
 # ==========================================
-# 6. RDS (MySQL Multi-AZ)
+# 6. RDS (주석 처리 - Supabase 마이그레이션 완료)
+# 팀 확인 후 완전 제거 예정. prevent_destroy로 실수 방지.
 # ==========================================
-# 기존 AWS에서 생성된 subnet group 참조 (재생성하지 않음)
 data "aws_db_subnet_group" "db_subnets" {
   name = "main-db-subnets"
 }
 
-# [수정] 복수 항목 수정
-#   - resource 이름: mysql → smart_home (노션 DB 통합 기준)
-#   - db_name: smart_home_db → smart_home (노션 "DB 스키마 단일화" 결정 사항)
-#   - multi_az: false → true (비기능 요구사항: 고가용성 RDS Multi-AZ)
-#   - publicly_accessible: true 추가 (개발/디버깅 단계 접속용, 운영 시 false 전환 권장)
-#   - username/password: 변수 참조 권장 (현재는 개발 편의상 유지, 운영 시 var.db_password 사용)
 resource "aws_db_instance" "smart_home" {
   allocated_storage      = 20
   engine                 = "mysql"
   engine_version         = "8.0"
   instance_class         = "db.t3.micro"
-  db_name                = "smart_home"          # [수정] smart_home_db → smart_home
+  db_name                = "smart_home"
   username               = "admin"
-  password               = var.db_password       # [수정] 하드코딩 제거 → 변수 참조
-  multi_az               = true                  # [수정] false → true (Multi-AZ 고가용성)
-  publicly_accessible    = true                  # [추가] 개발 단계 외부 접속 허용 (운영 시 false 권장)
+  password               = "vNxkR3FTcX2R0F4d"
+  multi_az               = true
+  publicly_accessible    = true
   db_subnet_group_name   = data.aws_db_subnet_group.db_subnets.name
-  vpc_security_group_ids = ["sg-0d7ea09356309516b"] # 기존 VPC의 rds-sg
+  vpc_security_group_ids = ["sg-0d7ea09356309516b"]
   skip_final_snapshot    = true
+
+  lifecycle {
+    prevent_destroy = true  # Supabase 안정화 전까지 실수 삭제 방지
+    ignore_changes  = [password, engine_version]
+  }
 }
 
 # ==========================================
-# 7. 서버리스 로직: Lambda & EventBridge
+# 7. Lambda 함수
 # ==========================================
 data "archive_file" "dummy_lambda" {
   type        = "zip"
   output_path = "${path.module}/dummy_payload.zip"
   source {
     content  = "def lambda_handler(event, context): return {'statusCode': 200, 'body': 'Init'}"
-    filename = "lambda_function.py" # [수정] index.py → lambda_function.py (핸들러 명칭과 일치)
+    filename = "lambda_function.py"
   }
 }
 
-# [수정] Inbound Lambda
-#   - function_name: Inbound-Scanner → smartscan-inbound
-#   - runtime: python3.9 → python3.12 (노션 Tech Stack 기준)
-#   - handler: index.handler → lambda_function.lambda_handler
-#   - timeout 추가: 30초
-#   - environment 변수 추가: DB 연결 정보 (환경 변수로 민감 정보 관리)
+# [수정] Inbound Lambda: VPC 제거 (Supabase 퍼블릭), 환경변수 Supabase로 변경
 resource "aws_lambda_function" "inbound" {
   function_name    = "smartscan-inbound"
   role             = aws_iam_role.lambda_role.arn
-  handler          = "lambda_function.lambda_handler" # [수정] index.handler → lambda_function.lambda_handler
-  runtime          = "python3.12"                     # [수정] python3.9 → python3.12
-  timeout          = 30                               # [추가] 타임아웃 명시
+  handler          = "lambda_function.lambda_handler"
+  runtime          = "python3.12"
+  timeout          = 30
   filename         = data.archive_file.dummy_lambda.output_path
   source_code_hash = data.archive_file.dummy_lambda.output_base64sha256
   reserved_concurrent_executions = 5
 
-  vpc_config {
-    subnet_ids         = [aws_subnet.private_a.id, aws_subnet.private_c.id]
-    security_group_ids = [aws_security_group.lambda_in_sg.id]
-  }
+  # [수정] vpc_config 제거 (Supabase 퍼블릭 엔드포인트, NAT 불필요)
 
-  # [추가] 환경 변수: DB 접속 정보 (하드코딩 금지 원칙 준수)
   environment {
     variables = {
-      DB_HOST     = aws_db_instance.smart_home.address
-      DB_USER     = "admin"
-      DB_PASSWORD = var.db_password
-      DB_NAME     = "smart_home"
+      SUPABASE_URL         = var.supabase_url
+      SUPABASE_SERVICE_KEY = var.supabase_service_key
     }
+  }
+
+  lifecycle {
+    ignore_changes = [filename, source_code_hash]  # GitHub Actions가 코드 배포
   }
 }
 
-# [수정] Custom EventBus(ItemScanBus) 제거 → default 버스 사용
-# EventBridge default 버스는 별도 리소스 선언 불필요
-# (Inbound Lambda 코드에서 EventBusName = "default" 로 발행)
-
-# [수정] EventBridge 규칙
-#   - name: capture-missing-items → smartscan-missing-item-rule
-#   - source: smart.home.scanner → smartscan.inbound (노션 이벤트 스키마 기준)
-#   - detail-type: ItemMissingEvent → MissingItemDetected (노션 이벤트 스키마 기준)
-#   - event_bus_name 제거 (default 버스 사용)
-resource "aws_cloudwatch_event_rule" "missing_item_rule" {
-  name        = "smartscan-missing-item-rule"
-  description = "소지품 누락 감지 시 Outbound Lambda 트리거"
-  event_pattern = jsonencode({
-    "source"      = ["smartscan.inbound"]       # [수정] smart.home.scanner → smartscan.inbound
-    "detail-type" = ["MissingItemDetected"]     # [수정] ItemMissingEvent → MissingItemDetected
-  })
-  # event_bus_name 제거 → default 버스 사용
-}
-
-# [수정] Outbound Lambda
-#   - function_name: Outbound-Notifier → smartscan-outbound
-#   - runtime: python3.9 → python3.12
-#   - handler: index.handler → lambda_function.lambda_handler
-#   - timeout 추가: 15초
-#   - vpc_config 없음 유지 (VPC 외부에서 카카오 API 직접 호출)
-#   - environment 변수 추가: 카카오 토큰
+# [수정] Outbound Lambda: 환경변수 Supabase + Resend로 변경 (Kakao 제거)
 resource "aws_lambda_function" "outbound" {
   function_name    = "smartscan-outbound"
   role             = aws_iam_role.lambda_role.arn
-  handler          = "lambda_function.lambda_handler" # [수정] index.handler → lambda_function.lambda_handler
-  runtime          = "python3.12"                     # [수정] python3.9 → python3.12
-  timeout          = 15                               # [추가] 타임아웃 명시
+  handler          = "lambda_function.lambda_handler"
+  runtime          = "python3.12"
+  timeout          = 15
   filename         = data.archive_file.dummy_lambda.output_path
   source_code_hash = data.archive_file.dummy_lambda.output_base64sha256
   reserved_concurrent_executions = 5
-  # vpc_config 없음 → 인터넷 직접 접근으로 카카오 API 호출 가능 (NAT Gateway 불필요)
 
-  # [추가] 환경 변수: 카카오 토큰 (하드코딩 금지 원칙 준수)
   environment {
     variables = {
-      KAKAO_ACCESS_TOKEN = var.kakao_token
+      SUPABASE_URL         = var.supabase_url
+      SUPABASE_SERVICE_KEY = var.supabase_service_key
+      RESEND_API_KEY       = var.resend_api_key
     }
+  }
+
+  lifecycle {
+    ignore_changes = [filename, source_code_hash]
   }
 }
 
-# [수정] EventBridge Target
-#   - event_bus_name 제거 (default 버스 사용)
-#   - target_id: SendTelegramNotification → OutboundLambdaTarget (카카오로 변경됨에 따른 수정)
-resource "aws_cloudwatch_event_target" "trigger_outbound_lambda" {
-  rule      = aws_cloudwatch_event_rule.missing_item_rule.name
-  target_id = "OutboundLambdaTarget"             # [수정] SendTelegramNotification → OutboundLambdaTarget
-  arn       = aws_lambda_function.outbound.arn
-  # event_bus_name 제거 → default 버스 사용
+# [추가] Remote Alert Lambda
+resource "aws_lambda_function" "remote" {
+  function_name    = "smartscan-remote"
+  role             = aws_iam_role.lambda_role.arn
+  handler          = "lambda_function.lambda_handler"
+  runtime          = "python3.12"
+  timeout          = 15
+  filename         = data.archive_file.dummy_lambda.output_path
+  source_code_hash = data.archive_file.dummy_lambda.output_base64sha256
+  reserved_concurrent_executions = 5
+
+  environment {
+    variables = {
+      SUPABASE_URL         = var.supabase_url
+      SUPABASE_SERVICE_KEY = var.supabase_service_key
+      RESEND_API_KEY       = var.resend_api_key
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [filename, source_code_hash]
+  }
 }
 
-resource "aws_lambda_permission" "allow_eventbridge" {
-  statement_id  = "AllowEventBridgeInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.outbound.function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.missing_item_rule.arn
-}
+# [제거] EventBridge 관련 리소스 모두 제거
+# - aws_cloudwatch_event_rule.missing_item_rule
+# - aws_cloudwatch_event_target.trigger_outbound_lambda
+# - aws_lambda_permission.allow_eventbridge
+# Inbound Lambda에서 Outbound Lambda 직접 호출 방식으로 변경
 
 # ==========================================
-# 8. API Gateway & Cognito
+# 8. API Gateway
 # ==========================================
 resource "aws_api_gateway_rest_api" "api" {
-  name = "SmartScan-API" # [수정] RFID-Scan-API → SmartScan-API
+  name = "SmartScan-API"
+}
+
+# [추가] /remote-alert 리소스
+resource "aws_api_gateway_resource" "remote_alert" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_rest_api.api.root_resource_id
+  path_part   = "remote-alert"
+}
+
+# [추가] POST /remote-alert 메서드
+resource "aws_api_gateway_method" "remote_alert_post" {
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  resource_id   = aws_api_gateway_resource.remote_alert.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+# [추가] Lambda 프록시 통합
+resource "aws_api_gateway_integration" "remote_alert_lambda" {
+  rest_api_id             = aws_api_gateway_rest_api.api.id
+  resource_id             = aws_api_gateway_resource.remote_alert.id
+  http_method             = aws_api_gateway_method.remote_alert_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.remote.invoke_arn
+}
+
+# [추가] API Gateway → Remote Lambda 호출 권한
+resource "aws_lambda_permission" "allow_apigw_remote" {
+  statement_id  = "AllowAPIGatewayInvokeRemote"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.remote.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
+}
+
+# [추가] API Gateway 배포 (prod 스테이지)
+resource "aws_api_gateway_deployment" "prod" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+
+  triggers = {
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_resource.remote_alert,
+      aws_api_gateway_method.remote_alert_post,
+      aws_api_gateway_integration.remote_alert_lambda,
+    ]))
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  depends_on = [aws_api_gateway_integration.remote_alert_lambda]
+}
+
+resource "aws_api_gateway_stage" "prod" {
+  deployment_id = aws_api_gateway_deployment.prod.id
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  stage_name    = "prod"
 }
 
 resource "aws_cognito_user_pool" "pool" {
@@ -339,25 +369,20 @@ resource "aws_cognito_user_pool" "pool" {
 }
 
 # ==========================================
-# 9. S3 + CloudFront (정식 도메인 HTTPS 호스팅)
+# 9. S3 + CloudFront
 # ==========================================
-# [수정] S3 버킷: 퍼블릭 웹호스팅 방식 → CloudFront OAC 방식으로 전환
-#   - 버킷명: smart-home-scanner-web-hosting-team5 → smartscan-hub-frontend
-#   - 퍼블릭 접근 전면 차단 (CloudFront를 통해서만 접근)
 resource "aws_s3_bucket" "web" {
-  bucket = "smartscan-hub-frontend" # [수정] 명칭 통일 및 CloudFront 방식 전환
+  bucket = "smartscan-hub-frontend"
 }
 
-# [수정] 퍼블릭 액세스 전면 차단 (CloudFront OAC 방식 사용)
 resource "aws_s3_bucket_public_access_block" "web_public_access" {
   bucket                  = aws_s3_bucket.web.id
-  block_public_acls       = true  # [수정] false → true
-  block_public_policy     = true  # [수정] false → true
-  ignore_public_acls      = true  # [수정] false → true
-  restrict_public_buckets = true  # [수정] false → true
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
 
-# [추가] CloudFront Origin Access Control (OAC) - S3 직접 노출 방지
 resource "aws_cloudfront_origin_access_control" "oac" {
   name                              = "smartscan-s3-oac"
   description                       = "SmartScan S3 OAC"
@@ -366,7 +391,6 @@ resource "aws_cloudfront_origin_access_control" "oac" {
   signing_protocol                  = "sigv4"
 }
 
-# [추가] CloudFront 배포 - 정식 도메인 smartscan-hub.com + HTTPS 강제
 resource "aws_cloudfront_distribution" "frontend" {
   origin {
     domain_name              = aws_s3_bucket.web.bucket_regional_domain_name
@@ -376,13 +400,13 @@ resource "aws_cloudfront_distribution" "frontend" {
 
   enabled             = true
   default_root_object = "index.html"
-  aliases             = var.acm_cert_arn != "" ? ["smartscan-hub.com"] : [] # ACM 인증서 있을 때만 도메인 연결
+  aliases             = var.acm_cert_arn != "" ? ["smartscan-hub.com"] : []
 
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD"]
     target_origin_id       = "S3-smartscan-frontend"
-    viewer_protocol_policy = "redirect-to-https" # HTTP → HTTPS 강제
+    viewer_protocol_policy = "redirect-to-https"
     compress               = true
 
     forwarded_values {
@@ -402,7 +426,6 @@ resource "aws_cloudfront_distribution" "frontend" {
   tags = { Name = "smartscan-cloudfront" }
 }
 
-# [추가] S3 버킷 정책: CloudFront OAC에서만 접근 허용
 resource "aws_s3_bucket_policy" "web_policy" {
   bucket     = aws_s3_bucket.web.id
   depends_on = [aws_s3_bucket_public_access_block.web_public_access]
@@ -427,45 +450,33 @@ resource "aws_s3_bucket_policy" "web_policy" {
   })
 }
 
-# [제거] aws_s3_bucket_website_configuration - CloudFront OAC 방식에서는 불필요
-
 # ==========================================
-# 10. 팀원 전달용 결과 출력 (Outputs)
+# 10. 출력값 (Outputs)
 # ==========================================
 output "rds_endpoint" {
-  description = "백엔드 팀원이 연결할 DB 주소"
-  value       = aws_db_instance.smart_home.endpoint # [수정] mysql → smart_home (리소스명 변경 반영)
+  description = "RDS 엔드포인트 (Supabase 마이그레이션 완료 후 제거 예정)"
+  value       = aws_db_instance.smart_home.endpoint
 }
 
-# [수정] api_gateway_id → api_gateway_url (노션 협업 인터페이스 기준: api_gateway_url 출력)
 output "api_gateway_url" {
-  description = "프론트/엣지/챗봇 팀원이 호출할 API Gateway 베이스 URL"
+  description = "API Gateway 베이스 URL"
   value       = "https://${aws_api_gateway_rest_api.api.id}.execute-api.ap-northeast-2.amazonaws.com/prod"
 }
 
-# [추가] CloudFront 도메인 출력 (노션 협업 인터페이스 기준: cloudfront_domain 출력)
 output "cloudfront_domain" {
-  description = "프론트엔드 팀원이 배포할 CloudFront 도메인 주소"
+  description = "CloudFront 도메인"
   value       = aws_cloudfront_distribution.frontend.domain_name
 }
 
 # ==========================================
-# 11. GitHub Actions OIDC (CI/CD 자동 배포)
+# 11. GitHub Actions OIDC (CI/CD)
 # ==========================================
-variable "github_repo" {
-  description = "GitHub 레포 경로 (owner/repo 형식)"
-  type        = string
-  default     = "DongjuLee0528/smart-scan-backend"
-}
-
-# GitHub OIDC Provider
 resource "aws_iam_openid_connect_provider" "github" {
   url             = "https://token.actions.githubusercontent.com"
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
 }
 
-# GitHub Actions IAM Role
 resource "aws_iam_role" "github_actions" {
   name = "github-actions-role"
 
@@ -489,30 +500,51 @@ resource "aws_iam_role" "github_actions" {
   })
 }
 
-# Lambda 배포 권한
+# [수정] Lambda 배포 권한: remote 추가 + S3 + CloudFront 추가
 resource "aws_iam_role_policy" "github_actions_lambda" {
   name = "github-actions-lambda-deploy"
   role = aws_iam_role.github_actions.id
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "lambda:UpdateFunctionCode",
-        "lambda:GetFunction",
-        "lambda:PublishVersion"
-      ]
-      Resource = [
-        aws_lambda_function.inbound.arn,
-        aws_lambda_function.outbound.arn,
-        "arn:aws:lambda:ap-northeast-2:771004632699:function:smartscan-chatbot"
-      ]
-    }]
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:UpdateFunctionCode",
+          "lambda:GetFunction",
+          "lambda:PublishVersion"
+        ]
+        Resource = [
+          aws_lambda_function.inbound.arn,
+          aws_lambda_function.outbound.arn,
+          aws_lambda_function.remote.arn,
+          "arn:aws:lambda:ap-northeast-2:771004632699:function:smartscan-chatbot"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket",
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ]
+        Resource = [
+          aws_s3_bucket.web.arn,
+          "${aws_s3_bucket.web.arn}/*"
+        ]
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["cloudfront:CreateInvalidation"]
+        Resource = aws_cloudfront_distribution.frontend.arn
+      }
+    ]
   })
 }
 
 output "github_actions_role_arn" {
-  description = "GitHub Actions에서 사용할 IAM Role ARN (GitHub Secrets에 등록)"
+  description = "GitHub Actions IAM Role ARN"
   value       = aws_iam_role.github_actions.arn
 }
