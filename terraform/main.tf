@@ -25,7 +25,7 @@ variable "resend_api_key" {
 variable "acm_cert_arn" {
   description = "CloudFront용 ACM 인증서 ARN (us-east-1 리전 발급 필수)"
   type        = string
-  default     = "" # 인증서 발급 전 임시 빈 값
+  default     = "arn:aws:acm:us-east-1:771004632699:certificate/e16c4c80-7ae0-4d54-9227-778e998a838e"
 }
 
 # [수정] github_repo 기본값: smart-scan-backend → smart-scan
@@ -420,7 +420,9 @@ resource "aws_cloudfront_distribution" "frontend" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn      = var.acm_cert_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
   }
 
   tags = { Name = "smartscan-cloudfront" }
