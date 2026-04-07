@@ -1,8 +1,7 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from backend.common.config import settings
 from backend.common.exceptions import BadRequestException, ForbiddenException, NotFoundException
 from backend.common.validator import validate_positive_int
 from backend.repositories.family_member_repository import FamilyMemberRepository
@@ -21,6 +20,7 @@ from backend.schemas.monitoring_schema import (
     TagCurrentStatus,
     TagStatusResponse,
 )
+from backend.schemas.scan_log_schema import ScanStatus
 
 
 class MonitoringService:
@@ -33,7 +33,6 @@ class MonitoringService:
         self.user_device_repository = UserDeviceRepository(db)
         self.item_repository = ItemRepository(db)
         self.scan_log_repository = ScanLogRepository(db)
-        self.monitoring_found_window_minutes = settings.MONITORING_FOUND_WINDOW_MINUTES
 
     def get_dashboard(self, user_id: int) -> MonitoringDashboardResponse:
         actor, requester_member, family = self._get_actor_context(user_id)
@@ -139,7 +138,6 @@ class MonitoringService:
         latest_logs_by_item_id = self.scan_log_repository.find_latest_by_item_ids(
             [item.id for item in item_by_owner_and_tag_uid.values()]
         )
-        found_window_started_at = self._get_found_window_started_at()
 
         tag_statuses = []
         for tag in tags:
@@ -152,8 +150,7 @@ class MonitoringService:
                     owner_member=owner_member,
                     item=item,
                     latest_log=latest_log,
-                    user_device_by_id=user_device_by_id,
-                    found_window_started_at=found_window_started_at
+                    user_device_by_id=user_device_by_id
                 )
             )
 
@@ -189,12 +186,11 @@ class MonitoringService:
         owner_member,
         item,
         latest_log,
-        user_device_by_id: dict[int, object],
-        found_window_started_at: datetime
+        user_device_by_id: dict[int, object]
     ) -> TagStatusResponse:
         last_seen_at = self._normalize_datetime(latest_log.scanned_at) if latest_log else None
         latest_user_device = user_device_by_id.get(latest_log.user_device_id) if latest_log else None
-        status = self._resolve_tag_status(item is not None, last_seen_at, found_window_started_at)
+        status = self._resolve_tag_status(item is not None, latest_log.status if latest_log else None)
 
         return TagStatusResponse(
             tag_id=tag.id,
@@ -214,22 +210,18 @@ class MonitoringService:
             updated_at=tag.updated_at
         )
 
-    def _get_found_window_started_at(self) -> datetime:
-        return datetime.now(timezone.utc) - timedelta(
-            minutes=self.monitoring_found_window_minutes
-        )
-
     @staticmethod
     def _resolve_tag_status(
         has_linked_item: bool,
-        last_seen_at: datetime | None,
-        found_window_started_at: datetime
+        latest_scan_status: str | None
     ) -> TagCurrentStatus:
-        if not has_linked_item or last_seen_at is None:
+        if not has_linked_item or latest_scan_status is None:
             return TagCurrentStatus.REGISTERED
-        if last_seen_at >= found_window_started_at:
+        if latest_scan_status == ScanStatus.FOUND.value:
             return TagCurrentStatus.FOUND
-        return TagCurrentStatus.LOST
+        if latest_scan_status == ScanStatus.LOST.value:
+            return TagCurrentStatus.LOST
+        return TagCurrentStatus.REGISTERED
 
     @staticmethod
     def _normalize_datetime(value: datetime | None) -> datetime | None:
