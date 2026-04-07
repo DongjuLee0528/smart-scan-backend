@@ -1,9 +1,11 @@
 from sqlalchemy.orm import Session
+
+from backend.common.exceptions import BadRequestException, ForbiddenException, NotFoundException
+from backend.common.validator import validate_positive_int
 from backend.repositories.item_repository import ItemRepository
 from backend.repositories.master_tag_repository import MasterTagRepository
 from backend.repositories.user_device_repository import UserDeviceRepository
-from backend.schemas.item_schema import ItemResponse, ItemListResponse
-from backend.common.exceptions import NotFoundException, BadRequestException, ForbiddenException
+from backend.schemas.item_schema import ItemListResponse, ItemResponse
 
 
 class ItemService:
@@ -13,10 +15,9 @@ class ItemService:
         self.master_tag_repository = MasterTagRepository(db)
         self.user_device_repository = UserDeviceRepository(db)
 
-    def get_items(self, kakao_user_id: str) -> ItemListResponse:
-        user_device = self.user_device_repository.get_by_kakao_user_id(kakao_user_id)
-        if not user_device:
-            raise NotFoundException("사용자 기기를 찾을 수 없습니다")
+    def get_items(self, user_id: int) -> ItemListResponse:
+        validate_positive_int(user_id, "user_id")
+        user_device = self._get_family_registered_user_device(user_id)
 
         items_with_labels = self.item_repository.get_active_items_with_label_by_user_device_id(user_device.id)
 
@@ -37,8 +38,9 @@ class ItemService:
             total_count=len(item_responses)
         )
 
-    def add_item(self, kakao_user_id: str, name: str, label_id: int) -> ItemResponse:
-        user_device = self._get_family_registered_user_device(kakao_user_id)
+    def add_item(self, user_id: int, name: str, label_id: int) -> ItemResponse:
+        validate_positive_int(user_id, "user_id")
+        user_device = self._get_family_registered_user_device(user_id)
 
         master_tag = self.master_tag_repository.get_by_label_id_and_device_id(
             label_id, user_device.device_id
@@ -71,8 +73,9 @@ class ItemService:
             self.db.rollback()
             raise
 
-    def update_item(self, item_id: int, kakao_user_id: str, name: str = None, label_id: int = None) -> ItemResponse:
-        user_device = self._get_family_registered_user_device(kakao_user_id)
+    def update_item(self, item_id: int, user_id: int, name: str = None, label_id: int = None) -> ItemResponse:
+        validate_positive_int(user_id, "user_id")
+        user_device = self._get_family_registered_user_device(user_id)
 
         item = self.item_repository.get_by_id(item_id)
         if not item or not item.is_active:
@@ -124,8 +127,27 @@ class ItemService:
             self.db.rollback()
             raise
 
-    def _get_family_registered_user_device(self, kakao_user_id: str):
-        user_device = self.user_device_repository.get_by_kakao_user_id(kakao_user_id)
+    def delete_item(self, item_id: int, user_id: int) -> bool:
+        validate_positive_int(user_id, "user_id")
+        user_device = self._get_family_registered_user_device(user_id)
+
+        item = self.item_repository.get_by_id(item_id)
+        if not item or not item.is_active:
+            raise NotFoundException("물품을 찾을 수 없습니다")
+
+        if item.user_device_id != user_device.id:
+            raise ForbiddenException("본인 소유 물품이 아닙니다")
+
+        try:
+            self.item_repository.soft_delete(item)
+            self.db.commit()
+            return True
+        except Exception:
+            self.db.rollback()
+            raise
+
+    def _get_family_registered_user_device(self, user_id: int):
+        user_device = self.user_device_repository.find_by_user_id(user_id)
         if not user_device:
             raise NotFoundException("사용자 기기를 찾을 수 없습니다")
         if not user_device.device or user_device.device.family_id is None:
@@ -145,23 +167,3 @@ class ItemService:
         )
         if existing_item:
             raise BadRequestException("이미 가족 내에서 사용 중인 라벨입니다")
-
-    def delete_item(self, item_id: int, kakao_user_id: str) -> bool:
-        user_device = self.user_device_repository.get_by_kakao_user_id(kakao_user_id)
-        if not user_device:
-            raise NotFoundException("사용자 기기를 찾을 수 없습니다")
-
-        item = self.item_repository.get_by_id(item_id)
-        if not item or not item.is_active:
-            raise NotFoundException("물품을 찾을 수 없습니다")
-
-        if item.user_device_id != user_device.id:
-            raise ForbiddenException("본인 소유 물품이 아닙니다")
-
-        try:
-            self.item_repository.soft_delete(item)
-            self.db.commit()
-            return True
-        except Exception:
-            self.db.rollback()
-            raise
