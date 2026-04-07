@@ -41,8 +41,6 @@ variable "db_password" {
 variable "acm_cert_arn" {
   description = "CloudFront용 ACM 인증서 ARN (us-east-1 리전 발급 필수)"
   type        = string
-  # 주의: 계정 ID 노출 주의, tfvars에서 관리 권장
-  default     = "arn:aws:acm:us-east-1:771004632699:certificate/e16c4c80-7ae0-4d54-9227-778e998a838e"
 }
 
 # [수정] github_repo 기본값: smart-scan-backend → smart-scan
@@ -322,14 +320,44 @@ resource "aws_api_gateway_rest_api" "api" {
   name = "SmartScan-API"
 }
 
-# [추가] /remote-alert 리소스
+# POST /inbound — 라즈베리파이 RFID 스캔 수신
+resource "aws_api_gateway_resource" "inbound" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_rest_api.api.root_resource_id
+  path_part   = "inbound"
+}
+
+resource "aws_api_gateway_method" "inbound_post" {
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  resource_id   = aws_api_gateway_resource.inbound.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "inbound_lambda" {
+  rest_api_id             = aws_api_gateway_rest_api.api.id
+  resource_id             = aws_api_gateway_resource.inbound.id
+  http_method             = aws_api_gateway_method.inbound_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.inbound.invoke_arn
+}
+
+resource "aws_lambda_permission" "allow_apigw_inbound" {
+  statement_id  = "AllowAPIGatewayInvokeInbound"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.inbound.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
+}
+
+# POST /remote-alert — 웹에서 원격 알림 요청
 resource "aws_api_gateway_resource" "remote_alert" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   parent_id   = aws_api_gateway_rest_api.api.root_resource_id
   path_part   = "remote-alert"
 }
 
-# [추가] POST /remote-alert 메서드
 resource "aws_api_gateway_method" "remote_alert_post" {
   rest_api_id   = aws_api_gateway_rest_api.api.id
   resource_id   = aws_api_gateway_resource.remote_alert.id
@@ -337,7 +365,6 @@ resource "aws_api_gateway_method" "remote_alert_post" {
   authorization = "NONE"
 }
 
-# [추가] Lambda 프록시 통합
 resource "aws_api_gateway_integration" "remote_alert_lambda" {
   rest_api_id             = aws_api_gateway_rest_api.api.id
   resource_id             = aws_api_gateway_resource.remote_alert.id
@@ -347,7 +374,6 @@ resource "aws_api_gateway_integration" "remote_alert_lambda" {
   uri                     = aws_lambda_function.remote.invoke_arn
 }
 
-# [추가] API Gateway → Remote Lambda 호출 권한
 resource "aws_lambda_permission" "allow_apigw_remote" {
   statement_id  = "AllowAPIGatewayInvokeRemote"
   action        = "lambda:InvokeFunction"
@@ -356,12 +382,15 @@ resource "aws_lambda_permission" "allow_apigw_remote" {
   source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
 }
 
-# [추가] API Gateway 배포 (prod 스테이지)
+# API Gateway 배포 (prod 스테이지)
 resource "aws_api_gateway_deployment" "prod" {
   rest_api_id = aws_api_gateway_rest_api.api.id
 
   triggers = {
     redeployment = sha1(jsonencode([
+      aws_api_gateway_resource.inbound,
+      aws_api_gateway_method.inbound_post,
+      aws_api_gateway_integration.inbound_lambda,
       aws_api_gateway_resource.remote_alert,
       aws_api_gateway_method.remote_alert_post,
       aws_api_gateway_integration.remote_alert_lambda,
@@ -372,18 +401,16 @@ resource "aws_api_gateway_deployment" "prod" {
     create_before_destroy = true
   }
 
-  depends_on = [aws_api_gateway_integration.remote_alert_lambda]
+  depends_on = [
+    aws_api_gateway_integration.inbound_lambda,
+    aws_api_gateway_integration.remote_alert_lambda,
+  ]
 }
 
 resource "aws_api_gateway_stage" "prod" {
   deployment_id = aws_api_gateway_deployment.prod.id
   rest_api_id   = aws_api_gateway_rest_api.api.id
   stage_name    = "prod"
-}
-
-# TODO: API Gateway Authorizer 연결 전까지 미사용
-resource "aws_cognito_user_pool" "pool" {
-  name = "UserAuthPool"
 }
 
 # ==========================================
