@@ -29,10 +29,18 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ap-northeast-2
 
-      - name: Sync to S3
+      - name: Sync HTML to S3 (no cache)
         run: |
           aws s3 sync frontend/ s3://${{ env.S3_BUCKET }} \
             --delete \
+            --exclude "*" \
+            --include "*.html" \
+            --cache-control "no-cache, no-store, must-revalidate"
+
+      - name: Sync static assets to S3 (cached)
+        run: |
+          aws s3 sync frontend/ s3://${{ env.S3_BUCKET }} \
+            --exclude "*.html" \
             --cache-control "max-age=86400"
 
       - name: Invalidate CloudFront cache
