@@ -1,19 +1,45 @@
 import json
+import logging
 import boto3
 from datetime import datetime, timezone
 
+from common.db import get_client
 from repositories.item_repository import (
     get_device_by_serial,
     check_missing_items_rpc
 )
 
-lambda_client = boto3.client('lambda')
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+lambda_client = boto3.client('lambda', region_name='ap-northeast-2')
 
 
 def process_scan(event):
-    body = json.loads(event.get('body', '{}'))
+    try:
+        raw_body = event.get('body', '{}')
+        body = json.loads(raw_body) if isinstance(raw_body, str) else raw_body
+    except (json.JSONDecodeError, TypeError) as e:
+        logger.warning("요청 body 파싱 실패: %s", str(e))
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"message": "요청 형식이 올바르지 않습니다."})
+        }
+
     serial_number = body.get('device_serial')
     scanned_tags = body.get('tags', [])
+
+    if not serial_number or not isinstance(serial_number, str):
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"message": "device_serial 값이 필요합니다."})
+        }
+
+    if not isinstance(scanned_tags, list):
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"message": "tags는 배열이어야 합니다."})
+        }
 
     # 디바이스 조회
     device = get_device_by_serial(serial_number)
@@ -25,7 +51,7 @@ def process_scan(event):
 
     device_id = device['id']
 
-    # 스캔 로그 기록
+    # 스캔 로그 기록 (실패해도 스캔 결과 반환에 영향 없음)
     _insert_scan_logs(device_id, scanned_tags)
 
     # RPC로 누락 물건 확인
@@ -34,19 +60,25 @@ def process_scan(event):
     if missing:
         # 멤버별로 그룹핑
         grouped = _group_by_member(missing)
-        print(f"누락 발생: {grouped}")
-
-        # outbound Lambda 직접 호출
-        lambda_client.invoke(
-            FunctionName='smartscan-outbound',
-            InvocationType='Event',
-            Payload=json.dumps({
-                'device_id': device_id,
-                'missing_by_member': grouped
-            })
+        missing_names = [item['missing_item'] for item in missing]
+        logger.info(
+            "누락 발생 — device_id: %s, 누락 물건 수: %d, 멤버 수: %d",
+            device_id, len(missing_names), len(grouped)
         )
 
-        missing_names = [item['missing_item'] for item in missing]
+        # outbound Lambda 직접 호출 (실패해도 스캔 결과 정상 반환)
+        try:
+            lambda_client.invoke(
+                FunctionName='smartscan-outbound',
+                InvocationType='Event',
+                Payload=json.dumps({
+                    'device_id': device_id,
+                    'missing_by_member': grouped
+                })
+            )
+        except Exception as e:
+            logger.error("outbound Lambda 호출 실패 — device_id: %s, error: %s", device_id, str(e))
+
         return {
             "statusCode": 200,
             "body": json.dumps({"message": f"누락 물건: {missing_names}"})
@@ -60,16 +92,19 @@ def process_scan(event):
 
 def _insert_scan_logs(device_id: int, scanned_tags: list):
     """스캔 태그별 로그 기록"""
-    from common.db import get_client
-    client = get_client()
+    if not scanned_tags:
+        return
 
-    now = datetime.now(timezone.utc).isoformat()
-    rows = [
-        {'device_id': device_id, 'tag_uid': tag, 'scanned_at': now}
-        for tag in scanned_tags
-    ]
-    if rows:
+    try:
+        client = get_client()
+        now = datetime.now(timezone.utc).isoformat()
+        rows = [
+            {'device_id': device_id, 'tag_uid': tag, 'scanned_at': now}
+            for tag in scanned_tags
+        ]
         client.table('scan_logs').insert(rows).execute()
+    except Exception as e:
+        logger.error("scan_logs insert 실패 — device_id: %s, error: %s", device_id, str(e))
 
 
 def _group_by_member(missing_items: list) -> list:

@@ -1,3 +1,5 @@
+from html import escape
+
 from common.db import get_client
 from common.email_client import send_email
 
@@ -8,15 +10,17 @@ def send_missing_alert(event) -> dict:
     누락 물건 알림을 처리한다.
 
     event 형식:
-    [
-      {
-        "member_id": "uuid",
-        "member_name": "홍길동",
-        "member_email": "user@example.com",
-        "missing_items": ["지갑", "열쇠"]
-      },
-      ...
-    ]
+    {
+      "missing_by_member": [
+        {
+          "member_id": 1,
+          "member_name": "홍길동",
+          "member_email": "user@example.com",
+          "missing_items": ["지갑", "열쇠"]
+        },
+        ...
+      ]
+    }
     """
     # inbound-scanner Lambda에서 {'missing_by_member': [...]} 형태로 전달됨
     members = event.get('missing_by_member', [])
@@ -40,14 +44,15 @@ def send_missing_alert(event) -> dict:
             })
             continue
 
-        # ── 이메일 HTML 생성 ──
+        # ── 이메일 HTML 생성 (XSS 방지: HTML 이스케이프 적용) ──
+        safe_name = escape(str(member_name))
         items_html = ''.join(
-            [f'<li style="margin:6px 0">{item}</li>' for item in missing_items]
+            [f'<li style="margin:6px 0">{escape(str(item))}</li>' for item in missing_items]
         )
         html = f"""
         <div style="font-family:sans-serif;max-width:480px;margin:auto">
-          <h2 style="color:#e53e3e">🚨 SmartScan Hub 알림</h2>
-          <p><strong>{member_name}</strong>님, 외출 시 다음 물건을 확인하세요:</p>
+          <h2 style="color:#e53e3e">&#x1F6A8; SmartScan Hub 알림</h2>
+          <p><strong>{safe_name}</strong>님, 외출 시 다음 물건을 확인하세요:</p>
           <ul style="background:#fff5f5;padding:16px 24px;border-radius:8px">
             {items_html}
           </ul>
@@ -56,26 +61,27 @@ def send_missing_alert(event) -> dict:
         """
 
         # ── 이메일 발송 ──
-        subject = "⚠️ 누락 물건 알림 - SmartScan Hub"
+        subject = "누락 물건 알림 - SmartScan Hub"
         ok = send_email([member_email], subject, html)
 
-        # ── notifications 테이블에 기록 ──
+        status = "sent" if ok else "email_failed"
+        print(f"[{status}] {member_name} ({member_email}) → {missing_items}")
+
+        # ── notifications 테이블에 기록 (이메일 발송 결과와 무관하게 격리) ──
         title = "누락 물건 알림"
         message = f"누락 항목: {', '.join(missing_items)}"
 
         try:
             supabase.table('notifications').insert({
-                "member_id": member_id,
+                "member_id": int(member_id),
                 "type": "missing",
                 "title": title,
                 "message": message,
                 "sent_via": "email",
             }).execute()
-        except Exception as e:
-            print(f"알림 DB 저장 오류 (member_id={member_id}): {e}")
+        except Exception as db_err:
+            print(f"알림 DB 저장 오류 (member_id={member_id}): {db_err}")
 
-        status = "sent" if ok else "email_failed"
-        print(f"[{status}] {member_name} ({member_email}) → {missing_items}")
         results.append({
             "member_id": member_id,
             "status": status,

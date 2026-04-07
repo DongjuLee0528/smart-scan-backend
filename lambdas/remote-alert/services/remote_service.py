@@ -1,4 +1,5 @@
 import json
+from html import escape
 from common.db import get_client
 from common.email_client import send_email
 
@@ -19,7 +20,7 @@ def send_remote_alert(event) -> dict:
 
     try:
         # 1. API Gateway 이벤트 바디 파싱
-        body = json.loads(event.get('body', '{}'))
+        body = json.loads(event.get('body') or '{}')
         member_id = body.get('member_id')
         message = body.get('message', '')
 
@@ -48,7 +49,8 @@ def send_remote_alert(event) -> dict:
             }
 
         member_email = member['email']
-        member_name = member.get('name', '가족')
+        member_name = escape(member.get('name', '가족'))
+        safe_message = escape(message)
 
         # 3. 알림 이메일 HTML 구성
         html = f"""
@@ -57,7 +59,7 @@ def send_remote_alert(event) -> dict:
           <p><strong>{member_name}</strong>님에게 보내는 메시지입니다:</p>
           <div style="background:#ebf8ff;padding:16px 24px;border-radius:8px;
                       border-left:4px solid #3182ce;margin:16px 0">
-            <p style="margin:0;font-size:15px">{message}</p>
+            <p style="margin:0;font-size:15px">{safe_message}</p>
           </div>
           <p style="color:#718096;font-size:13px">SmartScan Hub 자동 발송</p>
         </div>
@@ -73,14 +75,17 @@ def send_remote_alert(event) -> dict:
                 "body": json.dumps({"error": "이메일 발송에 실패했습니다."})
             }
 
-        # 5. notifications 테이블에 알림 기록 저장
-        supabase.table('notifications').insert({
-            "member_id": member_id,
-            "type": "remote",
-            "title": "원격 알림",
-            "message": message,
-            "sent_via": "email",
-        }).execute()
+        # 5. notifications 테이블에 알림 기록 저장 (이메일 성공과 독립 처리)
+        try:
+            supabase.table('notifications').insert({
+                "member_id": member_id,
+                "type": "remote",
+                "title": "원격 알림",
+                "message": message,
+                "sent_via": "email",
+            }).execute()
+        except Exception as db_err:
+            print(f"알림 기록 저장 실패 (이메일은 발송됨): {db_err}")
 
         print(f"원격 알림 발송 성공: {member_email}")
 

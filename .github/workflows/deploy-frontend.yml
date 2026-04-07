@@ -14,7 +14,7 @@ permissions:
 env:
   AWS_REGION: ap-northeast-2
   S3_BUCKET: smartscan-hub-frontend
-  CLOUDFRONT_DISTRIBUTION_ID: E2T21TZDXNUL15
+  CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
 
 jobs:
   deploy:

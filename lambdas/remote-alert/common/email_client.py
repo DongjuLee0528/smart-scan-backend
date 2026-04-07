@@ -1,9 +1,13 @@
 import os
 import resend
 
+_api_key = os.environ.get('RESEND_API_KEY')
+if not _api_key:
+    raise ValueError("환경변수 RESEND_API_KEY가 설정되지 않았습니다.")
+resend.api_key = _api_key
+
 
 def send_email(to: list, subject: str, html: str) -> bool:
-    resend.api_key = os.environ.get('RESEND_API_KEY')
     try:
         resend.Emails.send({
             "from": "SmartScan Hub <noreply@smartscan-hub.com>",

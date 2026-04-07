@@ -16,13 +16,20 @@ def lambda_handler(event, context):
         if method == 'OPTIONS':
             return make_res(True, "CORS OK")
 
-        raw_body = event.get('body', '{}')
+        raw_body = event.get('body') or '{}'
         body = json.loads(raw_body) if isinstance(raw_body, str) else raw_body
 
-        if is_web and 'user_id' in body and 'serial_number' in body:
+        action = body.get('action')
+        if action == 'register_device':
             return register_device(body)
-        else:
+        elif action is not None:
             return handle_chatbot(body)
+        else:
+            return {
+                "statusCode": 400,
+                "headers": {"Access-Control-Allow-Origin": "https://smartscan-hub.com"},
+                "body": json.dumps({"success": False, "message": "action 필드가 필요합니다."}, ensure_ascii=False),
+            }
 
     except Exception:
         print(traceback.format_exc())
