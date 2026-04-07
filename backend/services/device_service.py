@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from backend.common.exceptions import BadRequestException, ConflictException, ForbiddenException, NotFoundException
-from backend.common.validator import validate_kakao_user_id, validate_serial_number
+from backend.common.validator import validate_positive_int, validate_serial_number
 from backend.repositories.device_repository import DeviceRepository
 from backend.repositories.family_member_repository import FamilyMemberRepository
 from backend.repositories.item_repository import ItemRepository
@@ -23,13 +23,12 @@ class DeviceService:
         self.item_repo = ItemRepository(db)
         self.scan_log_repo = ScanLogRepository(db)
 
-    def register_device(self, kakao_user_id: str, serial_number: str) -> UserDeviceResponse:
-        validate_kakao_user_id(kakao_user_id)
+    def register_device(self, user_id: int, serial_number: str) -> UserDeviceResponse:
+        validate_positive_int(user_id, "user_id")
         validate_serial_number(serial_number)
 
-        normalized_kakao_user_id = kakao_user_id.strip()
+        user, family_member = self._get_user_and_family_member(user_id)
         normalized_serial_number = serial_number.strip()
-        user, family_member = self._get_user_and_family_member(normalized_kakao_user_id)
 
         device = self.device_repo.find_by_serial_number(normalized_serial_number)
         if not device:
@@ -62,11 +61,10 @@ class DeviceService:
             self.db.rollback()
             raise
 
-    def get_my_device(self, kakao_user_id: str) -> Optional[UserDeviceResponse]:
-        validate_kakao_user_id(kakao_user_id)
+    def get_my_device(self, user_id: int) -> Optional[UserDeviceResponse]:
+        validate_positive_int(user_id, "user_id")
 
-        normalized_kakao_user_id = kakao_user_id.strip()
-        user, family_member = self._find_user_and_family_member(normalized_kakao_user_id)
+        user, family_member = self._find_user_and_family_member(user_id)
         if not user or not family_member:
             return None
 
@@ -80,11 +78,10 @@ class DeviceService:
 
         return UserDeviceResponse.model_validate(user_device)
 
-    def unlink_device(self, kakao_user_id: str) -> bool:
-        validate_kakao_user_id(kakao_user_id)
+    def unlink_device(self, user_id: int) -> bool:
+        validate_positive_int(user_id, "user_id")
 
-        normalized_kakao_user_id = kakao_user_id.strip()
-        _, family_member = self._find_user_and_family_member(normalized_kakao_user_id)
+        _, family_member = self._find_user_and_family_member(user_id)
         if not family_member:
             return False
 
@@ -110,8 +107,8 @@ class DeviceService:
             self.db.rollback()
             raise
 
-    def _get_user_and_family_member(self, kakao_user_id: str):
-        user = self.user_repo.find_by_kakao_user_id(kakao_user_id)
+    def _get_user_and_family_member(self, user_id: int):
+        user = self.user_repo.find_by_id(user_id)
         if not user:
             raise NotFoundException("User not found")
 
@@ -121,8 +118,8 @@ class DeviceService:
 
         return user, family_member
 
-    def _find_user_and_family_member(self, kakao_user_id: str):
-        user = self.user_repo.find_by_kakao_user_id(kakao_user_id)
+    def _find_user_and_family_member(self, user_id: int):
+        user = self.user_repo.find_by_id(user_id)
         if not user:
             return None, None
 
