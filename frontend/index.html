@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ko" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartScan Hub - 소지품 자동 체크 시스템</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    body { font-family: 'Pretendard', sans-serif; }
+  </style>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              DEFAULT: 'rgb(3, 78, 162)',
+              dark: 'rgb(2, 56, 117)',
+              light: 'rgb(230, 240, 250)',
+            },
+            'accent-green': 'rgb(16, 185, 129)',
+            'accent-red': 'rgb(239, 68, 68)',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors">
+
+  <!-- NAV -->
+  <nav class="sticky top-0 z-50 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <!-- Logo -->
+        <div class="flex items-center space-x-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" class="w-8 h-8 text-primary">
+            <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+            <path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <span class="font-bold text-xl tracking-tight text-gray-900 dark:text-white">SmartScan Hub</span>
+        </div>
+        <!-- Right side -->
+        <div class="flex items-center space-x-3">
+          <!-- Dark mode toggle -->
+          <button id="themeToggle"
+            class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-900">
+            <!-- Sun icon (shown in light mode) -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" class="block dark:hidden text-gray-600">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 2v2"/><path d="M12 20v2"/>
+              <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
+              <path d="M2 12h2"/><path d="M20 12h2"/>
+              <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+            </svg>
+            <!-- Moon icon (shown in dark mode) -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" class="hidden dark:block text-gray-300">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+            </svg>
+          </button>
+          <a href="login.html"
+            class="text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-primary dark:hover:text-primary transition-colors px-3 py-2">로그인</a>
+          <a href="signup.html"
+            class="inline-flex items-center justify-center px-5 py-2.5 text-sm font-bold text-white bg-primary hover:bg-primary-dark rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-900">시작하기</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <!-- HERO SECTION -->
+    <section class="relative pt-20 pb-32 overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent dark:from-primary/10 -z-10 rounded-b-[4rem] md:rounded-b-[8rem]"></div>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 text-gray-900 dark:text-white leading-tight">
+          외출할 때,<br class="md:hidden">
+          <span class="text-primary">소지품 걱정 끝.</span>
+        </h1>
+        <p class="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-2xl mx-auto">
+          UHF RFID 기반 노터치 소지품 체크 시스템.
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
+          <a href="signup.html"
+            class="inline-flex items-center justify-center px-8 py-4 text-base md:text-lg font-bold text-white bg-primary hover:bg-primary-dark rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+            시작하기
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round" class="ml-2">
+              <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+
+        <!-- Hero UI Card -->
+        <div class="mt-16 md:mt-24 relative max-w-2xl mx-auto">
+          <!-- Decorative circle -->
+          <div class="absolute -inset-4 md:-inset-8 rounded-full border-2 border-dashed border-primary/10 dark:border-primary/20 animate-[spin_20s_linear_infinite]"></div>
+          <div class="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-10 md:p-14 border border-gray-100 dark:border-gray-700">
+            <div class="flex justify-center items-end gap-8 md:gap-12">
+              <!-- 지갑 (OK) -->
+              <div class="flex flex-col items-center gap-2">
+                <div class="relative">
+                  <div class="w-16 h-16 md:w-20 md:h-20 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center shadow-md border border-blue-100 dark:border-blue-800/50">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" class="text-primary">
+                      <rect width="20" height="14" x="2" y="5" rx="2"/>
+                      <path d="M2 10h20"/>
+                    </svg>
+                  </div>
+                  <span class="absolute -top-2 -right-2 w-6 h-6 bg-accent-green rounded-full flex items-center justify-center shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                      fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 6 9 17l-5-5"/>
+                    </svg>
+                  </span>
+                </div>
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">지갑</span>
+              </div>
+              <!-- 차키 (OK) -->
+              <div class="flex flex-col items-center gap-2">
+                <div class="relative">
+                  <div class="w-16 h-16 md:w-20 md:h-20 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center shadow-md border border-blue-100 dark:border-blue-800/50">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" class="text-primary">
+                      <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                    </svg>
+                  </div>
+                  <span class="absolute -top-2 -right-2 w-6 h-6 bg-accent-green rounded-full flex items-center justify-center shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                      fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 6 9 17l-5-5"/>
+                    </svg>
+                  </span>
+                </div>
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">차키</span>
+              </div>
+              <!-- 학생증 (누락) -->
+              <div class="flex flex-col items-center gap-2">
+                <div class="relative">
+                  <div class="w-16 h-16 md:w-20 md:h-20 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center shadow-md border border-red-200 dark:border-red-900/50 opacity-80">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" class="text-accent-red">
+                      <rect width="18" height="14" x="3" y="5" rx="2" ry="2"/>
+                      <path d="M7 15h4M15 15h2M7 11h2M13 11h4"/>
+                    </svg>
+                  </div>
+                  <span class="absolute -top-2 -right-2 w-6 h-6 bg-accent-red rounded-full flex items-center justify-center shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                      fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                    </svg>
+                  </span>
+                </div>
+                <span class="text-sm font-medium text-accent-red font-semibold">학생증 (누락)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES SECTION -->
+    <section class="py-24 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
+          <!-- Feature 1 -->
+          <div class="bg-gray-50 dark:bg-gray-800/40 rounded-3xl p-8 md:p-10 border border-gray-100 dark:border-gray-800 hover:shadow-xl transition-all duration-300">
+            <div class="w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-8 shadow-sm border border-gray-100 dark:border-gray-700 text-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+                <path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                <path d="M8 12h8"/><path d="M12 8v8"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">자동 스캔</h3>
+            <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
+              현관 통과만으로 소지품 자동 체크. 주머니나 가방 안에 있는 태그도 완벽하게 인식하여 따로 꺼낼 필요가 없습니다.
+            </p>
+          </div>
+          <!-- Feature 2 -->
+          <div class="bg-gray-50 dark:bg-gray-800/40 rounded-3xl p-8 md:p-10 border border-gray-100 dark:border-gray-800 hover:shadow-xl transition-all duration-300">
+            <div class="w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-8 shadow-sm border border-gray-100 dark:border-gray-700 text-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">실시간 알림</h3>
+            <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
+              누락 물품 즉시 이메일 알림. 필수 소지품을 챙기지 않고 문 밖을 나서는 순간, 설정된 이메일로 경고 알림이 발송됩니다.
+            </p>
+          </div>
+          <!-- Feature 3 -->
+          <div class="bg-gray-50 dark:bg-gray-800/40 rounded-3xl p-8 md:p-10 border border-gray-100 dark:border-gray-800 hover:shadow-xl transition-all duration-300">
+            <div class="w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-8 shadow-sm border border-gray-100 dark:border-gray-700 text-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">가족 관리</h3>
+            <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
+              가족 구성원별 개인 소지품 관리. 대시보드에서 각자의 물품을 등록하고 누구의 물건이 누락되었는지 한눈에 파악하세요.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS SECTION -->
+    <section class="py-24 bg-gray-50 dark:bg-gray-950">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-20">
+          <h2 class="text-sm font-bold text-primary tracking-wider uppercase mb-3">작동 방식</h2>
+          <h3 class="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white">단 4단계로 완벽한 소지품 체크</h3>
+        </div>
+        <div class="relative">
+          <!-- Connecting line (desktop) -->
+          <div class="hidden md:block absolute top-[52px] left-12 right-12 h-[2px] bg-gray-200 dark:bg-gray-800" aria-hidden="true">
+            <div class="absolute left-0 top-0 h-full bg-primary w-full origin-left" style="transform: scaleX(1)"></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-6">
+            <!-- Step 1 -->
+            <div class="relative text-center group">
+              <div class="w-28 h-28 mx-auto bg-white dark:bg-gray-900 rounded-full flex items-center justify-center border-[6px] border-gray-50 dark:border-gray-950 shadow-lg relative z-10 transition-transform group-hover:-translate-y-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                  stroke-linejoin="round" class="text-primary">
+                  <path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"/>
+                  <path d="M16.5 9.4 7.55 4.24"/><polyline points="3.29 7 12 12 20.71 7"/>
+                  <line x1="12" x2="12" y1="22" y2="12"/>
+                  <circle cx="18.5" cy="15.5" r="2.5"/>
+                  <path d="M20.27 17.27 22 19"/>
+                </svg>
+              </div>
+              <div class="mt-8">
+                <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-2">1. RFID 태그 부착</h4>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">관리할 소지품에 소형 태그를<br>부착합니다.</p>
+              </div>
+            </div>
+            <!-- Step 2 -->
+            <div class="relative text-center group">
+              <div class="w-28 h-28 mx-auto bg-white dark:bg-gray-900 rounded-full flex items-center justify-center border-[6px] border-gray-50 dark:border-gray-950 shadow-lg relative z-10 transition-transform group-hover:-translate-y-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                  stroke-linejoin="round" class="text-primary">
+                  <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/>
+                  <path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/>
+                  <path d="M12 3v6"/>
+                </svg>
+              </div>
+              <div class="mt-8">
+                <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-2">2. 현관 통과</h4>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">외출 시 평소처럼<br>현관을 나섭니다.</p>
+              </div>
+            </div>
+            <!-- Step 3 -->
+            <div class="relative text-center group">
+              <div class="w-28 h-28 mx-auto bg-white dark:bg-gray-900 rounded-full flex items-center justify-center border-[6px] border-gray-50 dark:border-gray-950 shadow-lg relative z-10 transition-transform group-hover:-translate-y-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                  stroke-linejoin="round" class="text-primary">
+                  <path d="M12 22v.01"/><path d="M12 18v.01"/>
+                  <circle cx="12" cy="12" r="4"/>
+                  <path d="M4.93 4.93a10 10 0 0 0 0 14.14"/>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                  <path d="M7.76 7.76a6 6 0 0 0 0 8.49"/>
+                  <path d="M16.24 7.76a6 6 0 0 1 0 8.49"/>
+                </svg>
+              </div>
+              <div class="mt-8">
+                <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-2">3. 자동 스캔</h4>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">리더기가 부착된 모든<br>태그를 즉시 스캔합니다.</p>
+              </div>
+            </div>
+            <!-- Step 4 -->
+            <div class="relative text-center group">
+              <div class="w-28 h-28 mx-auto bg-white dark:bg-gray-900 rounded-full flex items-center justify-center border-[6px] border-gray-50 dark:border-gray-950 shadow-[0_0_0_2px_rgba(239,68,68,0.2)] relative z-10 transition-transform group-hover:-translate-y-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                  stroke-linejoin="round" class="text-accent-red">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                  <path d="M12 9v4"/><path d="M12 17h.01"/>
+                </svg>
+              </div>
+              <div class="mt-8">
+                <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-2">4. 누락 알림</h4>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">필수 소지품이 없을 시<br>이메일로 즉시 알려줍니다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA SECTION -->
+    <section class="py-24 bg-primary dark:bg-[#022A5A] relative overflow-hidden">
+      <!-- Grid background pattern -->
+      <div class="absolute inset-0 opacity-10">
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="1"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)"/>
+        </svg>
+      </div>
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+        <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-6">지금 바로 소지품 걱정 없는 일상을 시작하세요</h2>
+        <p class="text-primary-light dark:text-blue-200 mb-10 text-lg md:text-xl font-medium">단 1분의 회원가입으로 가족 모두의 평화를 지킬 수 있습니다.</p>
+        <a href="signup.html"
+          class="inline-flex items-center justify-center px-10 py-4 text-lg font-bold text-primary bg-white hover:bg-gray-50 rounded-xl shadow-xl transition-all transform hover:-translate-y-1 w-full sm:w-auto">
+          무료로 시작하기
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-gray-900 text-gray-400 py-12 border-t border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row justify-between items-center md:items-start mb-8">
+        <div class="flex flex-col items-center md:items-start mb-6 md:mb-0">
+          <div class="flex items-center space-x-2 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" class="w-6 h-6 text-primary-light">
+              <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+              <path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <span class="font-bold text-lg text-white">SmartScan Hub</span>
+          </div>
+          <p class="text-sm text-gray-500 text-center md:text-left max-w-xs">
+            UHF RFID 기반 스마트 소지품 관리 플랫폼
+          </p>
+        </div>
+        <div class="flex gap-8 text-sm">
+          <div>
+            <h5 class="font-semibold text-white mb-3">서비스</h5>
+            <ul class="space-y-2">
+              <li><a href="#" class="hover:text-white transition-colors">기능 소개</a></li>
+              <li><a href="#" class="hover:text-white transition-colors">요금제</a></li>
+              <li><a href="#" class="hover:text-white transition-colors">FAQ</a></li>
+            </ul>
+          </div>
+          <div>
+            <h5 class="font-semibold text-white mb-3">회사</h5>
+            <ul class="space-y-2">
+              <li><a href="#" class="hover:text-white transition-colors">소개</a></li>
+              <li><a href="#" class="hover:text-white transition-colors">개인정보처리방침</a></li>
+              <li><a href="#" class="hover:text-white transition-colors">이용약관</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-gray-800 pt-8 text-center text-sm text-gray-600">
+        &copy; 2024 SmartScan Hub. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Dark mode toggle
+    const btn = document.getElementById('themeToggle');
+    btn.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+    });
+  </script>
+</body>
+</html>
