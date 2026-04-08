@@ -34,12 +34,15 @@ class NotificationService:
         message: str
     ) -> NotificationResponse:
         validate_positive_int(user_id, "user_id")
-        validate_positive_int(recipient_user_id, "user_id")
+        validate_positive_int(recipient_user_id, "recipient_user_id")
         validate_non_empty_string(title, "title")
         validate_non_empty_string(message, "message")
 
+        # 발신자 권한 및 가족 컨텍스트 확인
         actor, actor_family_member, family = self._get_actor_context(user_id)
         self._ensure_family_owner(actor.id, actor_family_member.role, family.owner_user_id)
+
+        # 수신자가 발신자와 동일한 가족에 속하는지 확인
         recipient_member = self._get_family_member_or_raise(family.id, recipient_user_id)
 
         try:
