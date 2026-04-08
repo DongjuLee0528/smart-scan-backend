@@ -1,3 +1,5 @@
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -5,8 +7,22 @@ from backend.common.config import settings
 
 
 def _build_database_url() -> str:
-    if settings.DATABASE_URL:
-        return settings.DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    database_url = (settings.DATABASE_URL or "").strip()
+    if database_url:
+        return database_url.replace("postgres://", "postgresql://", 1)
+
+    required_env_names = ("DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME")
+    missing_env_names = [
+        env_name
+        for env_name in required_env_names
+        if not (os.getenv(env_name) or "").strip()
+    ]
+    if missing_env_names:
+        missing_env_text = ", ".join(missing_env_names)
+        raise RuntimeError(
+            "Database configuration is missing. "
+            f"Set DATABASE_URL or all required DB env vars: {missing_env_text}"
+        )
 
     return (
         f"mysql+pymysql://{settings.DB_USER}:{settings.DB_PASSWORD}"
