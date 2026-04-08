@@ -57,7 +57,7 @@ def send_remote_alert(event) -> dict:
 
         # 2. family_members 테이블에서 이메일 조회
         result = supabase.table('family_members') \
-            .select('email, name') \
+            .select('family_id, user_id, email, name') \
             .eq('id', member_id) \
             .single() \
             .execute()
@@ -99,13 +99,12 @@ def send_remote_alert(event) -> dict:
 
         # 5. notifications 테이블에 알림 기록 저장 (이메일 성공과 독립 처리)
         try:
-            supabase.table('notifications').insert({
-                "member_id": member_id,
-                "type": "remote",
-                "title": "원격 알림",
-                "message": message,
-                "sent_via": "email",
-            }).execute()
+            notification_payload = _build_notification_payload(
+                sender_user_id=int(user_resp.user.id),
+                recipient_member=member,
+                message=message
+            )
+            supabase.table('notifications').insert(notification_payload).execute()
         except Exception as db_err:
             print(f"알림 기록 저장 실패 (이메일은 발송됨): {db_err}")
 
@@ -128,3 +127,16 @@ def send_remote_alert(event) -> dict:
             "headers": CORS_HEADERS,
             "body": json.dumps({"error": "서버 내부 오류가 발생했습니다."})
         }
+
+
+def _build_notification_payload(sender_user_id: int, recipient_member: dict, message: str) -> dict:
+    return {
+        "family_id": int(recipient_member["family_id"]),
+        "sender_user_id": sender_user_id,
+        "recipient_user_id": int(recipient_member["user_id"]),
+        "type": "remote",
+        "channel": "email",
+        "title": "원격 알림",
+        "message": message,
+        "is_read": False,
+    }

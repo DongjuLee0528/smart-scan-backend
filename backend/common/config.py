@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from pydantic import BaseModel, ConfigDict
-#dasd
+
 
 def _load_env_file() -> None:
     env_path = Path(__file__).resolve().parents[2] / ".env"
@@ -31,10 +31,10 @@ class Settings(BaseModel):
 
     # Database
     DB_HOST: str = os.getenv("DB_HOST", "localhost")
-    DB_PORT: int = int(os.getenv("DB_PORT", "3306"))
-    DB_USER: str = os.getenv("DB_USER", "root")
+    DB_PORT: int = int(os.getenv("DB_PORT", "5432"))
+    DB_USER: str = os.getenv("DB_USER", "postgres")
     DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
-    DB_NAME: str = os.getenv("DB_NAME", "smart_scan")
+    DB_NAME: str = os.getenv("DB_NAME", "postgres")
 
     # SMTP
     SMTP_HOST: str | None = os.getenv("SMTP_HOST")

@@ -70,15 +70,16 @@ def send_missing_alert(event) -> dict:
         # ── notifications 테이블에 기록 (이메일 발송 결과와 무관하게 격리) ──
         title = "누락 물건 알림"
         message = f"누락 항목: {', '.join(missing_items)}"
+        notification_payload = _build_notification_payload(member, title, message)
 
         try:
-            supabase.table('notifications').insert({
-                "member_id": int(member_id),
-                "type": "missing",
-                "title": title,
-                "message": message,
-                "sent_via": "email",
-            }).execute()
+            if notification_payload is not None:
+                supabase.table('notifications').insert(notification_payload).execute()
+            else:
+                print(
+                    "알림 DB 저장 건너뜀: notifications 필수 컬럼 값이 부족합니다 "
+                    f"(member_id={member_id})"
+                )
         except Exception as db_err:
             print(f"알림 DB 저장 오류 (member_id={member_id}): {db_err}")
 
@@ -93,4 +94,28 @@ def send_missing_alert(event) -> dict:
         "total": len(results),
         "sent": sent_count,
         "details": results,
+    }
+
+
+def _build_notification_payload(member: dict, title: str, message: str) -> dict | None:
+    family_id = member.get('family_id')
+    sender_user_id = member.get('sender_user_id')
+    recipient_user_id = member.get('recipient_user_id')
+
+    if family_id is None or sender_user_id is None or recipient_user_id is None:
+        return None
+
+    channel = str(member.get('channel') or 'kakao').strip().lower()
+    if channel not in {'kakao', 'sms'}:
+        channel = 'kakao'
+
+    return {
+        "family_id": int(family_id),
+        "sender_user_id": int(sender_user_id),
+        "recipient_user_id": int(recipient_user_id),
+        "type": "missing_alert",
+        "channel": channel,
+        "title": title,
+        "message": message,
+        "is_read": False,
     }

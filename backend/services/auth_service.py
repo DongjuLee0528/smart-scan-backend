@@ -1,6 +1,7 @@
 import secrets
 from datetime import datetime, timedelta, timezone
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.common.config import settings
@@ -198,6 +199,12 @@ class AuthService:
                 role=family_member.role,
                 created_at=user.created_at
             )
+        except IntegrityError as e:
+            self.db.rollback()
+            # DB 제약조건 위반으로 인한 중복 가입 시도
+            if "email" in str(e.orig).lower() or "kakao_user_id" in str(e.orig).lower():
+                raise ConflictException("User already exists")
+            raise
         except Exception:
             self.db.rollback()
             raise
