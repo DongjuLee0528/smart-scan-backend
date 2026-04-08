@@ -21,7 +21,7 @@ def create_scan_log(
 ):
     try:
         # 입력값 검증
-        if not request.item_id or request.item_id <= 0:
+        if request.item_id is None or request.item_id <= 0:
             raise BadRequestException("item_id는 양수여야 합니다")
 
         scan_log_service = ScanLogService(db)
