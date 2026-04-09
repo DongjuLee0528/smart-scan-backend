@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from backend.common.dependencies import get_current_user
 from backend.common.db import get_db
 from backend.common.response import success_response
+from backend.common.route_decorators import handle_service_errors
 from backend.schemas.family_member_schema import AddFamilyMemberRequest
 from backend.services.family_member_service import FamilyMemberService
 
@@ -16,6 +17,7 @@ def get_family_member_service(db: Session = Depends(get_db)) -> FamilyMemberServ
 
 
 @router.post("", response_model=dict)
+@handle_service_errors
 def add_family_member(
     request: AddFamilyMemberRequest,
     current_user=Depends(get_current_user),
@@ -32,6 +34,7 @@ def add_family_member(
 
 
 @router.get("", response_model=dict)
+@handle_service_errors
 def get_family_members(
     current_user=Depends(get_current_user),
     family_member_service: FamilyMemberService = Depends(get_family_member_service)
@@ -41,6 +44,7 @@ def get_family_members(
 
 
 @router.delete("/{member_id}", response_model=dict)
+@handle_service_errors
 def delete_family_member(
     member_id: int,
     current_user=Depends(get_current_user),
