@@ -42,7 +42,7 @@ def get_first_member_by_family(family_id: int):
            .table('family_members')
            .select('id, name, role')
            .eq('family_id', family_id)
-           .order('role', desc=False)   # 'member' < 'owner' 알파벳 역순 → owner 우선
+           .order('role', desc=True)    # 'owner' > 'member' 내림차순 → owner 우선
            .limit(1)
            .execute())
     return res.data[0] if res.data else None

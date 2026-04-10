@@ -7,7 +7,7 @@ def get_device_by_serial(serial_number: str):
     res = (client.table('devices')
            .select('id, family_id')
            .eq('serial_number', serial_number)
-           .single()
+           .maybe_single()
            .execute())
     return res.data if res.data else None
 

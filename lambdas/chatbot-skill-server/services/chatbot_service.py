@@ -59,6 +59,9 @@ def _handle_list(member_id: int) -> dict:
     return make_res(True, msg, True)
 
 
+MAX_ITEM_NAME_LEN = 30
+
+
 def _handle_add(utterance: str, member_id: int) -> dict:
     # "지갑 추가", "지갑추가", "추가 지갑" 등 처리
     m = re.search(r'(.+?)\s*추가|추가\s*(.+)', utterance)
@@ -68,6 +71,9 @@ def _handle_add(utterance: str, member_id: int) -> dict:
     name = (m.group(1) or m.group(2) or '').strip()
     if not name:
         return make_res(False, "물건 이름을 입력해 주세요.\n예) 지갑 추가", True)
+
+    if len(name) > MAX_ITEM_NAME_LEN:
+        return make_res(False, f"물건 이름은 {MAX_ITEM_NAME_LEN}자 이하로 입력해 주세요.", True)
 
     # 중복 확인
     existing = get_active_items(member_id)

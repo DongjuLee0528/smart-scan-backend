@@ -74,6 +74,5 @@ def validate_password(password: str) -> None:
     if not password or not isinstance(password, str):
         raise BadRequestException("password is required")
 
-    normalized_password = password.strip()
-    if len(normalized_password) < 8:
+    if len(password) < 8:
         raise BadRequestException("password must be at least 8 characters long")

@@ -1,4 +1,8 @@
+import logging
+
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 from backend.common.exceptions import BadRequestException, ForbiddenException, NotFoundException
 from backend.common.validator import validate_non_empty_string, validate_positive_int
@@ -183,4 +187,5 @@ class NotificationService:
 
     @staticmethod
     def _dispatch_notification(notification) -> None:
-        _ = notification
+        # TODO: 실시간 알림 발송 미구현 (카카오톡/Push 등)
+        logger.info("_dispatch_notification called for notification_id=%s (not yet implemented)", notification.id if hasattr(notification, 'id') else notification)

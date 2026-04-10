@@ -53,6 +53,14 @@ def send_remote_alert(event) -> dict:
                 "body": json.dumps({"error": "member_id와 message는 필수입니다."})
             }
 
+        MAX_MESSAGE_LEN = 500
+        if len(str(message)) > MAX_MESSAGE_LEN:
+            return {
+                "statusCode": 400,
+                "headers": CORS_HEADERS,
+                "body": json.dumps({"error": f"메시지는 {MAX_MESSAGE_LEN}자 이하여야 합니다."})
+            }
+
         supabase = get_client()
 
         # 2. family_members 테이블에서 이메일 조회
@@ -103,7 +111,7 @@ def send_remote_alert(event) -> dict:
                 "member_id": member_id,
                 "type": "remote",
                 "title": "원격 알림",
-                "message": message,
+                "message": escape(str(message)),
                 "sent_via": "email",
             }).execute()
         except Exception as db_err:
