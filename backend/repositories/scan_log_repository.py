@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import select, text
 from backend.models.scan_log import ScanLog
 from backend.schemas.scan_log_schema import ScanStatus
 
@@ -26,13 +26,22 @@ class ScanLogRepository:
         if not item_ids:
             return {}
 
-        stmt = select(ScanLog).where(
-            ScanLog.item_id.in_(item_ids)
-        ).order_by(ScanLog.scanned_at.desc(), ScanLog.id.desc())
+        # DISTINCT ON (item_id)으로 각 item_id별 최신 스캔 로그 1개만 DB에서 직접 조회.
+        # 기존 방식은 해당 item_ids의 모든 scan_logs를 불러온 뒤 Python에서 필터링하여
+        # item_ids 수가 많을수록 불필요한 전체 스캔 + N+1 성능 문제가 발생했음.
+        # PostgreSQL DISTINCT ON은 ORDER BY 기준으로 각 그룹의 첫 번째 행만 반환하므로
+        # 쿼리 1회로 item별 최신 로그를 효율적으로 가져올 수 있음.
+        stmt = text("""
+            SELECT DISTINCT ON (item_id)
+                id, user_device_id, item_id, status, scanned_at
+            FROM scan_logs
+            WHERE item_id = ANY(:item_ids)
+            ORDER BY item_id, scanned_at DESC, id DESC
+        """)
+        rows = self.db.execute(stmt, {"item_ids": item_ids}).mappings().all()
 
-        latest_by_item_id: dict[int, ScanLog] = {}
-        for scan_log in self.db.execute(stmt).scalars().all():
-            if scan_log.item_id not in latest_by_item_id:
-                latest_by_item_id[scan_log.item_id] = scan_log
-
-        return latest_by_item_id
+        result: dict[int, ScanLog] = {}
+        for row in rows:
+            scan_log = ScanLog(**dict(row))
+            result[scan_log.item_id] = scan_log
+        return result

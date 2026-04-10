@@ -32,7 +32,6 @@ jobs:
       - name: Sync HTML to S3 (no cache)
         run: |
           aws s3 sync frontend/ s3://${{ env.S3_BUCKET }} \
-            --delete \
             --exclude "*" \
             --include "*.html" \
             --cache-control "no-cache, no-store, must-revalidate"
@@ -40,6 +39,7 @@ jobs:
       - name: Sync static assets to S3 (cached)
         run: |
           aws s3 sync frontend/ s3://${{ env.S3_BUCKET }} \
+            --delete \
             --exclude "*.html" \
             --cache-control "max-age=86400"
 
