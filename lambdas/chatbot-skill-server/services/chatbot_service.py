@@ -18,6 +18,7 @@ def handle_chatbot(body: dict) -> dict:
     kakao_user_id = user_req.get('user', {}).get('id') or body.get('kakao_user_id', '')
     utterance = (user_req.get('utterance') or body.get('utterance') or '').strip()
 
+    print(f"[DEBUG] kakao_user_id={kakao_user_id}")
     if not kakao_user_id:
         return make_res(False, "카카오 사용자 ID를 확인할 수 없습니다.", True)
 
