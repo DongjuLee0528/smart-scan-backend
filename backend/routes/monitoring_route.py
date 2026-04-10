@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from backend.common.dependencies import get_current_user
 from backend.common.db import get_db
 from backend.common.response import success_response
+from backend.common.route_decorators import handle_service_errors
 from backend.services.monitoring_service import MonitoringService
 
 
@@ -15,6 +16,7 @@ def get_monitoring_service(db: Session = Depends(get_db)) -> MonitoringService:
 
 
 @router.get("/dashboard", response_model=dict)
+@handle_service_errors
 def get_dashboard(
     current_user=Depends(get_current_user),
     monitoring_service: MonitoringService = Depends(get_monitoring_service)
@@ -27,6 +29,7 @@ def get_dashboard(
 
 
 @router.get("/my-tags", response_model=dict)
+@handle_service_errors
 def get_my_tag_statuses(
     current_user=Depends(get_current_user),
     monitoring_service: MonitoringService = Depends(get_monitoring_service)
@@ -39,6 +42,7 @@ def get_my_tag_statuses(
 
 
 @router.get("/members/{member_id}/tags", response_model=dict)
+@handle_service_errors
 def get_member_tags(
     member_id: int,
     current_user=Depends(get_current_user),

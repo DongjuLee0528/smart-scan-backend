@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from backend.common.dependencies import get_current_user
 from backend.common.db import get_db
 from backend.common.response import success_response
+from backend.common.route_decorators import handle_service_errors
 from backend.schemas.item_schema import ItemAddRequest, ItemUpdateRequest
 from backend.services.item_service import ItemService
 
@@ -12,6 +13,7 @@ router = APIRouter(tags=["items"])
 
 
 @router.get("", response_model=dict)
+@handle_service_errors
 def get_items(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -22,6 +24,7 @@ def get_items(
 
 
 @router.post("", response_model=dict)
+@handle_service_errors
 def add_item(
     request: ItemAddRequest,
     current_user=Depends(get_current_user),
@@ -37,6 +40,7 @@ def add_item(
 
 
 @router.patch("/{item_id}", response_model=dict)
+@handle_service_errors
 def update_item(
     item_id: int,
     request: ItemUpdateRequest,
@@ -54,6 +58,7 @@ def update_item(
 
 
 @router.delete("/{item_id}", response_model=dict)
+@handle_service_errors
 def delete_item(
     item_id: int,
     current_user=Depends(get_current_user),

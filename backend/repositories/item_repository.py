@@ -94,7 +94,6 @@ class ItemRepository:
         return set(result)
 
     def exists_by_user_device_id(self, user_device_id: int) -> bool:
-        # Unlink safety check: any remaining item row still references user_device_id.
         stmt = select(Item.id).where(Item.user_device_id == user_device_id).limit(1)
         return self.db.execute(stmt).scalar_one_or_none() is not None
 
