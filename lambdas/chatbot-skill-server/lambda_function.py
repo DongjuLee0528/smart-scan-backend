@@ -22,7 +22,8 @@ def lambda_handler(event, context):
         action = body.get('action')
         if action == 'register_device':
             return register_device(body)
-        elif action is not None:
+        elif 'userRequest' in body or action is not None:
+            # 카카오 챗봇 요청(userRequest 포함) 또는 명시적 action
             return handle_chatbot(body)
         else:
             return {
