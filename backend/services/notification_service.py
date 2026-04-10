@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from backend.common.exceptions import BadRequestException, ForbiddenException, NotFoundException
+from backend.common.service_base import ServiceBase
 from backend.common.validator import validate_non_empty_string, validate_positive_int
 from backend.repositories.family_member_repository import FamilyMemberRepository
 from backend.repositories.family_repository import FamilyRepository
@@ -16,12 +17,9 @@ from backend.schemas.notification_schema import (
 from backend.services.monitoring_service import MonitoringService
 
 
-class NotificationService:
+class NotificationService(ServiceBase):
     def __init__(self, db: Session):
-        self.db = db
-        self.user_repository = UserRepository(db)
-        self.family_repository = FamilyRepository(db)
-        self.family_member_repository = FamilyMemberRepository(db)
+        super().__init__(db)
         self.notification_repository = NotificationRepository(db)
         self.monitoring_service = MonitoringService(db)
 
@@ -133,20 +131,6 @@ class NotificationService:
             self.db.rollback()
             raise
 
-    def _get_actor_context(self, user_id: int):
-        actor = self.user_repository.find_by_id(user_id)
-        if not actor:
-            raise NotFoundException("User not found")
-
-        family_member = self.family_member_repository.find_by_user_id(actor.id)
-        if not family_member:
-            raise BadRequestException("User is not assigned to a family")
-
-        family = self.family_repository.find_by_id(family_member.family_id)
-        if not family:
-            raise NotFoundException("Family not found")
-
-        return actor, family_member, family
 
     def _get_family_member_or_raise(self, family_id: int, user_id: int):
         family_member = self.family_member_repository.find_by_family_id_and_user_id(family_id, user_id)
