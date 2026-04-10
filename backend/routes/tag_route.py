@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from backend.common.dependencies import get_current_user
 from backend.common.db import get_db
 from backend.common.response import success_response
+from backend.common.route_decorators import handle_service_errors
 from backend.schemas.tag_schema import CreateTagRequest, UpdateTagRequest
 from backend.services.tag_service import TagService
 
@@ -16,6 +17,7 @@ def get_tag_service(db: Session = Depends(get_db)) -> TagService:
 
 
 @router.post("", response_model=dict)
+@handle_service_errors
 def create_tag(
     request: CreateTagRequest,
     current_user=Depends(get_current_user),
@@ -32,6 +34,7 @@ def create_tag(
 
 
 @router.get("", response_model=dict)
+@handle_service_errors
 def get_tags(
     current_user=Depends(get_current_user),
     tag_service: TagService = Depends(get_tag_service)
@@ -41,6 +44,7 @@ def get_tags(
 
 
 @router.patch("/{tag_id}", response_model=dict)
+@handle_service_errors
 def update_tag(
     tag_id: int,
     request: UpdateTagRequest,
@@ -58,6 +62,7 @@ def update_tag(
 
 
 @router.delete("/{tag_id}", response_model=dict)
+@handle_service_errors
 def delete_tag(
     tag_id: int,
     current_user=Depends(get_current_user),

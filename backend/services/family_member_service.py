@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from backend.common.exceptions import BadRequestException, ConflictException, ForbiddenException, NotFoundException
+from backend.common.service_base import ServiceBase
 from backend.common.validator import (
     validate_email,
     validate_non_empty_string,
@@ -17,12 +18,9 @@ from backend.repositories.user_repository import UserRepository
 from backend.schemas.family_member_schema import FamilyMemberListResponse, FamilyMemberResponse
 
 
-class FamilyMemberService:
+class FamilyMemberService(ServiceBase):
     def __init__(self, db: Session):
-        self.db = db
-        self.user_repository = UserRepository(db)
-        self.family_repository = FamilyRepository(db)
-        self.family_member_repository = FamilyMemberRepository(db)
+        super().__init__(db)
         self.device_repository = DeviceRepository(db)
         self.user_device_repository = UserDeviceRepository(db)
         self.item_repository = ItemRepository(db)
@@ -126,20 +124,6 @@ class FamilyMemberService:
             total_count=len(members)
         )
 
-    def _get_actor_context(self, user_id: int):
-        actor = self.user_repository.find_by_id(user_id)
-        if not actor:
-            raise NotFoundException("User not found")
-
-        family_member = self.family_member_repository.find_by_user_id(actor.id)
-        if not family_member:
-            raise BadRequestException("User is not assigned to a family")
-
-        family = self.family_repository.find_by_id(family_member.family_id)
-        if not family:
-            raise NotFoundException("Family not found")
-
-        return actor, family_member, family
 
     @staticmethod
     def _ensure_owner(actor_user_id: int, role: str, owner_user_id: int) -> None:

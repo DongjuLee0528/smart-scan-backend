@@ -30,9 +30,9 @@ class ScanLogRepository:
             ScanLog.item_id.in_(item_ids)
         ).order_by(ScanLog.scanned_at.desc(), ScanLog.id.desc())
 
-        latest_by_item_id: dict[int, ScanLog] = {}
+        latest_logs_by_item_id: dict[int, ScanLog] = {}
         for scan_log in self.db.execute(stmt).scalars().all():
-            if scan_log.item_id not in latest_by_item_id:
-                latest_by_item_id[scan_log.item_id] = scan_log
+            if scan_log.item_id not in latest_logs_by_item_id:
+                latest_logs_by_item_id[scan_log.item_id] = scan_log
 
-        return latest_by_item_id
+        return latest_logs_by_item_id

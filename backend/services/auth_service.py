@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.common.config import settings
+from backend.common.datetime_utils import normalize_datetime_required
 from backend.common.exceptions import (
     BadRequestException,
     ConflictException,
@@ -237,7 +238,7 @@ class AuthService:
             raise UnauthorizedException("Refresh token is revoked")
 
         now = datetime.now(timezone.utc)
-        expires_at = self._normalize_datetime(refresh_token_row.expires_at)
+        expires_at = normalize_datetime_required(refresh_token_row.expires_at)
         if expires_at <= now:
             raise UnauthorizedException("Refresh token has expired")
 
@@ -281,11 +282,6 @@ class AuthService:
     def _generate_verification_code() -> str:
         return str(secrets.randbelow(900000) + 100000)
 
-    @staticmethod
-    def _normalize_datetime(value: datetime) -> datetime:
-        if value.tzinfo is None:
-            return value.replace(tzinfo=timezone.utc)
-        return value
 
     def _issue_token_pair(self, user, revoke_existing: bool = True) -> AuthTokenResponse:
         issued_at = datetime.now(timezone.utc)

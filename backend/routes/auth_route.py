@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from backend.common.dependencies import get_current_user
 from backend.common.db import get_db
 from backend.common.response import success_response
+from backend.common.route_decorators import handle_service_errors
 from backend.schemas.auth_schema import (
     LoginRequest,
     LogoutRequest,
@@ -23,6 +24,7 @@ def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
 
 
 @router.post("/send-verification-email")
+@handle_service_errors
 async def send_verification_email(
     request: SendVerificationEmailRequest,
     auth_service: AuthService = Depends(get_auth_service)
@@ -35,6 +37,7 @@ async def send_verification_email(
 
 
 @router.post("/verify-email")
+@handle_service_errors
 async def verify_email(
     request: VerifyEmailRequest,
     auth_service: AuthService = Depends(get_auth_service)
@@ -47,6 +50,7 @@ async def verify_email(
 
 
 @router.post("/register")
+@handle_service_errors
 async def register(
     request: RegisterRequest,
     auth_service: AuthService = Depends(get_auth_service)
@@ -67,6 +71,7 @@ async def register(
 
 
 @router.post("/login")
+@handle_service_errors
 async def login(
     request: LoginRequest,
     auth_service: AuthService = Depends(get_auth_service)
@@ -79,6 +84,7 @@ async def login(
 
 
 @router.post("/refresh")
+@handle_service_errors
 async def refresh(
     request: RefreshRequest,
     auth_service: AuthService = Depends(get_auth_service)
@@ -91,6 +97,7 @@ async def refresh(
 
 
 @router.post("/logout")
+@handle_service_errors
 async def logout(
     request: LogoutRequest,
     current_user=Depends(get_current_user),
