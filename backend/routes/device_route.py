@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from backend.common.dependencies import get_current_user
 from backend.common.db import get_db
 from backend.common.response import success_response
+from backend.common.route_decorators import handle_service_errors, validate_required_string
 from backend.schemas.device_schema import DeviceRegisterRequest
 from backend.services.device_service import DeviceService
 
@@ -16,16 +17,20 @@ def get_device_service(db: Session = Depends(get_db)) -> DeviceService:
 
 
 @router.post("/register")
+@handle_service_errors
 async def register_device(
     request: DeviceRegisterRequest,
     current_user=Depends(get_current_user),
     device_service: DeviceService = Depends(get_device_service)
 ):
+    validate_required_string("serial_number", request.serial_number)
+
     user_device = device_service.register_device(current_user.id, request.serial_number)
     return success_response("Device registered successfully", user_device.model_dump())
 
 
 @router.get("/me")
+@handle_service_errors
 async def get_my_device(
     current_user=Depends(get_current_user),
     device_service: DeviceService = Depends(get_device_service)
@@ -39,6 +44,7 @@ async def get_my_device(
 
 
 @router.delete("/me")
+@handle_service_errors
 async def unlink_device(
     current_user=Depends(get_current_user),
     device_service: DeviceService = Depends(get_device_service)

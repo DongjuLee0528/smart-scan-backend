@@ -65,7 +65,7 @@ def send_remote_alert(event) -> dict:
 
         # 2. family_members 테이블에서 이메일 조회
         result = supabase.table('family_members') \
-            .select('email, name') \
+            .select('family_id, user_id, email, name') \
             .eq('id', member_id) \
             .single() \
             .execute()
@@ -136,3 +136,16 @@ def send_remote_alert(event) -> dict:
             "headers": CORS_HEADERS,
             "body": json.dumps({"error": "서버 내부 오류가 발생했습니다."})
         }
+
+
+def _build_notification_payload(sender_user_id: int, recipient_member: dict, message: str) -> dict:
+    return {
+        "family_id": int(recipient_member["family_id"]),
+        "sender_user_id": sender_user_id,
+        "recipient_user_id": int(recipient_member["user_id"]),
+        "type": "remote",
+        "channel": "email",
+        "title": "원격 알림",
+        "message": message,
+        "is_read": False,
+    }

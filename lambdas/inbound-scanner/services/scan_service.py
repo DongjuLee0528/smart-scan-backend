@@ -119,5 +119,13 @@ def _group_by_member(missing_items: list) -> list:
                 'member_email': item['member_email'],
                 'missing_items': []
             }
+            if item.get('family_id') is not None:
+                members[mid]['family_id'] = item['family_id']
+            if item.get('sender_user_id') is not None:
+                members[mid]['sender_user_id'] = item['sender_user_id']
+            if item.get('recipient_user_id') is not None:
+                members[mid]['recipient_user_id'] = item['recipient_user_id']
+            if item.get('channel') is not None:
+                members[mid]['channel'] = item['channel']
         members[mid]['missing_items'].append(item['missing_item'])
     return list(members.values())
