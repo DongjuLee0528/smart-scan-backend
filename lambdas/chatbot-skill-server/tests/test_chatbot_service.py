@@ -54,7 +54,7 @@ class TestHandleChatbot(unittest.TestCase):
         resp = handle_chatbot(_body("목록"))
 
         text = _kakao_text(resp)
-        self.assertIn("연결된 기기가 없습니다", text)
+        self.assertIn("아직 기기가 연결되지 않았습니다", text)
 
     # 3. '목록' 발화 → _handle_list 호출 (items 1개)
     @patch("services.chatbot_service.get_active_items",
