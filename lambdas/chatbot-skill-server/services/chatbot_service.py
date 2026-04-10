@@ -27,9 +27,10 @@ def handle_chatbot(body: dict) -> dict:
             "👋 SmartScan Hub에 오신 것을 환영합니다!\n\n"
             "아직 기기가 연결되지 않았습니다.\n\n"
             "📱 기기 연결 방법:\n"
-            "1. SmartScan 앱 또는 웹에서 로그인\n"
+            "1. SmartScan 웹에서 로그인\n"
             "2. [기기 관리] → [카카오 연동]\n"
-            "3. 연동 완료 후 이 채팅창으로 돌아오세요"
+            "3. 연동 완료 후 이 채팅창으로 돌아오세요\n\n"
+            "🌐 https://smartscan-hub.com"
         ), True)
 
     member_id = link['member_id']
@@ -41,10 +42,11 @@ def handle_chatbot(body: dict) -> dict:
     elif '등록' in utterance:
         return make_res(True, (
             "기기 등록 방법:\n\n"
-            "1. SmartScan 앱 또는 웹에서 로그인\n"
+            "1. SmartScan 웹에서 로그인\n"
             "2. [기기 관리] → [기기 등록]\n"
             "3. 기기 시리얼 번호 입력 후 등록\n\n"
-            "기기 등록은 앱/웹에서만 가능합니다."
+            "기기 등록은 웹에서만 가능합니다.\n\n"
+            "🌐 https://smartscan-hub.com"
         ), True, quick_replies=MAIN_QUICK_REPLIES)
     elif '추가' in utterance:
         return _handle_add(utterance, member_id)

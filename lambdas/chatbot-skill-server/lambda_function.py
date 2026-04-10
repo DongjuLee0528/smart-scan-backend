@@ -12,17 +12,20 @@ def lambda_handler(event, context):
     method = event.get('httpMethod') or http_info.get('method')
     is_web = 'httpMethod' in event or 'http' in request_context
 
+    body = {}
+    is_kakao = False
     try:
         if method == 'OPTIONS':
             return make_res(True, "CORS OK")
 
         raw_body = event.get('body') or '{}'
         body = json.loads(raw_body) if isinstance(raw_body, str) else raw_body
+        is_kakao = 'userRequest' in body
 
         action = body.get('action')
         if action == 'register_device':
             return register_device(body)
-        elif 'userRequest' in body or action is not None:
+        elif is_kakao or action is not None:
             # 카카오 챗봇 요청(userRequest 포함) 또는 명시적 action
             return handle_chatbot(body)
         else:
@@ -34,4 +37,4 @@ def lambda_handler(event, context):
 
     except Exception:
         print(traceback.format_exc())
-        return make_res(False, "서버 오류가 발생했습니다.", not is_web)
+        return make_res(False, "서버 오류가 발생했습니다.", is_kakao)
