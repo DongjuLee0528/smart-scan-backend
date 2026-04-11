@@ -6,9 +6,12 @@ from pydantic import BaseModel, ConfigDict
 def _require_env_var(var_name: str) -> str:
     """환경변수가 필수일 때 없으면 서버 시작을 중단"""
     value = os.getenv(var_name)
-    if not value:
+    if not value or not value.strip():
         raise ValueError(f"환경변수 {var_name}이 설정되지 않았습니다. 보안상 기본값을 제공하지 않습니다.")
-    return value
+    stripped_value = value.strip()
+    if len(stripped_value) < 32:
+        raise ValueError(f"환경변수 {var_name}의 값이 너무 짧습니다. 최소 32자 이상이어야 합니다.")
+    return stripped_value
 
 
 def _load_env_file() -> None:
@@ -59,7 +62,7 @@ class Settings(BaseModel):
     MONITORING_FOUND_WINDOW_MINUTES: int = int(
         os.getenv("MONITORING_FOUND_WINDOW_MINUTES", "10")
     )
-    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY") or _require_env_var("JWT_SECRET_KEY")
+    JWT_SECRET_KEY: str = _require_env_var("JWT_SECRET_KEY")
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(
         os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15")
