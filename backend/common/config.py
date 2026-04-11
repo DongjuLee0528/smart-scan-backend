@@ -78,7 +78,7 @@ class Settings(BaseModel):
     ALLOWED_ORIGIN: str = os.getenv("ALLOWED_ORIGIN", "http://localhost:3000")
 
     # Environment
-    ENV: str = os.getenv("ENV", "development")
+    ENV: str = os.getenv("ENV", "production")
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
     model_config = ConfigDict(frozen=True)
