@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 
 from backend.common.exceptions import BadRequestException
+from backend.common.config import settings
 
 
 def handle_service_errors(func):
@@ -17,8 +18,11 @@ def handle_service_errors(func):
         except Exception as e:
             if isinstance(e, (BadRequestException, HTTPException)):
                 raise
-            # 개발 시 디버깅을 위해 원본 에러 메시지 포함
-            error_detail = f"서버 오류가 발생했습니다: {str(e)}" if str(e) else "서버 오류가 발생했습니다"
+            # 개발 환경에서만 상세 에러 메시지 노출, 운영 환경에서는 일반 메시지만 반환
+            if settings.ENV == "development":
+                error_detail = f"서버 오류가 발생했습니다: {str(e)}" if str(e) else "서버 오류가 발생했습니다"
+            else:
+                error_detail = "서버 오류가 발생했습니다"
             raise HTTPException(status_code=500, detail=error_detail)
     return wrapper
 
