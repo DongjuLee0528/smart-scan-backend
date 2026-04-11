@@ -23,8 +23,8 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=[settings.ALLOWED_ORIGIN],
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type", "Accept"],
     )
 
     # 예외 핸들러 등록
