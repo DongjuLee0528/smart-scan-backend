@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from backend.common.config import settings
 from backend.common.exceptions import (
     CustomException,
@@ -7,6 +9,7 @@ from backend.common.exceptions import (
     http_exception_handler,
     general_exception_handler
 )
+from backend.common.rate_limiter import limiter, rate_limit_exceeded_handler
 
 
 def create_app() -> FastAPI:
@@ -26,6 +29,10 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type", "Accept"],
     )
+
+    # Rate limiter 설정
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
     # 예외 핸들러 등록
     app.add_exception_handler(CustomException, custom_exception_handler)
