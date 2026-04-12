@@ -1,3 +1,16 @@
+"""
+아이템 관리 API 라우터
+
+스마트 태그와 연결된 물품(아이템) 관리 REST API를 제공한다.
+사용자가 태그에 연결할 실제 물건을 등록, 수정, 삭제하고 조회할 수 있는 엔드포인트들을 포함한다.
+
+주요 엔드포인트:
+- GET /items: 가족의 모든 아이템 목록 조회
+- POST /items: 새로운 아이템 등록
+- PUT /items/{item_id}: 아이템 정보 수정
+- DELETE /items/{item_id}: 아이템 삭제 (연삭제)
+"""
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
