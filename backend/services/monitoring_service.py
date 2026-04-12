@@ -241,4 +241,5 @@ class MonitoringService(ServiceBase):
 
     @staticmethod
     def _count_tags_by_status(tags: list[TagStatusResponse], status: TagCurrentStatus) -> int:
+        """특정 상태의 태그 개수 집계"""
         return sum(1 for tag in tags if tag.status == status)
