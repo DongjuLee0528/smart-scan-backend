@@ -53,6 +53,14 @@ def send_remote_alert(event) -> dict:
                 "body": json.dumps({"error": "member_id와 message는 필수입니다."})
             }
 
+        MAX_MESSAGE_LEN = 500
+        if len(str(message)) > MAX_MESSAGE_LEN:
+            return {
+                "statusCode": 400,
+                "headers": CORS_HEADERS,
+                "body": json.dumps({"error": f"메시지는 {MAX_MESSAGE_LEN}자 이하여야 합니다."})
+            }
+
         supabase = get_client()
 
         # 2. family_members 테이블에서 이메일 조회
@@ -99,12 +107,13 @@ def send_remote_alert(event) -> dict:
 
         # 5. notifications 테이블에 알림 기록 저장 (이메일 성공과 독립 처리)
         try:
-            notification_payload = _build_notification_payload(
-                sender_user_id=int(user_resp.user.id),
-                recipient_member=member,
-                message=message
-            )
-            supabase.table('notifications').insert(notification_payload).execute()
+            supabase.table('notifications').insert({
+                "member_id": member_id,
+                "type": "remote",
+                "title": "원격 알림",
+                "message": escape(str(message)),
+                "sent_via": "email",
+            }).execute()
         except Exception as db_err:
             print(f"알림 기록 저장 실패 (이메일은 발송됨): {db_err}")
 

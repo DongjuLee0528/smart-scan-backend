@@ -36,7 +36,7 @@ def send_missing_alert(event) -> dict:
         member_email = member.get('member_email')
         missing_items = member.get('missing_items', [])
 
-        if not missing_items or not member_email:
+        if not member_id or not missing_items or not member_email:
             results.append({
                 "member_id": member_id,
                 "status": "skipped",

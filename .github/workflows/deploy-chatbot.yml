@@ -23,6 +23,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run tests before deploy
+        run: |
+          pip install pytest supabase resend boto3 --quiet
+          PYTHONPATH=lambdas/chatbot-skill-server pytest lambdas/chatbot-skill-server/tests/ -v
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -32,7 +42,8 @@ jobs:
       - name: Package and Deploy
         run: |
           cd lambdas/chatbot-skill-server
-          pip install -r requirements.txt -t ./package --quiet
+          pip install -r requirements.txt -t ./package --quiet \
+            --platform manylinux2014_x86_64 --only-binary=:all: --python-version 3.12
           cp -r common ./package/
           cp -r repositories ./package/
           cp -r services ./package/

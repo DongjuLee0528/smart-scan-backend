@@ -172,7 +172,7 @@ class AuthService:
         normalized_kakao_user_id = kakao_user_id.strip()
         normalized_name = name.strip()
         normalized_email = email.strip()
-        normalized_password = password.strip()
+        normalized_password = password  # 비밀번호는 공백 포함 원본 그대로 사용
         normalized_phone = phone.strip() if phone else None
         # 가족명 기본값 설정 (미입력시 "사용자명 가족"으로 자동 생성)
         normalized_family_name = family_name.strip() if family_name else f"{normalized_name} 가족"
@@ -268,7 +268,7 @@ class AuthService:
 
         # 사용자 인증 (이메일 또는 비밀번호 오류 시 동일한 답안으로 보안 강화)
         user = self.user_repository.find_by_email(email.strip())
-        if not user or not verify_password(password.strip(), user.password_hash):
+        if not user or not verify_password(password, user.password_hash):
             raise UnauthorizedException("Invalid email or password")
 
         try:

@@ -53,94 +53,7 @@ provider "aws" {
   region = "ap-northeast-2"
 }
 
-resource "aws_vpc" "main" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-  tags                 = { Name = "smartscan-vpc" }
-}
-
-# ==========================================
-# 2. 서브넷(Subnet) 및 게이트웨이(IGW)
-# ==========================================
-resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.main.id
-  tags   = { Name = "smartscan-igw" }
-}
-
-resource "aws_subnet" "public_a" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.1.0/24"
-  availability_zone       = "ap-northeast-2a"
-  map_public_ip_on_launch = true
-  tags                    = { Name = "smartscan-public-subnet" }
-}
-
-resource "aws_subnet" "private_a" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "ap-northeast-2a"
-  tags              = { Name = "smartscan-private-subnet-a" }
-}
-
-resource "aws_subnet" "private_c" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.3.0/24"
-  availability_zone = "ap-northeast-2c"
-  tags              = { Name = "smartscan-private-subnet-c" }
-}
-
-# ==========================================
-# 3. 라우팅 테이블 및 S3 엔드포인트
-# ==========================================
-resource "aws_route_table" "public_rt" {
-  vpc_id = aws_vpc.main.id
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
-  }
-}
-resource "aws_route_table_association" "public_a_assoc" {
-  subnet_id      = aws_subnet.public_a.id
-  route_table_id = aws_route_table.public_rt.id
-}
-
-resource "aws_route_table" "private_rt" {
-  vpc_id = aws_vpc.main.id
-  tags   = { Name = "smartscan-private-rt" }
-}
-resource "aws_route_table_association" "private_a_assoc" {
-  subnet_id      = aws_subnet.private_a.id
-  route_table_id = aws_route_table.private_rt.id
-}
-resource "aws_route_table_association" "private_c_assoc" {
-  subnet_id      = aws_subnet.private_c.id
-  route_table_id = aws_route_table.private_rt.id
-}
-
-resource "aws_vpc_endpoint" "s3_gw" {
-  vpc_id            = aws_vpc.main.id
-  service_name      = "com.amazonaws.ap-northeast-2.s3"
-  vpc_endpoint_type = "Gateway"
-  route_table_ids   = [aws_route_table.private_rt.id]
-}
-
-# ==========================================
-# 4. 보안 그룹 (Security Groups)
-# ==========================================
-# [수정] RDS 3306 rule 제거 (Supabase는 퍼블릭 HTTPS) → 443만 유지
-resource "aws_security_group" "lambda_in_sg" {
-  name   = "lambda-inbound-sg"
-  vpc_id = aws_vpc.main.id
-
-  egress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
+# [제거] VPC/서브넷/IGW/라우팅테이블/SG → Lambda vpc_config 미사용으로 고아 리소스 제거
 # [제거] rds_sg, lambda_to_rds, rds_from_lambda → RDS 미사용으로 제거
 
 # ==========================================
@@ -166,10 +79,7 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_vpc_access" {
-  role       = aws_iam_role.lambda_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
-}
+# [제거] lambda_vpc_access → VPC 미사용으로 제거
 
 # [수정] EventBridge 정책 제거 → Inbound→Outbound/Remote Lambda 직접 호출 정책으로 교체
 resource "aws_iam_role_policy" "lambda_invoke_policy" {
@@ -275,6 +185,29 @@ resource "aws_lambda_function" "remote" {
   }
 }
 
+# [추가] Chatbot Lambda
+resource "aws_lambda_function" "chatbot" {
+  function_name    = "smartscan-chatbot"
+  role             = aws_iam_role.lambda_role.arn
+  handler          = "lambda_function.lambda_handler"
+  runtime          = "python3.12"
+  timeout          = 15
+  filename         = data.archive_file.dummy_lambda.output_path
+  source_code_hash = data.archive_file.dummy_lambda.output_base64sha256
+  reserved_concurrent_executions = 5
+
+  environment {
+    variables = {
+      SUPABASE_URL         = var.supabase_url
+      SUPABASE_SERVICE_KEY = var.supabase_service_key
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [filename, source_code_hash]
+  }
+}
+
 # [제거] EventBridge 관련 리소스 모두 제거
 # - aws_cloudwatch_event_rule.missing_item_rule
 # - aws_cloudwatch_event_target.trigger_outbound_lambda
@@ -315,6 +248,53 @@ resource "aws_lambda_permission" "allow_apigw_inbound" {
   statement_id  = "AllowAPIGatewayInvokeInbound"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.inbound.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
+}
+
+# POST /chatbot — 카카오 챗봇 스킬 서버
+resource "aws_api_gateway_resource" "chatbot" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_rest_api.api.root_resource_id
+  path_part   = "chatbot"
+}
+
+resource "aws_api_gateway_method" "chatbot_post" {
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  resource_id   = aws_api_gateway_resource.chatbot.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method" "chatbot_options" {
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  resource_id   = aws_api_gateway_resource.chatbot.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "chatbot_lambda" {
+  rest_api_id             = aws_api_gateway_rest_api.api.id
+  resource_id             = aws_api_gateway_resource.chatbot.id
+  http_method             = aws_api_gateway_method.chatbot_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.chatbot.invoke_arn
+}
+
+resource "aws_api_gateway_integration" "chatbot_options_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.api.id
+  resource_id             = aws_api_gateway_resource.chatbot.id
+  http_method             = aws_api_gateway_method.chatbot_options.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.chatbot.invoke_arn
+}
+
+resource "aws_lambda_permission" "allow_apigw_chatbot" {
+  statement_id  = "AllowAPIGatewayInvokeChatbot"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.chatbot.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
 }
@@ -362,6 +342,9 @@ resource "aws_api_gateway_deployment" "prod" {
       aws_api_gateway_resource.remote_alert,
       aws_api_gateway_method.remote_alert_post,
       aws_api_gateway_integration.remote_alert_lambda,
+      aws_api_gateway_resource.chatbot,
+      aws_api_gateway_method.chatbot_post,
+      aws_api_gateway_integration.chatbot_lambda,
     ]))
   }
 
@@ -372,13 +355,33 @@ resource "aws_api_gateway_deployment" "prod" {
   depends_on = [
     aws_api_gateway_integration.inbound_lambda,
     aws_api_gateway_integration.remote_alert_lambda,
+    aws_api_gateway_integration.chatbot_lambda,
   ]
+}
+
+resource "aws_cloudwatch_log_group" "api_gw_logs" {
+  name              = "/aws/apigateway/smartscan-prod"
+  retention_in_days = 30
 }
 
 resource "aws_api_gateway_stage" "prod" {
   deployment_id = aws_api_gateway_deployment.prod.id
   rest_api_id   = aws_api_gateway_rest_api.api.id
   stage_name    = "prod"
+}
+
+resource "aws_api_gateway_usage_plan" "default" {
+  name = "smartscan-default"
+
+  api_stages {
+    api_id = aws_api_gateway_rest_api.api.id
+    stage  = aws_api_gateway_stage.prod.stage_name
+  }
+
+  throttle_settings {
+    rate_limit  = 10
+    burst_limit = 20
+  }
 }
 
 # ==========================================
@@ -529,7 +532,7 @@ resource "aws_iam_role_policy" "github_actions_lambda" {
           aws_lambda_function.inbound.arn,
           aws_lambda_function.outbound.arn,
           aws_lambda_function.remote.arn,
-          "arn:aws:lambda:ap-northeast-2:${data.aws_caller_identity.current.account_id}:function:smartscan-chatbot"
+          aws_lambda_function.chatbot.arn
         ]
       },
       {

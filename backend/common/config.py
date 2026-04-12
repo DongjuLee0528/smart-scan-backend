@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 def _require_env_var(var_name: str) -> str:
@@ -40,13 +40,6 @@ _load_env_file()
 class Settings(BaseModel):
     DATABASE_URL: str | None = os.getenv("DATABASE_URL")
 
-    # Database
-    DB_HOST: str = os.getenv("DB_HOST", "localhost")
-    DB_PORT: int = int(os.getenv("DB_PORT", "5432"))
-    DB_USER: str = os.getenv("DB_USER", "postgres")
-    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
-    DB_NAME: str = os.getenv("DB_NAME", "postgres")
-
     # SMTP
     SMTP_HOST: str | None = os.getenv("SMTP_HOST")
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
@@ -62,7 +55,7 @@ class Settings(BaseModel):
     MONITORING_FOUND_WINDOW_MINUTES: int = int(
         os.getenv("MONITORING_FOUND_WINDOW_MINUTES", "10")
     )
-    JWT_SECRET_KEY: str = _require_env_var("JWT_SECRET_KEY")
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "smart-scan-dev-secret")  # 프로덕션에서 반드시 환경변수로 교체
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(
         os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15")
@@ -82,6 +75,12 @@ class Settings(BaseModel):
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
     model_config = ConfigDict(frozen=True)
+
+    @model_validator(mode="after")
+    def _check_prod_secrets(self):
+        if self.ENV == "production" and self.JWT_SECRET_KEY == "smart-scan-dev-secret":
+            raise ValueError("JWT_SECRET_KEY must be changed from default in production environment")
+        return self
 
 
 settings = Settings()
