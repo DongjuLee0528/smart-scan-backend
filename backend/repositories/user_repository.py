@@ -4,6 +4,17 @@ from typing import Optional
 
 
 class UserRepository:
+    """
+    사용자 데이터 접근 계층
+
+    사용자(User) 모델에 대한 CRUD 연산을 담당하는 리포지토리.
+    카카오 ID와 이메일 기반 사용자 조회, 생성, 프로필 업데이트 등의 기본 데이터 액세스 기능을 제공한다.
+
+    주요 책임:
+    - 사용자 엔티티의 데이터베이스 연산
+    - 카카오 ID 및 이메일 기반 조회
+    - 회원가입 시 사용자 생성 및 프로필 업데이트
+    """
     def __init__(self, db: Session):
         self.db = db
 
