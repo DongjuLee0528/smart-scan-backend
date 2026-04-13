@@ -1,3 +1,18 @@
+"""
+RFID 태그 관리 API 라우터
+
+RFID 태그와 아이템 간의 연결을 관리하는 API 엔드포인트를 제공합니다.
+물리적 RFID 태그를 시스템에 등록하고 소지품과 연결하여 추적을 가능하게 합니다.
+
+주요 엔드포인트:
+- POST /: 새로운 RFID 태그 등록 및 아이템 연결
+- GET /: 현재 사용자의 모든 등록된 태그 목록 조회
+- PUT /{tag_id}: 태그 정보 수정 (연결된 아이템 변경)
+- DELETE /{tag_id}: 태그 등록 해제
+
+보안: 사용자는 본인이 등록한 태그만 관리 가능
+"""
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
