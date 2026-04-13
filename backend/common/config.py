@@ -39,6 +39,11 @@ _load_env_file()
 
 class Settings(BaseModel):
     DATABASE_URL: str | None = os.getenv("DATABASE_URL")
+    DB_HOST: str | None = os.getenv("DB_HOST")
+    DB_PORT: str | None = os.getenv("DB_PORT")
+    DB_USER: str | None = os.getenv("DB_USER")
+    DB_PASSWORD: str | None = os.getenv("DB_PASSWORD")
+    DB_NAME: str | None = os.getenv("DB_NAME")
 
     # SMTP
     SMTP_HOST: str | None = os.getenv("SMTP_HOST")
