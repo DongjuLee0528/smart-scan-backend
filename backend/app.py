@@ -1,3 +1,18 @@
+"""
+SmartScan Backend Application Entry Point
+
+이 모듈은 SmartScan 시스템의 FastAPI 백엔드 애플리케이션을 구성하고 초기화합니다.
+UHF RFID 기반 소지품 체크 시스템의 웹 API 서버 역할을 담당합니다.
+
+주요 기능:
+- CORS 미들웨어 설정으로 프론트엔드와의 통신 허용
+- Rate limiting으로 API 보안 강화
+- 전역 예외 처리기 설정
+- 모든 라우터 등록 및 API 엔드포인트 구성
+
+배포: Render 클라우드 플랫폼에 배포되며, 환경변수를 통해 설정 관리
+"""
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
