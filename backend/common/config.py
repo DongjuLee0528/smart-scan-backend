@@ -1,3 +1,20 @@
+"""
+애플리케이션 설정 관리
+
+SmartScan 백엔드 애플리케이션의 환경변수 및 설정을 관리하는 모듈입니다.
+보안이 중요한 설정들은 환경변수에서 로드하며, 기본값을 제공하지 않아 안전성을 보장합니다.
+
+주요 설정:
+- DATABASE_URL: Supabase PostgreSQL 연결 문자열
+- JWT_SECRET_KEY: JWT 토큰 서명용 비밀키 (32자 이상 필수)
+- ALLOWED_ORIGIN: CORS 허용 도메인
+- ENV: 개발/운영 환경 구분
+
+보안 정책:
+- 중요한 환경변수는 최소 길이 검증 적용
+- .env 파일 자동 로드 지원 (로컬 개발용)
+"""
+
 import os
 from pathlib import Path
 from pydantic import BaseModel, ConfigDict, model_validator
