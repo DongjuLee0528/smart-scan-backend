@@ -1,5 +1,3 @@
-import os
-
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -11,11 +9,17 @@ def _build_database_url() -> str:
     if database_url:
         return _normalize_database_url(database_url)
 
-    required_env_names = ("DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME")
+    db_settings = {
+        "DB_HOST": settings.DB_HOST,
+        "DB_PORT": settings.DB_PORT,
+        "DB_USER": settings.DB_USER,
+        "DB_PASSWORD": settings.DB_PASSWORD,
+        "DB_NAME": settings.DB_NAME,
+    }
     missing_env_names = [
         env_name
-        for env_name in required_env_names
-        if not (os.getenv(env_name) or "").strip()
+        for env_name, env_value in db_settings.items()
+        if not (env_value or "").strip()
     ]
     if missing_env_names:
         missing_env_text = ", ".join(missing_env_names)
