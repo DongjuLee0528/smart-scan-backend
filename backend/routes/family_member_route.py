@@ -1,3 +1,17 @@
+"""
+가족 구성원 관리 API 라우터
+
+SmartScan 시스템에서 가족 그룹 내 구성원을 관리하는 API 엔드포인트를 제공합니다.
+가족 구성원을 추가하고 삭제하며, 각 구성원의 소지품을 개별적으로 추적할 수 있습니다.
+
+주요 엔드포인트:
+- POST /: 새로운 가족 구성원 추가
+- GET /: 현재 가족의 모든 구성원 목록 조회
+- DELETE /{member_id}: 가족 구성원 제거
+
+권한: 가족 소유자만 구성원 추가/삭제 가능
+"""
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
