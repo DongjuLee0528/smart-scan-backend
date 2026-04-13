@@ -1,3 +1,19 @@
+"""
+커스텀 예외 처리 모듈
+
+SmartScan 백엔드 애플리케이션의 예외 처리를 위한 커스텀 예외 클래스들과
+글로벌 예외 핸들러를 정의합니다. 일관된 에러 응답 형식을 보장합니다.
+
+제공하는 예외 클래스:
+- CustomException: 기본 커스텀 예외 클래스
+- NotFoundException: 404 리소스 없음 예외
+- BadRequestException: 400 잘못된 요청 예외
+- ConflictException: 409 충돌 예외
+- UnauthorizedException: 401 인증 실패 예외
+
+모든 예외는 통일된 JSON 응답 형식으로 변환됩니다.
+"""
+
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 from backend.common.response import error_response
