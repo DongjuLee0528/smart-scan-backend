@@ -1,9 +1,38 @@
+"""
+입력 데이터 검증 모듈
+
+SmartScan 시스템의 모든 입력 데이터 검증을 담당하는 모듈입니다.
+사용자 입력값의 형식, 길이, 범위 등을 검증하여 데이터 무결성을 보장합니다.
+
+검증 기능:
+- 카카오 사용자 ID 형식 검증
+- 디바이스 시리얼 번호 검증
+- 이메일 형식 및 도메인 검증
+- 태그 UID 형식 검증
+- 숫자 범위 검증 (양수, ID 값 등)
+- 문자열 길이 및 필수 값 검증
+
+예외 처리: 모든 검증 실패 시 BadRequestException 발생
+"""
+
 import re
 
 from backend.common.exceptions import BadRequestException
 
 
 def validate_kakao_user_id(kakao_user_id: str) -> None:
+    """
+    카카오 사용자 ID 검증
+
+    카카오톡 플랫폼에서 제공하는 사용자 고유 ID의 유효성을 검증합니다.
+    빈 값, None, 공백만 있는 문자열을 거부합니다.
+
+    Args:
+        kakao_user_id: 검증할 카카오 사용자 ID
+
+    Raises:
+        BadRequestException: ID가 없거나 빈 문자열인 경우
+    """
     if not kakao_user_id or not isinstance(kakao_user_id, str):
         raise BadRequestException("kakao_user_id is required")
 
@@ -12,6 +41,20 @@ def validate_kakao_user_id(kakao_user_id: str) -> None:
 
 
 def validate_serial_number(serial_number: str) -> None:
+    """
+    RFID 디바이스 시리얼 번호 검증
+
+    UHF RFID 리더기의 시리얼 번호 형식을 검증합니다.
+    영숫자, 하이픈, 언더스코어만 허용하여 보안상 위험한 문자를 차단합니다.
+
+    Args:
+        serial_number: 검증할 시리얼 번호
+
+    Raises:
+        BadRequestException: 시리얼 번호가 없거나 잘못된 형식인 경우
+
+    허용 문자: a-z, A-Z, 0-9, -, _
+    """
     if not serial_number or not isinstance(serial_number, str):
         raise BadRequestException("serial_number is required")
 
@@ -24,6 +67,23 @@ def validate_serial_number(serial_number: str) -> None:
 
 
 def validate_status(status: str, allowed_values: list) -> None:
+    """
+    상태 값 검증
+
+    허용된 상태 값 목록과 대조하여 입력된 상태가 유효한지 확인합니다.
+    스캔 로그 상태, 디바이스 상태 등에 사용됩니다.
+
+    Args:
+        status: 검증할 상태 값
+        allowed_values: 허용된 상태 값 목록
+
+    Raises:
+        BadRequestException: 상태가 없거나 허용되지 않은 값인 경우
+
+    Example:
+        validate_status('FOUND', ['FOUND', 'LOST'])  # OK
+        validate_status('INVALID', ['FOUND', 'LOST'])  # Exception
+    """
     if not status or not isinstance(status, str):
         raise BadRequestException("status is required")
 
