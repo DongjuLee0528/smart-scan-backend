@@ -13,6 +13,18 @@ from backend.schemas.tag_schema import TagListResponse, TagResponse
 
 
 class TagService:
+    """
+    스마트 태그 관리 서비스
+
+    사용자가 소유하는 가상 태그의 생성, 수정, 삭제를 관리한다.
+    실제 물리적 태그와 연결되기 전 단계의 가상 태그로, 나중에 아이템과 연결되어 위치 추적이 가능해진다.
+
+    설계 의도:
+    - 사용자별 태그 소유권: 각 사용자가 자신의 태그만 관리 가능
+    - 가족 단위 조회: 가족 구성원들의 태그 목록 통합 조회
+    - 고유 식별자: tag_uid를 통한 물리적 태그와의 연결 준비
+    - 활성 상태 관리: 소프트 삭제를 통한 데이터 보존
+    """
     def __init__(self, db: Session):
         self.db = db
         self.user_repository = UserRepository(db)

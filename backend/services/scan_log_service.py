@@ -10,7 +10,20 @@ from backend.schemas.scan_log_schema import ScanLogResponse, ScanStatus
 
 
 class ScanLogService:
+    """
+    스캔 로그 관리 서비스
+
+    사용자 디바이스에서 발생한 스캔 이벤트의 기록과 조회를 담당한다.
+    FOUND/LOST 상태의 스캔 로그를 처리하여 태그 위치 추적 기반 데이터를 제공한다.
+
+    설계 의도:
+    - 위치 추적 로그: 모든 스캔 이벤트를 시간순 기록으로 저장
+    - 상태 기반 분류: FOUND(발견), LOST(분실) 상태로 구분
+    - 가족 단위 조회: 가족 구성원들의 스캔 기록 통합 조회
+    - 실시간 데이터: 모니터링 서비스에서 최신 상태 판단에 활용
+    """
     def __init__(self, db: Session):
+        """스캔 로그 관리에 필요한 리포지토리 초기화"""
         self.db = db
         self.scan_log_repository = ScanLogRepository(db)
         self.item_repository = ItemRepository(db)

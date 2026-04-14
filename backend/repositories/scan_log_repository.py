@@ -5,6 +5,18 @@ from backend.schemas.scan_log_schema import ScanStatus
 
 
 class ScanLogRepository:
+    """
+    스캔 로그 데이터 접근 계층
+
+    스캔 이벤트 로그의 데이터베이스 연산을 담당한다.
+    FOUND/LOST 상태의 스캔 기록 저장, 최신 스캔 로그 조회, 아이템별 스캔 히스토리 관리 등을 수행한다.
+
+    주요 책임:
+    - 스캔 이벤트 로그 저장 및 조회
+    - 아이템별 최신 스캔 상태 추적
+    - 가족 단위 스캔 로그 집계
+    - 모니터링용 최신 상태 정보 제공
+    """
     def __init__(self, db: Session):
         self.db = db
 

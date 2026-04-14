@@ -1,3 +1,15 @@
+"""
+모니터링 API 라우터
+
+Smart Scan 태그 모니터링 관련 REST API 엔드포인트를 제공한다.
+가족 단위로 태그 현황을 모니터링하고 개별 구성원의 태그 상태를 조회할 수 있는 API들을 포함한다.
+
+주요 엔드포인트:
+- GET /dashboard: 가족 전체 태그 모니터링 대시보드
+- GET /member/{member_id}/tags: 특정 구성원의 태그 목록
+- GET /my-tags: 내 태그 상태 목록
+"""
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 

@@ -1,6 +1,34 @@
+"""
+애플리케이션 설정 관리
+
+SmartScan 백엔드 애플리케이션의 환경변수 및 설정을 관리하는 모듈입니다.
+보안이 중요한 설정들은 환경변수에서 로드하며, 기본값을 제공하지 않아 안전성을 보장합니다.
+
+주요 설정:
+- DATABASE_URL: Supabase PostgreSQL 연결 문자열
+- JWT_SECRET_KEY: JWT 토큰 서명용 비밀키 (32자 이상 필수)
+- ALLOWED_ORIGIN: CORS 허용 도메인
+- ENV: 개발/운영 환경 구분
+
+보안 정책:
+- 중요한 환경변수는 최소 길이 검증 적용
+- .env 파일 자동 로드 지원 (로컬 개발용)
+"""
+
 import os
 from pathlib import Path
 from pydantic import BaseModel, ConfigDict, model_validator
+
+
+def _require_env_var(var_name: str) -> str:
+    """환경변수가 필수일 때 없으면 서버 시작을 중단"""
+    value = os.getenv(var_name)
+    if not value or not value.strip():
+        raise ValueError(f"환경변수 {var_name}이 설정되지 않았습니다. 보안상 기본값을 제공하지 않습니다.")
+    stripped_value = value.strip()
+    if len(stripped_value) < 32:
+        raise ValueError(f"환경변수 {var_name}의 값이 너무 짧습니다. 최소 32자 이상이어야 합니다.")
+    return stripped_value
 
 
 def _load_env_file() -> None:
@@ -28,6 +56,11 @@ _load_env_file()
 
 class Settings(BaseModel):
     DATABASE_URL: str | None = os.getenv("DATABASE_URL")
+    DB_HOST: str | None = os.getenv("DB_HOST")
+    DB_PORT: str | None = os.getenv("DB_PORT")
+    DB_USER: str | None = os.getenv("DB_USER")
+    DB_PASSWORD: str | None = os.getenv("DB_PASSWORD")
+    DB_NAME: str | None = os.getenv("DB_NAME")
 
     # SMTP
     SMTP_HOST: str | None = os.getenv("SMTP_HOST")
@@ -60,7 +93,7 @@ class Settings(BaseModel):
     ALLOWED_ORIGIN: str = os.getenv("ALLOWED_ORIGIN", "http://localhost:3000")
 
     # Environment
-    ENV: str = os.getenv("ENV", "development")
+    ENV: str = os.getenv("ENV", "production")
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
     model_config = ConfigDict(frozen=True)

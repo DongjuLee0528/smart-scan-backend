@@ -8,6 +8,18 @@ from backend.models.user_device import UserDevice
 
 
 class ItemRepository:
+    """
+    아이템 데이터 접근 계층
+
+    태그와 연결된 실제 물건(아이템)의 데이터베이스 연산을 담당한다.
+    라벨 정보와 함께 아이템 조회, 생성, 수정, 연삭제 기능을 제공한다.
+
+    주요 책임:
+    - 아이템 엔티티의 CRUD 연산
+    - 태그 UID 기반 조회 및 중복 검사
+    - 라벨과 연결된 아이템 목록 제공
+    - 가족 단위 아이템 관리
+    """
     def __init__(self, db: Session):
         self.db = db
 

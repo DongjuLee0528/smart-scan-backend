@@ -171,6 +171,7 @@ terraform apply
 | `resend_api_key` | Resend email API key |
 | `acm_cert_arn` | ACM certificate ARN (us-east-1) |
 | `github_repo` | GitHub repo in `owner/repo` format |
+| `domain_name` | Custom domain (smartscan-hub.com) |
 
 ---
 
@@ -179,15 +180,19 @@ terraform apply
 ### FastAPI Backend
 
 ```bash
+# Create virtual environment in project root
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+# Install backend dependencies
 cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
-# Copy and fill in environment variables
-cp .env.example .env
+# Copy and fill in environment variables (replace MySQL vars with Supabase)
+cp ../.env.example ../.env
 
-uvicorn backend.app:app --reload
+# Run FastAPI server
+uvicorn app:app --reload
 # Swagger UI available at http://localhost:8000/docs (requires ENV=development)
 ```
 
@@ -214,6 +219,8 @@ python -c "from lambda_function import lambda_handler; print(lambda_handler({}, 
 | `JWT_SECRET_KEY` | Supabase JWT secret |
 | `ALLOWED_ORIGIN` | Frontend origin for CORS |
 | `ENV` | `development` enables `/docs` |
+
+Note: For local development, copy `.env.example` to `.env` and update with your actual Supabase credentials instead of the MySQL placeholders.
 
 ### Lambda (AWS Console / Terraform)
 | Variable | Description |

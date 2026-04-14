@@ -6,6 +6,17 @@ from backend.common.exceptions import CustomException
 
 
 class EmailService:
+    """
+    이메일 발송 서비스
+
+    SMTP를 통한 이메일 인증 코드 발송을 담당한다.
+    회원가입 시 이메일 인증을 위해 사용되며, 설정된 SMTP 서버를 통해 메일을 발송한다.
+
+    설계 의도:
+    - 인증 코드 안전 전송: 가입 시 이메일 소유권 검증
+    - 환경변수 기반 설정: 개발/운영 환경별 SMTP 서버 분리
+    - 오류 처리: SMTP 연결 실패 시 적절한 예외 발생
+    """
     def __init__(self) -> None:
         self.smtp_host = settings.SMTP_HOST
         self.smtp_port = settings.SMTP_PORT
