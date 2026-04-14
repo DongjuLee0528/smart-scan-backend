@@ -1,3 +1,19 @@
+"""
+RFID 스캔 데이터 처리 서비스
+
+라즈베리파이 RFID 리더기에서 전송된 스캔 데이터를 처리하는 비즈니스 로직입니다.
+UHF RFID 태그들을 대문 통과 시 스캔하여 누락된 소지품을 감지합니다.
+
+주요 기능:
+- RFID 스캔 데이터 검증 및 파싱
+- 디바이스 시리얼 번호로 사용자 식별
+- 누락된 소지품 감지 (RPC 함수 이용)
+- outbound-notifier Lambda 자동 호출
+- Supabase에 스캔 로그 저장
+
+버전: 2024-03-15 - RPC 기반 성능 최적화 버전
+"""
+
 import json
 import logging
 import boto3
