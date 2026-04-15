@@ -1,3 +1,26 @@
+"""
+가족 구성원 관리 서비스
+
+SmartScan 시스템에서 가족 그룹 내 구성원의 추가, 삭제, 관리를 담당하는 서비스입니다.
+가족 기반 소지품 추적 시스템의 핵심 구성 요소로, 구성원별 개별 아이템 관리를 지원합니다.
+
+주요 기능:
+- 가족 구성원 추가/삭제 (가족 소유자 권한 필요)
+- 구성원별 소지품 조회 및 통계
+- 구성원별 스캔 이력 관리
+- 구성원 정보 수정 (이름, 나이, 이메일 등)
+
+비즈니스 규칙:
+- 가족 소유자만 구성원 추가/삭제 가능
+- 구성원 삭제 시 연관된 아이템과 스캔 로그 연쇄 삭제
+- 이메일 중복 검증 (가족 내 고유성)
+- 최대 구성원 수 제한 (설정 가능)
+
+보안 고려사항:
+- 구성원 정보는 가족 단위로 격리
+- 개인정보 수정은 본인 또는 가족 소유자만 가능
+"""
+
 from sqlalchemy.orm import Session
 
 from backend.common.exceptions import BadRequestException, ConflictException, ForbiddenException, NotFoundException
@@ -19,6 +42,12 @@ from backend.schemas.family_member_schema import FamilyMemberListResponse, Famil
 
 
 class FamilyMemberService(ServiceBase):
+    """
+    가족 구성원 관리 서비스 클래스
+
+    가족 그룹 내에서 구성원을 관리하고, 각 구성원의 소지품과 스캔 이력을 추적합니다.
+    ServiceBase를 상속하여 공통 액터 컨텍스트 기능을 활용합니다.
+    """
     def __init__(self, db: Session):
         super().__init__(db)
         self.device_repository = DeviceRepository(db)

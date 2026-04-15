@@ -1,4 +1,27 @@
+"""
+스캔 로그 관리 API 라우터
 
+RFID 스캔 이벤트의 기록과 조회를 위한 API 엔드포인트를 제공합니다.
+각 스캔 이벤트는 FOUND/LOST 상태로 기록되며, 소지품 추적의 기본 데이터를 제공합니다.
+
+주요 엔드포인트:
+- POST /: 새로운 스캔 로그 등록 (수동)
+- GET /{member_id}: 특정 가족 구성원의 스캔 이력 조회
+
+비즈니스 로직:
+- 스캔 로그는 주로 Lambda 함수에서 자동 생성
+- 수동 등록도 지원 (디버깅 및 테스트용)
+- 가족 구성원만 서로의 스캔 이력 조회 가능
+- Rate limiting 적용 (API 남용 방지)
+
+데이터 형식:
+- 스캔 시간 (UTC)
+- 태그 UID
+- 스캔 상태 (FOUND/LOST)
+- 연관된 아이템 정보
+
+보안: JWT 인증 필요, 가족 단위 데이터 격리
+"""
 
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
