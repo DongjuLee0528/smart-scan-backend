@@ -1,0 +1,13 @@
+"""
+Repository layer for Smart Scan chatbot skill server.
+
+This package contains repository modules for data access operations.
+Works with Supabase database for items, tags, and user management.
+
+Available repositories:
+- item_repository: Item data operations
+- tag_repository: RFID tag data operations
+- user_repository: User data operations
+
+All repositories use Supabase client for database operations.
+"""
