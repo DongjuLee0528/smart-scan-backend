@@ -1,13 +1,19 @@
+# Smart Scan Backend Docker Compose 설정
+#
+# 로컬 개발 환경에서 FastAPI 백엔드 서버를 Docker 컨테이너로 실행하기 위한 설정입니다.
+# .env 파일의 환경 변수를 자동으로 로드하여 개발 환경을 쉽게 구성할 수 있습니다.
+
 version: "3.8"
 
 services:
+  # FastAPI 백엔드 서비스
   backend:
-    build: .
+    build: .                              # 현재 디렉토리의 Dockerfile 사용
     ports:
-      - "8000:8000"
+      - "8000:8000"                       # 호스트 8000 포트를 컨테이너 8000 포트에 매핑
     env_file:
-      - .env
+      - .env                              # 환경 변수 파일 로드
     environment:
-      - ENV=development
-      - ALLOWED_ORIGIN=http://localhost:3000
-    restart: unless-stopped
+      - ENV=development                   # 개발 환경 설정
+      - ALLOWED_ORIGIN=http://localhost:3000  # CORS 허용 Origin (프론트엔드)
+    restart: unless-stopped               # 컨테이너 자동 재시작 (수동 정지 제외)
