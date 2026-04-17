@@ -28,6 +28,21 @@ class EmailService:
         self.from_name = settings.SMTP_FROM_NAME
 
     def send_verification_code(self, to_email: str, code: str, expires_at: datetime) -> None:
+        """
+        이메일 인증 코드 발송
+
+        지정된 이메일 주소로 6자리 인증 코드를 발송한다.
+        SSL 또는 TLS를 사용한 보안 연결을 통해 메일을 전송한다.
+
+        Args:
+            to_email: 인증 코드를 받을 이메일 주소
+            code: 발송할 6자리 인증 코드
+            expires_at: 인증 코드 만료 시간
+
+        Raises:
+            CustomException: SMTP 설정이 누락된 경우
+            smtplib.SMTPException: 메일 발송 실패 시
+        """
         if not all([self.smtp_host, self.smtp_username, self.smtp_password, self.from_email]):
             raise CustomException(500, "SMTP settings are not configured")
 
