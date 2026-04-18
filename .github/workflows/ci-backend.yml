@@ -21,11 +21,13 @@ on:
     paths:
       - 'backend/**'      # 백엔드 코드 변경 시
       - 'lambdas/**'      # Lambda 함수 코드 변경 시
+      - '.github/workflows/ci-backend.yml'  # CI 설정 변경 시
   pull_request:
     branches: [main]      # 메인 브랜치로의 PR 시 실행
     paths:
       - 'backend/**'      # 백엔드 코드 변경 시
       - 'lambdas/**'      # Lambda 함수 코드 변경 시
+  workflow_dispatch:      # 수동 실행 허용
 
 jobs:
   # 코드 품질 및 구문 검증 작업
