@@ -1,1 +1,4 @@
-supabase
+# Smart Scan 챗봇 스킬 서버 Lambda 의존성
+# 카카오톡 챗봇 스킬 서버에서 필요한 Python 라이브러리 목록
+
+supabase          # Supabase 클라이언트 라이브러리 (데이터베이스 연결용)
