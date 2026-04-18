@@ -77,6 +77,7 @@ class Settings(BaseModel):
     MONITORING_FOUND_WINDOW_MINUTES: int = int(
         os.getenv("MONITORING_FOUND_WINDOW_MINUTES", "10")
     )
+
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "smart-scan-dev-secret")  # 프로덕션에서 반드시 환경변수로 교체
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(
