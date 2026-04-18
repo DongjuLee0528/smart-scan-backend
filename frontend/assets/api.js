@@ -220,6 +220,53 @@
     return true;
   }
 
+  // ---------- Devices ----------
+  const registerDevice = (serial_number) =>
+    apiFetch("/api/devices/register", { method: "POST", auth: true, body: { serial_number } });
+  const getMyDevice = () => apiFetch("/api/devices/me", { auth: true });
+  const unlinkDevice = () => apiFetch("/api/devices/me", { method: "DELETE", auth: true });
+
+  // ---------- Family members ----------
+  const addFamilyMember = (body) =>
+    apiFetch("/api/families/members", { method: "POST", auth: true, body });
+  const getFamilyMembers = () => apiFetch("/api/families/members", { auth: true });
+  const deleteFamilyMember = (id) =>
+    apiFetch(`/api/families/members/${id}`, { method: "DELETE", auth: true });
+
+  // ---------- Items ----------
+  const getItems = () => apiFetch("/api/items", { auth: true });
+  const addItem = (body) => apiFetch("/api/items", { method: "POST", auth: true, body });
+  const updateItem = (id, body) =>
+    apiFetch(`/api/items/${id}`, { method: "PATCH", auth: true, body });
+  const deleteItem = (id) => apiFetch(`/api/items/${id}`, { method: "DELETE", auth: true });
+
+  // ---------- Labels ----------
+  const getAvailableLabels = () => apiFetch("/api/labels/available", { auth: true });
+
+  // ---------- Tags ----------
+  const createTag = (body) => apiFetch("/api/tags", { method: "POST", auth: true, body });
+  const getTags = () => apiFetch("/api/tags", { auth: true });
+  const updateTag = (id, body) =>
+    apiFetch(`/api/tags/${id}`, { method: "PATCH", auth: true, body });
+  const deleteTag = (id) => apiFetch(`/api/tags/${id}`, { method: "DELETE", auth: true });
+
+  // ---------- Monitoring ----------
+  const getDashboard = () => apiFetch("/api/monitoring/dashboard", { auth: true });
+  const getMyTags = () => apiFetch("/api/monitoring/my-tags", { auth: true });
+  const getMemberTags = (memberId) =>
+    apiFetch(`/api/monitoring/members/${memberId}/tags`, { auth: true });
+
+  // ---------- Notifications ----------
+  const sendNotification = (userId, body) =>
+    apiFetch(`/api/notifications/send/${userId}`, { method: "POST", auth: true, body });
+  const getMyNotifications = () => apiFetch("/api/notifications", { auth: true });
+  const markNotificationAsRead = (id) =>
+    apiFetch(`/api/notifications/${id}/read`, { method: "PATCH", auth: true });
+
+  // ---------- Scan logs ----------
+  const createScanLog = (body) =>
+    apiFetch("/api/scan-logs", { method: "POST", auth: true, body });
+
   window.smartscanApi = {
     API_BASE,
     getAccessToken,
@@ -236,5 +283,35 @@
     linkKakao,
     sendVerificationEmail,
     verifyEmail,
+    // devices
+    registerDevice,
+    getMyDevice,
+    unlinkDevice,
+    // family
+    addFamilyMember,
+    getFamilyMembers,
+    deleteFamilyMember,
+    // items
+    getItems,
+    addItem,
+    updateItem,
+    deleteItem,
+    // labels
+    getAvailableLabels,
+    // tags
+    createTag,
+    getTags,
+    updateTag,
+    deleteTag,
+    // monitoring
+    getDashboard,
+    getMyTags,
+    getMemberTags,
+    // notifications
+    sendNotification,
+    getMyNotifications,
+    markNotificationAsRead,
+    // scan logs
+    createScanLog,
   };
 })();

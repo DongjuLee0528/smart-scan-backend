@@ -5,219 +5,121 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>알림 - SmartScan Hub</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: { brand: '#034EA2' }
-        }
-      }
-    }
-  </script>
-  <style>
-    body { font-family: 'Noto Sans KR', sans-serif; }
-  </style>
+  <style>body { font-family: 'Noto Sans KR', sans-serif; }</style>
+  <script src="assets/api.js"></script>
+  <script src="assets/layout.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-900 flex h-screen overflow-hidden antialiased selection:bg-[#034EA2]/20 selection:text-[#034EA2]">
+<body class="bg-slate-50 text-slate-900 flex h-screen overflow-hidden antialiased">
+  <aside id="sidebar-mount"></aside>
 
-  <!-- ===== 사이드바 ===== -->
-  <aside class="w-64 bg-white border-r border-slate-200 flex-col hidden md:flex shrink-0">
-    <div class="h-16 flex items-center px-6 border-b border-slate-200">
-      <div class="flex items-center gap-2 text-[#034EA2]">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>
-          <path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
-          <circle cx="12" cy="12" r="3"/>
-        </svg>
-        <span class="text-xl font-bold tracking-tight">SmartScan Hub</span>
-      </div>
-    </div>
-    <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-      <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-        <span class="font-medium text-sm">대시보드</span>
-      </a>
-      <a href="devices.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
-        <span class="font-medium text-sm">기기 관리</span>
-      </a>
-      <a href="items.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
-        <span class="font-medium text-sm">소지품 관리</span>
-      </a>
-      <a href="members.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <span class="font-medium text-sm">구성원 관리</span>
-      </a>
-      <a href="notifications.html" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-[#034EA2]/10 text-[#034EA2] transition-colors">
-        <div class="flex items-center gap-3">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-          <span class="font-medium text-sm">알림</span>
-        </div>
-        <span class="text-xs font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">2</span>
-      </a>
-      <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-        <span class="font-medium text-sm">설정</span>
-      </a>
-    </nav>
-    <div class="p-4 border-t border-slate-200">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-full bg-[#034EA2]/10 text-[#034EA2] flex items-center justify-center font-semibold text-sm shrink-0">아</div>
-        <div class="min-w-0">
-          <p class="text-sm font-semibold text-slate-800 truncate">아빠</p>
-          <p class="text-xs text-slate-500 truncate">dad@smartscan-hub.com</p>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- ===== 메인 영역 ===== -->
   <main class="flex-1 flex flex-col min-w-0 bg-slate-50">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0">
-      <button class="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-lg">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
-      </button>
-      <div class="hidden md:flex items-center gap-2 text-slate-800 font-semibold">
-        <span>김씨 가족 스마트홈</span>
-        <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">시스템 정상</span>
-      </div>
-      <div class="flex items-center gap-1">
-        <button class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-        </button>
-      </div>
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center px-6 shrink-0">
+      <h1 class="text-lg font-semibold text-slate-800">알림</h1>
     </header>
 
-    <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-      <!-- 페이지 제목 + 모두 읽음 처리 -->
-      <div class="flex items-start justify-between mb-6">
+    <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-4xl w-full mx-auto">
+      <div class="mb-6 flex items-start justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-slate-900">알림</h1>
-          <p class="text-slate-500 text-sm mt-1">소지품 누락, 원격 알림, 시스템 상태 알림을 확인하세요.</p>
+          <h2 class="text-2xl font-bold text-slate-900">내 알림</h2>
+          <p class="text-slate-500 text-sm mt-1">수신한 알림을 확인하고 읽음 처리합니다.</p>
         </div>
-        <button class="flex items-center gap-2 px-4 py-2.5 border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          모두 읽음 처리
-        </button>
+        <button id="mark-all-btn" class="px-3.5 py-2 text-sm font-medium text-[#034EA2] border border-[#034EA2]/30 rounded-lg hover:bg-[#034EA2]/5 disabled:opacity-40">모두 읽음</button>
       </div>
 
-      <!-- 필터 탭 -->
-      <div class="flex gap-2 mb-6 flex-wrap">
-        <button class="filter-tab px-4 py-2 rounded-lg text-sm font-semibold bg-[#034EA2] text-white transition-colors" data-filter="all">전체</button>
-        <button class="filter-tab px-4 py-2 rounded-lg text-sm font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors" data-filter="missing">누락 알림</button>
-        <button class="filter-tab px-4 py-2 rounded-lg text-sm font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors" data-filter="remote">원격 알림</button>
-        <button class="filter-tab px-4 py-2 rounded-lg text-sm font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors" data-filter="system">시스템</button>
-      </div>
-
-      <!-- 알림 목록 -->
-      <div class="space-y-3" id="notificationList">
-
-        <!-- 알림 1: 누락 - 학생증 (unread) -->
-        <div class="notification-card bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex" data-type="missing" data-unread="true">
-          <div class="w-1 bg-red-500 shrink-0"></div>
-          <div class="flex-1 p-5">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1.5">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">누락</span>
-                  <span class="w-2 h-2 rounded-full bg-red-500 shrink-0" title="읽지 않음"></span>
-                </div>
-                <h3 class="font-bold text-slate-900 text-sm leading-snug">자녀1 - 학생증 누락 감지</h3>
-                <p class="text-slate-500 text-sm mt-1 leading-relaxed">현관 리더기에서 학생증이 감지되지 않았습니다. 이메일 알림이 발송되었습니다.</p>
-              </div>
-              <span class="text-xs text-slate-400 whitespace-nowrap shrink-0 pt-1">오늘 08:32</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 알림 2: 누락 - 체육복 (unread) -->
-        <div class="notification-card bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex" data-type="missing" data-unread="true">
-          <div class="w-1 bg-red-500 shrink-0"></div>
-          <div class="flex-1 p-5">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1.5">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">누락</span>
-                  <span class="w-2 h-2 rounded-full bg-red-500 shrink-0" title="읽지 않음"></span>
-                </div>
-                <h3 class="font-bold text-slate-900 text-sm leading-snug">자녀1 - 체육복 누락 감지</h3>
-                <p class="text-slate-500 text-sm mt-1 leading-relaxed">현관 리더기에서 체육복이 감지되지 않았습니다.</p>
-              </div>
-              <span class="text-xs text-slate-400 whitespace-nowrap shrink-0 pt-1">오늘 08:32</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 알림 3: 원격 알림 (read) -->
-        <div class="notification-card bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex opacity-75" data-type="remote" data-unread="false">
-          <div class="w-1 bg-blue-500 shrink-0"></div>
-          <div class="flex-1 p-5">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1.5">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">원격</span>
-                </div>
-                <h3 class="font-medium text-slate-700 text-sm leading-snug">아빠 → 자녀1 원격 알림 발송</h3>
-                <p class="text-slate-400 text-sm mt-1 leading-relaxed">학생증 꼭 챙기세요!</p>
-              </div>
-              <span class="text-xs text-slate-400 whitespace-nowrap shrink-0 pt-1">오늘 08:35</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 알림 4: 시스템 (read) -->
-        <div class="notification-card bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex opacity-75" data-type="system" data-unread="false">
-          <div class="w-1 bg-slate-400 shrink-0"></div>
-          <div class="flex-1 p-5">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1.5">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">시스템</span>
-                </div>
-                <h3 class="font-medium text-slate-700 text-sm leading-snug">현관 리더기 연결됨</h3>
-                <p class="text-slate-400 text-sm mt-1 leading-relaxed">기기 SH-0001이 정상적으로 연결되었습니다.</p>
-              </div>
-              <span class="text-xs text-slate-400 whitespace-nowrap shrink-0 pt-1">어제 18:00</span>
-            </div>
-          </div>
-        </div>
-
+      <div id="list" class="bg-white rounded-xl border border-slate-200 shadow-sm divide-y divide-slate-100">
+        <div class="px-6 py-12 text-center text-slate-400">불러오는 중...</div>
       </div>
     </div>
   </main>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const tabs = document.querySelectorAll('.filter-tab');
-      const cards = document.querySelectorAll('.notification-card');
+    smartscanLayout.init({ active: 'notifications' });
+    const esc = smartscanLayout.escapeHtml;
+    const fmt = smartscanLayout.formatDateTime;
 
-      tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          // 탭 스타일 업데이트
-          tabs.forEach(t => {
-            t.classList.remove('bg-[#034EA2]', 'text-white');
-            t.classList.add('bg-white', 'text-slate-600', 'border', 'border-slate-200');
-          });
-          tab.classList.remove('bg-white', 'text-slate-600', 'border', 'border-slate-200');
-          tab.classList.add('bg-[#034EA2]', 'text-white');
+    let cached = [];
 
-          const filter = tab.dataset.filter;
+    function channelBadge(ch) {
+      if (ch === 'kakao') return `<span class="px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs font-medium">카카오</span>`;
+      if (ch === 'sms') return `<span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs font-medium">SMS</span>`;
+      return `<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-medium">${esc(ch)}</span>`;
+    }
 
-          // 카드 필터링
-          cards.forEach(card => {
-            if (filter === 'all' || card.dataset.type === filter) {
-              card.style.display = 'flex';
-            } else {
-              card.style.display = 'none';
-            }
-          });
+    function render(list) {
+      const mount = document.getElementById('list');
+      if (list.length === 0) {
+        mount.innerHTML = `<div class="px-6 py-12 text-center text-slate-400">받은 알림이 없습니다.</div>`;
+        return;
+      }
+      mount.innerHTML = list.map((n) => {
+        const unread = !n.is_read;
+        const unreadStyle = unread ? 'bg-[#034EA2]/5' : '';
+        const unreadDot = unread ? `<span class="w-2 h-2 rounded-full bg-[#034EA2] shrink-0 mt-2"></span>` : `<span class="w-2 h-2 shrink-0 mt-2"></span>`;
+        return `
+          <div class="px-6 py-4 hover:bg-slate-50 ${unreadStyle}" data-id="${n.id}">
+            <div class="flex gap-3">
+              ${unreadDot}
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                  <h3 class="font-semibold text-slate-900 truncate">${esc(n.title || '(제목 없음)')}</h3>
+                  ${channelBadge(n.channel)}
+                  <span class="ml-auto text-xs text-slate-400">${fmt(n.created_at)}</span>
+                </div>
+                <p class="text-sm text-slate-600 whitespace-pre-wrap">${esc(n.message || '')}</p>
+                ${unread ? `<button data-action="read" class="mt-2 px-2.5 py-1 text-xs font-medium text-[#034EA2] border border-[#034EA2]/30 rounded-md hover:bg-[#034EA2]/5">읽음 처리</button>` : ''}
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+
+      mount.querySelectorAll('button[data-action="read"]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const row = btn.closest('[data-id]');
+          markRead(row.dataset.id);
         });
       });
+    }
+
+    async function markRead(id) {
+      try {
+        await smartscanApi.markNotificationAsRead(id);
+        const n = cached.find((x) => String(x.id) === String(id));
+        if (n) n.is_read = true;
+        render(cached);
+      } catch (err) {
+        smartscanLayout.toast(err.message || '처리 실패', 'error');
+      }
+    }
+
+    document.getElementById('mark-all-btn').addEventListener('click', async () => {
+      const unread = cached.filter((n) => !n.is_read);
+      if (unread.length === 0) return;
+      const btn = document.getElementById('mark-all-btn');
+      btn.disabled = true;
+      try {
+        await Promise.all(unread.map((n) => smartscanApi.markNotificationAsRead(n.id)));
+        unread.forEach((n) => (n.is_read = true));
+        render(cached);
+        smartscanLayout.toast('모두 읽음 처리했습니다.', 'success');
+      } catch (err) {
+        smartscanLayout.toast(err.message || '처리 실패', 'error');
+      } finally {
+        btn.disabled = false;
+      }
     });
+
+    async function load() {
+      try {
+        const res = await smartscanApi.getMyNotifications();
+        cached = (res.data && res.data.notifications) || [];
+        render(cached);
+      } catch (err) {
+        document.getElementById('list').innerHTML = `<div class="px-6 py-12 text-center text-red-500">조회 실패: ${esc(err.message)}</div>`;
+      }
+    }
+
+    load();
   </script>
 </body>
 </html>

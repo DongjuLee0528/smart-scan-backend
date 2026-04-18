@@ -4,289 +4,180 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>구성원 관리 - SmartScan Hub</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: { brand: '#034EA2' }
-        }
-      }
-    }
-  </script>
-  <style>
-    body { font-family: 'Noto Sans KR', sans-serif; }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>body { font-family: 'Noto Sans KR', sans-serif; }</style>
+  <script src="assets/api.js"></script>
+  <script src="assets/layout.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-900 flex h-screen overflow-hidden antialiased selection:bg-[#034EA2]/20 selection:text-[#034EA2]">
+<body class="bg-slate-50 text-slate-900 flex h-screen overflow-hidden antialiased">
+  <aside id="sidebar-mount"></aside>
 
-  <!-- ===== 사이드바 ===== -->
-  <aside class="w-64 bg-white border-r border-slate-200 flex-col hidden md:flex shrink-0">
-    <div class="h-16 flex items-center px-6 border-b border-slate-200">
-      <div class="flex items-center gap-2 text-[#034EA2]">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>
-          <path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
-          <circle cx="12" cy="12" r="3"/>
-        </svg>
-        <span class="text-xl font-bold tracking-tight">SmartScan Hub</span>
-      </div>
-    </div>
-    <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-      <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-        <span class="font-medium text-sm">대시보드</span>
-      </a>
-      <a href="devices.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
-        <span class="font-medium text-sm">기기 관리</span>
-      </a>
-      <a href="items.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
-        <span class="font-medium text-sm">소지품 관리</span>
-      </a>
-      <a href="members.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#034EA2]/10 text-[#034EA2] transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <span class="font-medium text-sm">구성원 관리</span>
-      </a>
-      <a href="notifications.html" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-        <div class="flex items-center gap-3">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-          <span class="font-medium text-sm">알림</span>
-        </div>
-        <span class="text-xs font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">2</span>
-      </a>
-      <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-        <span class="font-medium text-sm">설정</span>
-      </a>
-    </nav>
-    <div class="p-4 border-t border-slate-200">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-full bg-[#034EA2]/10 text-[#034EA2] flex items-center justify-center font-semibold text-sm shrink-0">아</div>
-        <div class="min-w-0">
-          <p class="text-sm font-semibold text-slate-800 truncate">아빠</p>
-          <p class="text-xs text-slate-500 truncate">dad@smartscan-hub.com</p>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- ===== 메인 영역 ===== -->
   <main class="flex-1 flex flex-col min-w-0 bg-slate-50">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0">
-      <button class="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-lg">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
-      </button>
-      <div class="hidden md:flex items-center gap-2 text-slate-800 font-semibold">
-        <span>김씨 가족 스마트홈</span>
-        <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">시스템 정상</span>
-      </div>
-      <div class="flex items-center gap-1">
-        <button class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-        </button>
-      </div>
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
+      <h1 class="text-lg font-semibold text-slate-800">구성원 관리</h1>
+      <span id="family-name-pill" class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">-</span>
     </header>
 
-    <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+    <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-5xl w-full mx-auto">
       <div class="flex items-start justify-between mb-6">
         <div>
-          <h1 class="text-2xl font-bold text-slate-900">구성원 관리</h1>
-          <p class="text-slate-500 text-sm mt-1">시스템을 이용할 가족 구성원을 등록하고 관리하세요.</p>
+          <h2 class="text-2xl font-bold text-slate-900">가족 구성원</h2>
+          <p class="text-slate-500 text-sm mt-1">구성원 추가는 Admin 권한이 필요합니다.</p>
         </div>
-        <button id="openModalBtn" class="flex items-center gap-2 px-4 py-2.5 bg-[#034EA2] text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-[#023d82] transition-colors shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        <button id="add-btn" class="px-4 py-2.5 bg-[#034EA2] text-white text-sm font-semibold rounded-lg hover:bg-[#023d82] flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           구성원 추가
         </button>
       </div>
 
-      <!-- 구성원 카드 그리드 -->
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-        <!-- 아빠 카드 -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div class="p-6">
-            <div class="flex items-start justify-between mb-4">
-              <div class="flex items-center gap-4">
-                <div class="w-14 h-14 rounded-full bg-[#034EA2]/10 text-[#034EA2] flex items-center justify-center font-bold text-xl shrink-0">아</div>
-                <div>
-                  <h3 class="font-bold text-slate-900 text-lg leading-tight">아빠</h3>
-                  <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold">Owner</span>
-                </div>
-              </div>
-              <div class="flex gap-1">
-                <button class="p-1.5 text-slate-400 hover:text-[#034EA2] hover:bg-[#034EA2]/10 rounded-md transition-colors" title="편집">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-                </button>
-                <button class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="삭제">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                </button>
-              </div>
-            </div>
-            <div class="space-y-3">
-              <div class="flex items-center gap-3 text-sm text-slate-600">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-slate-400"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                <span>dad@smartscan-hub.com</span>
-              </div>
-              <div class="flex items-center gap-3 text-sm text-slate-600">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-slate-400"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.9 1.11h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                <span>010-1234-5678</span>
-              </div>
-            </div>
-          </div>
-          <div class="bg-slate-50 px-6 py-3 border-t border-slate-100 flex items-center justify-between">
-            <span class="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
-              등록된 소지품
-            </span>
-            <span class="text-xs font-semibold text-slate-700">3개</span>
-          </div>
-        </div>
-
-        <!-- 엄마 카드 -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div class="p-6">
-            <div class="flex items-start justify-between mb-4">
-              <div class="flex items-center gap-4">
-                <div class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xl shrink-0">엄</div>
-                <div>
-                  <h3 class="font-bold text-slate-900 text-lg leading-tight">엄마</h3>
-                  <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">Member</span>
-                </div>
-              </div>
-              <div class="flex gap-1">
-                <button class="p-1.5 text-slate-400 hover:text-[#034EA2] hover:bg-[#034EA2]/10 rounded-md transition-colors" title="편집">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-                </button>
-                <button class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="삭제">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                </button>
-              </div>
-            </div>
-            <div class="space-y-3">
-              <div class="flex items-center gap-3 text-sm text-slate-600">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-slate-400"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                <span>mom@smartscan-hub.com</span>
-              </div>
-              <div class="flex items-center gap-3 text-sm text-slate-600">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-slate-400"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.9 1.11h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                <span>010-8765-4321</span>
-              </div>
-            </div>
-          </div>
-          <div class="bg-slate-50 px-6 py-3 border-t border-slate-100 flex items-center justify-between">
-            <span class="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
-              등록된 소지품
-            </span>
-            <span class="text-xs font-semibold text-slate-700">2개</span>
-          </div>
-        </div>
-
-        <!-- 자녀1 카드 -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div class="p-6">
-            <div class="flex items-start justify-between mb-4">
-              <div class="flex items-center gap-4">
-                <div class="w-14 h-14 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center font-bold text-xl shrink-0">자</div>
-                <div>
-                  <h3 class="font-bold text-slate-900 text-lg leading-tight">자녀1</h3>
-                  <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">Member</span>
-                </div>
-              </div>
-              <div class="flex gap-1">
-                <button class="p-1.5 text-slate-400 hover:text-[#034EA2] hover:bg-[#034EA2]/10 rounded-md transition-colors" title="편집">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-                </button>
-                <button class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="삭제">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                </button>
-              </div>
-            </div>
-            <div class="space-y-3">
-              <div class="flex items-center gap-3 text-sm text-slate-600">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-slate-400"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                <span>kid@smartscan-hub.com</span>
-              </div>
-              <div class="flex items-center gap-3 text-sm text-slate-600">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-slate-400"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.9 1.11h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                <span>010-5555-7777</span>
-              </div>
-            </div>
-          </div>
-          <div class="bg-slate-50 px-6 py-3 border-t border-slate-100 flex items-center justify-between">
-            <span class="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
-              등록된 소지품
-            </span>
-            <span class="text-xs font-semibold text-slate-700">2개</span>
-          </div>
-        </div>
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-100 text-slate-500 bg-slate-50/50">
+              <th class="text-left font-medium px-6 py-3">이름</th>
+              <th class="text-left font-medium px-6 py-3">이메일</th>
+              <th class="text-left font-medium px-6 py-3">전화번호</th>
+              <th class="text-left font-medium px-6 py-3">나이</th>
+              <th class="text-left font-medium px-6 py-3">역할</th>
+              <th class="text-right font-medium px-6 py-3">작업</th>
+            </tr>
+          </thead>
+          <tbody id="members-tbody" class="divide-y divide-slate-100">
+            <tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">불러오는 중...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </main>
 
-  <!-- ===== 구성원 추가 모달 ===== -->
-  <div id="addMemberModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4 sm:p-6">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
-      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
-        <h2 class="text-lg font-bold text-slate-900">구성원 추가</h2>
-        <button id="closeModalBtn" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-md transition-colors" aria-label="Close">
+  <div id="modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-slate-900">구성원 추가</h3>
+        <button id="modal-close" class="p-1 text-slate-400 hover:text-slate-600">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
         </button>
       </div>
-      <div class="p-6 space-y-5 overflow-y-auto">
-        <div class="space-y-1.5">
-          <label class="block text-sm font-medium text-slate-700">이름 <span class="text-red-500">*</span></label>
-          <input type="text" placeholder="이름을 입력하세요" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow bg-white placeholder:text-slate-400 text-slate-900" />
+      <form id="member-form" class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">이름</label>
+          <input id="m-name" type="text" required class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg bg-white" />
         </div>
-        <div class="space-y-1.5">
-          <label class="block text-sm font-medium text-slate-700">전화번호 <span class="text-red-500">*</span></label>
-          <input type="tel" placeholder="010-0000-0000" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow bg-white placeholder:text-slate-400 text-slate-900" />
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">이메일</label>
+          <input id="m-email" type="email" required class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg bg-white" />
         </div>
-        <div class="space-y-1.5">
-          <label class="block text-sm font-medium text-slate-700">이메일</label>
-          <input type="email" placeholder="email@example.com" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow bg-white placeholder:text-slate-400 text-slate-900" />
-          <p class="text-xs text-slate-500 mt-1">이메일로 소지품 누락 알림이 발송됩니다.</p>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">전화번호</label>
+          <input id="m-phone" type="tel" required placeholder="010-0000-0000" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg bg-white" />
         </div>
-        <div class="space-y-1.5">
-          <label class="block text-sm font-medium text-slate-700">역할 <span class="text-red-500">*</span></label>
-          <div class="relative">
-            <select class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow bg-white text-slate-900 appearance-none pr-10">
-              <option value="member">Member (일반 구성원)</option>
-              <option value="owner">Owner (관리자)</option>
-            </select>
-            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400"><path d="m6 9 6 6 6-6"/></svg>
-            </div>
-          </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">나이 (선택)</label>
+          <input id="m-age" type="number" min="0" max="150" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg bg-white" />
         </div>
-        <div class="pt-2 flex gap-3">
-          <button type="button" id="cancelModalBtn" class="flex-1 px-4 py-2.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">취소</button>
-          <button type="submit" class="flex-1 px-4 py-2.5 bg-[#034EA2] rounded-lg text-sm font-medium text-white hover:bg-[#023d82] shadow-sm transition-colors">추가</button>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" id="modal-cancel" class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50">취소</button>
+          <button id="m-submit" type="submit" class="px-4 py-2 bg-[#034EA2] text-white text-sm font-semibold rounded-lg hover:bg-[#023d82] disabled:opacity-60">추가</button>
         </div>
-      </div>
+      </form>
     </div>
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const modal = document.getElementById('addMemberModal');
-      const openBtn = document.getElementById('openModalBtn');
-      const closeBtn = document.getElementById('closeModalBtn');
-      const cancelBtn = document.getElementById('cancelModalBtn');
+    smartscanLayout.init({ active: 'members' });
+    const esc = smartscanLayout.escapeHtml;
+    const modal = document.getElementById('modal');
 
-      const openModal = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); };
-      const closeModal = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
+    document.getElementById('add-btn').addEventListener('click', () => modal.classList.remove('hidden'));
+    document.getElementById('modal-close').addEventListener('click', () => modal.classList.add('hidden'));
+    document.getElementById('modal-cancel').addEventListener('click', () => modal.classList.add('hidden'));
 
-      openBtn.addEventListener('click', openModal);
-      closeBtn.addEventListener('click', closeModal);
-      cancelBtn.addEventListener('click', closeModal);
-      modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    document.getElementById('member-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = {
+        name: document.getElementById('m-name').value.trim(),
+        email: document.getElementById('m-email').value.trim(),
+        phone_number: document.getElementById('m-phone').value.trim(),
+      };
+      const ageRaw = document.getElementById('m-age').value.trim();
+      if (ageRaw) body.age = parseInt(ageRaw, 10);
+      const btn = document.getElementById('m-submit');
+      btn.disabled = true;
+      try {
+        await smartscanApi.addFamilyMember(body);
+        smartscanLayout.toast('추가되었습니다.', 'success');
+        document.getElementById('member-form').reset();
+        modal.classList.add('hidden');
+        load();
+      } catch (err) {
+        smartscanLayout.toast(err.message || '추가 실패', 'error');
+      } finally {
+        btn.disabled = false;
+      }
     });
+
+    async function removeMember(id, name) {
+      if (!confirm(`'${name}'을(를) 삭제하시겠습니까?`)) return;
+      try {
+        await smartscanApi.deleteFamilyMember(id);
+        smartscanLayout.toast('삭제되었습니다.', 'success');
+        load();
+      } catch (err) {
+        smartscanLayout.toast(err.message || '삭제 실패', 'error');
+      }
+    }
+
+    function roleBadge(role) {
+      if (role === 'admin' || role === 'ADMIN') return `<span class="px-2 py-0.5 rounded bg-[#034EA2]/10 text-[#034EA2] text-xs font-semibold">관리자</span>`;
+      return `<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-semibold">구성원</span>`;
+    }
+
+    async function load() {
+      const tbody = document.getElementById('members-tbody');
+      try {
+        const res = await smartscanApi.getFamilyMembers();
+        const d = res.data || {};
+        document.getElementById('family-name-pill').textContent = d.family_name || '-';
+        const list = d.members || [];
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">등록된 구성원이 없습니다.</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = list.map((m) => {
+          const initial = esc((m.name || '?').charAt(0));
+          return `
+            <tr class="hover:bg-slate-50" data-id="${m.id}">
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full bg-[#034EA2]/10 text-[#034EA2] flex items-center justify-center font-semibold text-sm">${initial}</div>
+                  <span class="font-semibold text-slate-800">${esc(m.name)}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-slate-600">${esc(m.email || '-')}</td>
+              <td class="px-6 py-4 text-slate-600">${esc(m.phone_number || '-')}</td>
+              <td class="px-6 py-4 text-slate-600">${m.age != null ? m.age : '-'}</td>
+              <td class="px-6 py-4">${roleBadge(m.role)}</td>
+              <td class="px-6 py-4 text-right">
+                <button data-action="delete" class="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50">삭제</button>
+              </td>
+            </tr>`;
+        }).join('');
+
+        tbody.querySelectorAll('button[data-action="delete"]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const row = btn.closest('tr');
+            const id = row.dataset.id;
+            const m = list.find((x) => String(x.id) === String(id));
+            removeMember(id, m.name);
+          });
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">조회 실패: ${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    load();
   </script>
 </body>
 </html>
