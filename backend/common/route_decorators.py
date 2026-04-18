@@ -21,7 +21,7 @@ from functools import wraps
 from fastapi import HTTPException
 from pydantic import ValidationError
 
-from backend.common.exceptions import BadRequestException
+from backend.common.exceptions import BadRequestException, CustomException
 from backend.common.config import settings
 
 
@@ -91,7 +91,10 @@ def handle_service_errors(func):
         except ValidationError as e:
             raise BadRequestException(f"입력값 검증 실패: {str(e)}")
         except Exception as e:
-            if isinstance(e, (BadRequestException, HTTPException)):
+            # CustomException (Unauthorized/NotFound/Conflict/Forbidden/Database/BadRequest)
+            # 과 HTTPException 은 global exception handler 로 위임해 올바른
+            # status code 와 메시지를 유지한다.
+            if isinstance(e, (CustomException, HTTPException)):
                 raise
             raise _map_exception(e)
     return sync_wrapper
