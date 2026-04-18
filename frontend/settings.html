@@ -23,7 +23,6 @@
 </head>
 <body class="bg-slate-50 text-slate-900 flex h-screen overflow-hidden antialiased selection:bg-[#034EA2]/20 selection:text-[#034EA2]">
 
-  <!-- ===== 사이드바 ===== -->
   <aside class="w-64 bg-white border-r border-slate-200 flex-col hidden md:flex shrink-0">
     <div class="h-16 flex items-center px-6 border-b border-slate-200">
       <div class="flex items-center gap-2 text-[#034EA2]">
@@ -66,23 +65,22 @@
     </nav>
     <div class="p-4 border-t border-slate-200">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-full bg-[#034EA2]/10 text-[#034EA2] flex items-center justify-center font-semibold text-sm shrink-0">아</div>
+        <div id="userAvatar" class="w-9 h-9 rounded-full bg-[#034EA2]/10 text-[#034EA2] flex items-center justify-center font-semibold text-sm shrink-0">아</div>
         <div class="min-w-0">
-          <p class="text-sm font-semibold text-slate-800 truncate">아빠</p>
-          <p class="text-xs text-slate-500 truncate">dad@smartscan-hub.com</p>
+          <p id="sidebarName" class="text-sm font-semibold text-slate-800 truncate">아빠</p>
+          <p id="sidebarEmail" class="text-xs text-slate-500 truncate">dad@smartscan-hub.com</p>
         </div>
       </div>
     </div>
   </aside>
 
-  <!-- ===== 메인 영역 ===== -->
   <main class="flex-1 flex flex-col min-w-0 bg-slate-50">
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0">
       <button class="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-lg">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
       </button>
       <div class="hidden md:flex items-center gap-2 text-slate-800 font-semibold">
-        <span>김씨 가족 스마트홈</span>
+        <span id="welcomeMsg">김씨 가족 스마트홈</span>
         <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">시스템 정상</span>
       </div>
       <div class="flex items-center gap-1">
@@ -100,7 +98,6 @@
 
       <div class="max-w-2xl space-y-6">
 
-        <!-- 프로필 설정 -->
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div class="px-6 py-4 border-b border-slate-100">
             <h2 class="text-base font-bold text-slate-900">프로필 설정</h2>
@@ -108,30 +105,28 @@
           <div class="p-6 space-y-4">
             <div class="space-y-1.5">
               <label class="block text-sm font-medium text-slate-700">이름</label>
-              <input type="text" value="아빠" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow bg-white text-slate-900" />
+              <input id="profileNameInput" type="text" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow bg-white text-slate-900" />
             </div>
             <div class="space-y-1.5">
               <label class="block text-sm font-medium text-slate-700">이메일</label>
-              <input type="email" value="dad@smartscan-hub.com" readonly class="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-500 cursor-not-allowed" />
-              <p class="text-xs text-slate-400">이메일은 변경할 수 없습니다.</p>
+              <input id="profileEmailInput" type="email" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow bg-white text-slate-900" />
+              <p class="text-xs text-slate-400">알림을 수신할 이메일 주소입니다.</p>
             </div>
             <div class="space-y-1.5">
               <label class="block text-sm font-medium text-slate-700">전화번호</label>
-              <input type="tel" value="010-1234-5678" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow bg-white text-slate-900" />
+              <input id="profilePhoneInput" type="tel" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow bg-white text-slate-900" />
             </div>
             <div class="pt-2">
-              <button class="px-5 py-2.5 bg-[#034EA2] text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-[#023d82] transition-colors">저장</button>
+              <button id="saveProfileBtn" class="px-5 py-2.5 bg-[#034EA2] text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-[#023d82] transition-colors">저장</button>
             </div>
           </div>
         </div>
 
-        <!-- 알림 설정 -->
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div class="px-6 py-4 border-b border-slate-100">
             <h2 class="text-base font-bold text-slate-900">알림 설정</h2>
           </div>
           <div class="p-6 space-y-5">
-            <!-- 이메일 알림 (on) -->
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm font-medium text-slate-800">이메일 알림</p>
@@ -141,7 +136,6 @@
                 <span class="toggle-dot absolute top-0.5 left-[22px] w-5 h-5 bg-white rounded-full shadow transition-all"></span>
               </button>
             </div>
-            <!-- 누락 감지 알림 (on) -->
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm font-medium text-slate-800">누락 감지 알림</p>
@@ -151,7 +145,6 @@
                 <span class="toggle-dot absolute top-0.5 left-[22px] w-5 h-5 bg-white rounded-full shadow transition-all"></span>
               </button>
             </div>
-            <!-- 원격 알림 수신 (on) -->
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm font-medium text-slate-800">원격 알림 수신</p>
@@ -161,7 +154,6 @@
                 <span class="toggle-dot absolute top-0.5 left-[22px] w-5 h-5 bg-white rounded-full shadow transition-all"></span>
               </button>
             </div>
-            <!-- 시스템 알림 (off) -->
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm font-medium text-slate-800">시스템 알림</p>
@@ -174,7 +166,6 @@
           </div>
         </div>
 
-        <!-- 가족 정보 -->
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div class="px-6 py-4 border-b border-slate-100">
             <h2 class="text-base font-bold text-slate-900">가족 정보</h2>
@@ -198,7 +189,6 @@
           </div>
         </div>
 
-        <!-- 계정 -->
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div class="px-6 py-4 border-b border-slate-100">
             <h2 class="text-base font-bold text-slate-900">계정</h2>
@@ -206,10 +196,9 @@
           <div class="p-6 space-y-4">
             <div class="flex flex-wrap gap-3">
               <button class="px-4 py-2.5 border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">비밀번호 변경</button>
-              <button class="px-4 py-2.5 border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">로그아웃</button>
+              <button id="accountActionBtn" class="px-4 py-2.5 border border-red-200 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors">계정 삭제</button>
             </div>
             <div class="pt-2 border-t border-slate-100">
-              <button class="text-xs text-red-500 hover:text-red-700 font-medium transition-colors">계정 삭제</button>
               <p class="text-xs text-slate-400 mt-1">계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다.</p>
             </div>
           </div>
@@ -221,7 +210,54 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // 토글 버튼
+      // 1. 프로필 데이터 로드 및 UI 반영
+      const loadProfileData = () => {
+        const name = localStorage.getItem('userName') || '아빠';
+        const email = localStorage.getItem('userEmail') || 'dad@smartscan-hub.com';
+        const phone = localStorage.getItem('userPhone') || '010-1234-5678';
+
+        // 사이드바 업데이트
+        document.getElementById('sidebarName').textContent = name;
+        document.getElementById('sidebarEmail').textContent = email;
+        document.getElementById('userAvatar').textContent = name.charAt(0);
+        document.getElementById('welcomeMsg').textContent = name + "님의 스마트홈";
+
+        // 설정 입력창 업데이트
+        document.getElementById('profileNameInput').value = name;
+        document.getElementById('profileEmailInput').value = email;
+        document.getElementById('profilePhoneInput').value = phone;
+      };
+
+      loadProfileData();
+
+      // 2. 프로필 저장 로직
+      document.getElementById('saveProfileBtn').addEventListener('click', () => {
+        const newName = document.getElementById('profileNameInput').value;
+        const newEmail = document.getElementById('profileEmailInput').value;
+        const newPhone = document.getElementById('profilePhoneInput').value;
+
+        if(!newName || !newEmail) {
+          alert("이름과 이메일을 입력해주세요.");
+          return;
+        }
+
+        localStorage.setItem('userName', newName);
+        localStorage.setItem('userEmail', newEmail);
+        localStorage.setItem('userPhone', newPhone);
+
+        alert("정보가 저장되었습니다.");
+        loadProfileData();
+      });
+
+      // 3. 계정 삭제(빨간 버튼) 로직
+      document.getElementById('accountActionBtn').addEventListener('click', () => {
+        if(confirm("정말로 계정을 삭제하시겠습니까? 모든 데이터가 삭제됩니다.")) {
+          localStorage.clear();
+          window.location.href = 'index.html';
+        }
+      });
+
+      // 4. 토글 버튼 로직 (원본 기능 유지)
       document.querySelectorAll('.toggle-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const isOn = btn.dataset.on === 'true';
@@ -240,13 +276,13 @@
         });
       });
 
-      // 가족 코드 복사
+      // 5. 가족 코드 복사 로직 (원본 기능 유지)
       const copyBtn = document.getElementById('copyCodeBtn');
       copyBtn.addEventListener('click', () => {
         navigator.clipboard.writeText('FAM-2024-0001').then(() => {
-          const original = copyBtn.innerHTML;
-          copyBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 복사됨';
-          setTimeout(() => { copyBtn.innerHTML = original; }, 2000);
+          const originalText = copyBtn.innerHTML;
+          copyBtn.innerHTML = '복사됨!';
+          setTimeout(() => { copyBtn.innerHTML = originalText; }, 2000);
         });
       });
     });
