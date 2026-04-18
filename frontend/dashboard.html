@@ -28,7 +28,6 @@
 </head>
 <body class="bg-slate-50 text-slate-900 flex h-screen overflow-hidden antialiased selection:bg-[#034EA2]/20 selection:text-[#034EA2]">
 
-  <!-- ===== 사이드바 ===== -->
   <aside class="w-64 bg-white border-r border-slate-200 flex-col hidden md:flex shrink-0">
     <div class="h-16 flex items-center px-6 border-b border-slate-200">
       <div class="flex items-center gap-2 text-[#034EA2]">
@@ -71,23 +70,24 @@
     </nav>
     <div class="p-4 border-t border-slate-200">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-full bg-[#034EA2]/10 text-[#034EA2] flex items-center justify-center font-semibold text-sm shrink-0">아</div>
+        <div id="userAvatar" class="w-9 h-9 rounded-full bg-[#034EA2]/10 text-[#034EA2] flex items-center justify-center font-semibold text-sm shrink-0">
+          사
+        </div>
         <div class="min-w-0">
-          <p class="text-sm font-semibold text-slate-800 truncate">아빠</p>
-          <p class="text-xs text-slate-500 truncate">dad@smartscan-hub.com</p>
+          <p id="sidebarUserName" class="text-sm font-semibold text-slate-800 truncate">사용자</p>
+          <p id="sidebarUserEmail" class="text-xs text-slate-500 truncate">user@smartscan-hub.com</p>
         </div>
       </div>
     </div>
   </aside>
 
-  <!-- ===== 메인 영역 ===== -->
   <main class="flex-1 flex flex-col min-w-0 bg-slate-50">
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0">
       <button class="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-lg">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
       </button>
       <div class="hidden md:flex items-center gap-2 text-slate-800 font-semibold">
-        <span>김씨 가족 스마트홈</span>
+        <span id="welcomeMessage">김씨 가족 스마트홈</span>
         <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">시스템 정상</span>
       </div>
       <div class="flex items-center gap-1">
@@ -98,15 +98,12 @@
     </header>
 
     <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-      <!-- 페이지 타이틀 -->
       <div class="mb-6">
         <h1 class="text-2xl font-bold text-slate-900">대시보드</h1>
         <p class="text-slate-500 text-sm mt-1">가족 소지품 현황을 한눈에 확인하세요.</p>
       </div>
 
-      <!-- ===== 1. 요약 카드 4개 ===== -->
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-        <!-- 전체 소지품 -->
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
           <div class="w-12 h-12 rounded-lg bg-[#034EA2]/10 text-[#034EA2] flex items-center justify-center shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
@@ -117,7 +114,6 @@
           </div>
         </div>
 
-        <!-- 정상 감지 -->
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
           <div class="w-12 h-12 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
@@ -128,7 +124,6 @@
           </div>
         </div>
 
-        <!-- 누락 물품 -->
         <div class="bg-white rounded-xl border border-red-200 shadow-sm p-5 flex items-center gap-4">
           <div class="w-12 h-12 rounded-lg bg-red-100 text-red-600 flex items-center justify-center shrink-0 animate-pulse-slow">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
@@ -139,7 +134,6 @@
           </div>
         </div>
 
-        <!-- 등록 기기 -->
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
           <div class="w-12 h-12 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
@@ -151,7 +145,6 @@
         </div>
       </div>
 
-      <!-- ===== 2. 가족 상태 현황 ===== -->
       <div class="bg-white rounded-xl border border-slate-200 shadow-sm mb-6">
         <div class="px-6 py-4 border-b border-slate-100">
           <h2 class="text-lg font-bold text-slate-900">가족 상태 현황</h2>
@@ -166,7 +159,6 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <!-- 아빠 -->
               <tr class="hover:bg-slate-50 transition-colors">
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
@@ -197,11 +189,10 @@
                   </span>
                 </td>
               </tr>
-              <!-- 엄마 -->
               <tr class="hover:bg-slate-50 transition-colors">
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-semibold text-sm shrink-0">엄</div>
+                    <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-semibold text-sm shrink-0">엄마</div>
                     <span class="font-semibold text-slate-800">엄마</span>
                   </div>
                 </td>
@@ -224,7 +215,6 @@
                   </span>
                 </td>
               </tr>
-              <!-- 자녀1 -->
               <tr class="hover:bg-slate-50 transition-colors">
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
@@ -247,7 +237,7 @@
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-2">
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
-                      <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                      <span class=\"w-1.5 h-1.5 rounded-full bg-red-500\"></span>
                       누락 1건
                     </span>
                     <span class="text-xs text-slate-400">알림 전송됨</span>
@@ -260,7 +250,6 @@
       </div>
 
       <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <!-- ===== 3. 최근 스캔 이력 ===== -->
         <div class="xl:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm">
           <div class="px-6 py-4 border-b border-slate-100">
             <h2 class="text-lg font-bold text-slate-900">최근 스캔 이력</h2>
@@ -321,7 +310,6 @@
           </div>
         </div>
 
-        <!-- ===== 4. 원격 알림 보내기 ===== -->
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
           <div class="px-6 py-4 border-b border-slate-100">
             <h2 class="text-lg font-bold text-slate-900">원격 알림 보내기</h2>
@@ -355,5 +343,33 @@
     </div>
   </main>
 
+  <script>
+    // [추가 부분] 페이지 로드 시 가입 정보를 불러와 사이드바 및 헤더에 반영하는 로직
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. localStorage에서 저장된 이름과 이메일 가져오기
+      const savedName = localStorage.getItem('userName') || '사용자';
+      const savedEmail = localStorage.getItem('userEmail') || 'user@smartscan-hub.com';
+
+      // 2. 사이드바 프로필 요소 선택
+      const sidebarNameEl = document.getElementById('sidebarUserName');
+      const sidebarEmailEl = document.getElementById('sidebarUserEmail');
+      const avatarEl = document.getElementById('userAvatar');
+      const welcomeMsgEl = document.getElementById('welcomeMessage');
+
+      // 3. 데이터 반영
+      if (sidebarNameEl) sidebarNameEl.textContent = savedName;
+      if (sidebarEmailEl) sidebarEmailEl.textContent = savedEmail;
+      
+      // 4. 아바타 첫 글자 추출 및 반영
+      if (avatarEl && savedName) {
+        avatarEl.textContent = savedName.trim().charAt(0);
+      }
+
+      // 5. 상단 헤더 환영 메시지 반영
+      if (welcomeMsgEl) {
+        welcomeMsgEl.textContent = `${savedName}님의 스마트홈`;
+      }
+    });
+  </script>
 </body>
 </html>
