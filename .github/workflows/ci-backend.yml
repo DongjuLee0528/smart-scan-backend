@@ -63,6 +63,7 @@ jobs:
           # CI 테스트용 더미 환경변수
           DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
           JWT_SECRET_KEY: "ci-test-secret-key-that-is-at-least-32-characters-long"
+          KAKAO_LINK_JWT_SECRET: "ci-test-kakao-link-secret-that-is-at-least-32-chars-long"
           ALLOWED_ORIGIN: "http://localhost:3000"
 
   # Lambda 함수 단위 테스트 작업
