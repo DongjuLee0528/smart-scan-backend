@@ -109,7 +109,7 @@
       <div id="groupListView" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"></div>
       <div id="memberDetailView" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 hidden"></div>
 
-      <div id="emptyView" class="flex flex-col items-center justify-center py-20 text-center">
+      <div id="emptyView" class="flex flex-col items-center justify-center py-20 text-center hidden">
         <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
           <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
@@ -170,6 +170,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // 1. 초기 정보 로드
       const savedName = localStorage.getItem('userName') || '아빠';
       const savedEmail = localStorage.getItem('userEmail') || 'dad@smartscan-hub.com';
       const savedPhone = localStorage.getItem('userPhone') || '010-0000-0000';
@@ -178,16 +179,17 @@
       document.getElementById('userEmail').textContent = savedEmail;
       document.getElementById('userAvatar').textContent = savedName.charAt(0);
 
-      // --- 그룹 데이터 관리 ---
-      // 초기 샘플 데이터
-      let groups = [
+      // 2. 그룹 데이터 로드 (고정핀 연동 핵심)
+      let groups = JSON.parse(localStorage.getItem('familyGroups')) || [
         { 
+          id: 1,
           name: "우리집 스마트홈", 
           code: "FAM-2024-0001", 
           owner: "김아빠", 
+          isPinned: true,
           members: [
             {name: "김아빠", email: "dad@test.com", phone: "010-1111-2222", role: 'Owner', items: ['지갑', '차키', '스마트폰']},
-            {name: "이엄마", email: "mom@test.com", phone: "010-3333-4444", role: 'Member', items: ['카드지갑', '차키']},
+            {name: "이엄마", email: "mom@test.com", phone: "010-3333-4444", role: 'Member', items: ['핸드백', '열쇠']},
             {name: "김자녀", email: "kid@test.com", phone: "010-5555-6666", role: 'Member', items: ['학생증', '에어팟']}
           ] 
         }
@@ -196,12 +198,22 @@
       const groupListView = document.getElementById('groupListView');
       const memberDetailView = document.getElementById('memberDetailView');
       const emptyView = document.getElementById('emptyView');
-      const createModal = document.getElementById('createGroupModal');
-      const joinModal = document.getElementById('joinGroupModal');
       const headerPath = document.getElementById('headerPath');
       const backBtn = document.getElementById('backToListBtn');
 
+      // --- 고정핀 기능 ---
+      window.togglePin = function(e, id) {
+        e.stopPropagation();
+        groups.forEach(g => g.isPinned = false); // 하나만 고정
+        const target = groups.find(g => g.id === id);
+        if(target) target.isPinned = true;
+        localStorage.setItem('familyGroups', JSON.stringify(groups));
+        renderGroupList();
+      };
+
       // --- 모달 제어 ---
+      const createModal = document.getElementById('createGroupModal');
+      const joinModal = document.getElementById('joinGroupModal');
       document.getElementById('createGroupBtn').addEventListener('click', () => { createModal.classList.remove('hidden'); createModal.classList.add('flex'); });
       document.getElementById('openJoinModalBtn').addEventListener('click', () => { joinModal.classList.remove('hidden'); joinModal.classList.add('flex'); });
       document.querySelectorAll('.close-modal').forEach(btn => {
@@ -211,103 +223,82 @@
         });
       });
 
-      // --- 그룹 추가 실행 ---
+      // --- 그룹 추가 ---
       document.getElementById('submitCreateBtn').addEventListener('click', () => {
         const name = document.getElementById('newGroupName').value.trim();
         const code = document.getElementById('newGroupCode').value.trim();
         if(!name || !code) return alert("정보를 입력하세요.");
-
-        // 같은 코드가 있는지 확인
-        const existingGroup = groups.find(g => g.code === code);
-        if(existingGroup) {
-          alert("이미 존재하는 가족 코드입니다. 참여하기를 이용해주세요.");
-          return;
-        }
-
-        groups.push({ name: name, code: code, owner: savedName, members: [{name: savedName, email: savedEmail, phone: savedPhone, role: 'Owner', items: ['등록된 물품 없음']}] });
+        
+        groups.push({ 
+          id: Date.now(), name, code, owner: savedName, isPinned: false,
+          members: [{name: savedName, email: savedEmail, phone: savedPhone, role: 'Owner', items: ['등록된 물품 없음']}] 
+        });
+        localStorage.setItem('familyGroups', JSON.stringify(groups));
         renderGroupList();
-        document.querySelector('#createGroupModal .close-modal').click();
+        document.querySelector('.close-modal').click();
       });
 
-      // --- 그룹 참여 실행 ---
+      // --- 그룹 참여 ---
       document.getElementById('submitJoinBtn').addEventListener('click', () => {
         const code = document.getElementById('joinGroupCode').value.trim();
         const group = groups.find(g => g.code === code);
-
         if(group) {
-          // 이미 멤버인지 확인
-          if(group.members.some(m => m.email === savedEmail)) {
-            alert("이미 이 그룹의 멤버입니다.");
-          } else {
+          if(!group.members.some(m => m.email === savedEmail)) {
             group.members.push({name: savedName, email: savedEmail, phone: savedPhone, role: 'Member', items: ['등록된 물품 없음']});
-            alert(`'${group.name}' 그룹에 합류했습니다!`);
+            localStorage.setItem('familyGroups', JSON.stringify(groups));
           }
           renderGroupList();
-          document.querySelector('#joinGroupModal .close-modal').click();
-        } else {
-          alert("해당 코드를 가진 그룹이 없습니다.");
-        }
+          document.querySelector('.close-modal').click();
+        } else { alert("코드를 찾을 수 없습니다."); }
       });
 
-      // --- 화면 렌더링 함수들 ---
+      // --- 화면 렌더링 ---
       function renderGroupList() {
-        if(groups.length === 0) {
-          emptyView.classList.remove('hidden'); groupListView.classList.add('hidden');
-          return;
-        }
-        emptyView.classList.add('hidden');
-        groupListView.classList.remove('hidden');
-        memberDetailView.classList.add('hidden');
-        backBtn.classList.add('hidden');
+        if(groups.length === 0) { emptyView.classList.remove('hidden'); groupListView.classList.add('hidden'); return; }
+        emptyView.classList.add('hidden'); groupListView.classList.remove('hidden');
+        memberDetailView.classList.add('hidden'); backBtn.classList.add('hidden');
         headerPath.textContent = "가족 그룹 목록";
 
-        groupListView.innerHTML = groups.map((group, index) => `
-          <div onclick="renderMemberDetail(${index})" class="group bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:border-brand hover:shadow-md cursor-pointer transition-all">
-            <div class="flex justify-between items-start mb-4">
+        // 고정핀 순서 정렬
+        const sorted = [...groups].sort((a,b) => b.isPinned - a.isPinned);
+
+        groupListView.innerHTML = sorted.map(g => `
+          <div onclick="renderMemberDetail(${g.id})" class="group bg-white rounded-2xl border ${g.isPinned ? 'border-brand ring-1 ring-brand' : 'border-slate-200'} p-6 shadow-sm hover:shadow-md cursor-pointer transition-all relative">
+            <button onclick="togglePin(event, ${g.id})" class="absolute top-4 right-4 p-1.5 rounded-full ${g.isPinned ? 'text-brand bg-brand/10' : 'text-slate-300 hover:bg-slate-100'} transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="${g.isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+            </button>
+            <div class="mb-4">
               <div class="w-12 h-12 bg-brand/5 rounded-xl flex items-center justify-center text-brand">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
               </div>
-              <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-100 font-mono">${group.code}</span>
             </div>
-            <h3 class="text-lg font-bold text-slate-900">${group.name}</h3>
-            <p class="text-sm text-slate-500 mb-4">관리자: ${group.owner}</p>
-            <div class="flex items-center justify-between border-t border-slate-50 pt-4">
-              <span class="text-xs font-medium text-slate-400">구성원 ${group.members.length}명</span>
-              <span class="text-xs font-bold text-brand flex items-center gap-1">입장하기 →</span>
+            <h3 class="text-lg font-bold text-slate-900">${g.name}</h3>
+            <p class="text-sm text-slate-500 mb-4 font-medium">관리자: ${g.owner}</p>
+            <div class="flex items-center justify-between border-t border-slate-50 pt-4 text-xs">
+              <span class="text-slate-400">구성원 ${g.members.length}명</span>
+              <span class="text-brand font-bold">입장하기 →</span>
             </div>
           </div>
         `).join('');
       }
 
-      window.renderMemberDetail = function(index) {
-        const group = groups[index];
+      window.renderMemberDetail = function(id) {
+        const g = groups.find(x => x.id === id);
         groupListView.classList.add('hidden');
         memberDetailView.classList.remove('hidden');
         backBtn.classList.remove('hidden');
-        headerPath.textContent = `가족 그룹 > ${group.name}`;
+        headerPath.textContent = `가족 그룹 > ${g.name}`;
 
-        memberDetailView.innerHTML = group.members.map(member => `
+        memberDetailView.innerHTML = g.members.map(m => `
           <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-            <div class="p-6 border-b border-slate-50">
-              <div class="flex items-center gap-4 mb-4">
-                <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">${member.name.charAt(0)}</div>
-                <div>
-                  <h3 class="font-bold text-slate-900">${member.name}</h3>
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${member.role === 'Owner' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}">${member.role}</span>
-                </div>
-              </div>
-              <div class="space-y-1 text-xs text-slate-500">
-                <p class="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>${member.email}</p>
-              </div>
+            <div class="p-6 border-b border-slate-50 flex items-center gap-4">
+              <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">${m.name.charAt(0)}</div>
+              <div><h3 class="font-bold text-slate-900">${m.name}</h3><span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${m.role==='Owner'?'bg-amber-100 text-amber-700':'bg-slate-100 text-slate-500'}">${m.role}</span></div>
             </div>
             <div class="p-4 bg-slate-50/50">
-              <h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">소지품 상태</h4>
+              <h4 class="text-[11px] font-bold text-slate-400 mb-3 tracking-wider">소지품 상태</h4>
               <div class="flex flex-wrap gap-2">
-                ${member.items.map(item => `
-                  <span class="bg-white border border-slate-200 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 shadow-sm flex items-center gap-1">
-                    <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div> ${item}
-                  </span>
-                `).join('')}
+                ${m.items.map(i => `<span class="bg-white border border-slate-200 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 shadow-sm flex items-center gap-1"><div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div> ${i}</span>`).join('')}
               </div>
             </div>
           </div>
