@@ -67,7 +67,11 @@
           <p class="text-sm text-gray-500 dark:text-gray-400">계정을 생성하고 소지품 관리를 시작하세요.</p>
         </div>
 
-        <form class="space-y-5" onsubmit="return false;">
+        <!-- Error / success banner -->
+        <div id="signup-error" class="hidden mb-4 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300"></div>
+        <div id="signup-success" class="hidden mb-4 px-4 py-3 rounded-lg bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-sm text-green-700 dark:text-green-300"></div>
+
+        <form id="signup-form" class="space-y-5">
           <!-- 이름 -->
           <div class="space-y-1.5">
             <label for="name" class="text-sm font-medium text-gray-700 dark:text-gray-300">이름</label>
@@ -182,8 +186,8 @@
           </div>
 
           <!-- 가입 버튼 -->
-          <button type="submit"
-            class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-[#034EA2] hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#034EA2] transition-colors">
+          <button id="signup-submit" type="submit"
+            class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-[#034EA2] hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#034EA2] transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
             회원가입
           </button>
         </form>
@@ -207,10 +211,91 @@
     </div>
   </main>
 
+  <!-- SmartScan Hub API client -->
+  <script src="assets/api.js"></script>
+
   <script>
+    lucide.createIcons && lucide.createIcons();
+
     const toggle = document.getElementById('theme-toggle');
     toggle.addEventListener('click', () => {
       document.documentElement.classList.toggle('dark');
+    });
+
+    // ---- Signup 처리 ----
+    const form = document.getElementById('signup-form');
+    const submitBtn = document.getElementById('signup-submit');
+    const errorBox = document.getElementById('signup-error');
+    const successBox = document.getElementById('signup-success');
+
+    function showError(msg) {
+      successBox.classList.add('hidden');
+      errorBox.textContent = msg;
+      errorBox.classList.remove('hidden');
+    }
+    function showSuccess(msg) {
+      errorBox.classList.add('hidden');
+      successBox.textContent = msg;
+      successBox.classList.remove('hidden');
+    }
+    function clearBanners() {
+      errorBox.classList.add('hidden');
+      successBox.classList.add('hidden');
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearBanners();
+
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const passwordConfirm = document.getElementById('password-confirm').value;
+      const phoneRaw = document.getElementById('phone').value.trim();
+      const ageRaw = document.getElementById('age').value.trim();
+      const terms = document.getElementById('terms').checked;
+
+      // ---- 클라이언트 검증 ----
+      if (!name || !email || !password) {
+        showError('이름, 이메일, 비밀번호는 필수 입력 항목입니다.');
+        return;
+      }
+      if (password.length < 8) {
+        showError('비밀번호는 8자 이상이어야 합니다.');
+        return;
+      }
+      if (password !== passwordConfirm) {
+        showError('비밀번호가 일치하지 않습니다.');
+        return;
+      }
+      if (!terms) {
+        showError('이용약관 및 개인정보처리방침에 동의해주세요.');
+        return;
+      }
+
+      const phone = phoneRaw || null;
+      const age = ageRaw ? parseInt(ageRaw, 10) : null;
+
+      submitBtn.disabled = true;
+      const orig = submitBtn.textContent;
+      submitBtn.textContent = '가입 중...';
+
+      try {
+        await smartscanApi.register({
+          name,
+          email,
+          password,
+          phone,
+          age,
+        });
+        showSuccess('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다...');
+        setTimeout(() => location.replace('login.html'), 1200);
+      } catch (err) {
+        const msg = (err && err.message) ? err.message : '회원가입 중 오류가 발생했습니다.';
+        showError(msg);
+        submitBtn.disabled = false;
+        submitBtn.textContent = orig;
+      }
     });
   </script>
 </body>

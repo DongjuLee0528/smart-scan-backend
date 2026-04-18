@@ -24,6 +24,7 @@ from backend.common.response import success_response
 from backend.common.route_decorators import handle_service_errors
 from backend.common.rate_limiter import limiter, auth_rate_limit, api_rate_limit
 from backend.schemas.auth_schema import (
+    LinkKakaoRequest,
     LoginRequest,
     LogoutRequest,
     RefreshRequest,
@@ -151,5 +152,27 @@ async def logout(
     result = auth_service.logout(current_user.id, request.refresh_token)
     return success_response(
         "Logout completed successfully",
+        result.model_dump()
+    )
+
+
+@router.post("/link-kakao")
+@limiter.limit(auth_rate_limit)
+@handle_service_errors
+async def link_kakao(
+    request: Request,
+    payload: LinkKakaoRequest,
+    current_user=Depends(get_current_user),
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """
+    카카오 계정 연동 (magic link)
+
+    챗봇 Lambda가 발급한 단기 JWT를 검증하여 현재 로그인 사용자의
+    kakao_user_id를 실제 카카오 UID로 교체한다.
+    """
+    result = auth_service.link_kakao(current_user.id, payload.token)
+    return success_response(
+        "Kakao account linked successfully",
         result.model_dump()
     )

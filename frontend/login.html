@@ -75,7 +75,10 @@
           <p class="text-sm text-gray-500 dark:text-gray-400">서비스 이용을 위해 계정 정보를 입력해주세요.</p>
         </div>
 
-        <form class="space-y-5" onsubmit="return false;">
+        <!-- Error banner -->
+        <div id="login-error" class="hidden mb-4 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300"></div>
+
+        <form id="login-form" class="space-y-5">
           <!-- Email -->
           <div class="space-y-1.5">
             <label for="email" class="text-sm font-medium text-gray-700 dark:text-gray-300">이메일</label>
@@ -135,8 +138,9 @@
 
           <!-- Submit button -->
           <button
+            id="login-submit"
             type="submit"
-            class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-[#034EA2] hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#034EA2] transition-colors"
+            class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-[#034EA2] hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#034EA2] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             로그인
           </button>
@@ -161,6 +165,9 @@
     </div>
   </main>
 
+  <!-- SmartScan Hub API client -->
+  <script src="assets/api.js"></script>
+
   <script>
     // Initialize Lucide icons
     lucide.createIcons();
@@ -169,6 +176,63 @@
     const toggle = document.getElementById('theme-toggle');
     toggle.addEventListener('click', () => {
       document.documentElement.classList.toggle('dark');
+    });
+
+    // ---- Login 처리 ----
+    const form = document.getElementById('login-form');
+    const submitBtn = document.getElementById('login-submit');
+    const errorBox = document.getElementById('login-error');
+
+    function showError(msg) {
+      errorBox.textContent = msg;
+      errorBox.classList.remove('hidden');
+    }
+    function clearError() {
+      errorBox.textContent = '';
+      errorBox.classList.add('hidden');
+    }
+
+    function getRedirectTarget() {
+      const params = new URLSearchParams(location.search);
+      const r = params.get('redirect');
+      // 같은 origin 내부 경로만 허용 (open redirect 방지)
+      if (r && r.startsWith('/')) return r;
+      return 'dashboard.html';
+    }
+
+    // 이미 로그인되어 있으면 즉시 이동
+    if (smartscanApi.isLoggedIn()) {
+      location.replace(getRedirectTarget());
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearError();
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!email || !password) {
+        showError('이메일과 비밀번호를 입력해주세요.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      const origText = submitBtn.textContent;
+      submitBtn.textContent = '로그인 중...';
+
+      try {
+        await smartscanApi.login(email, password);
+        location.replace(getRedirectTarget());
+      } catch (err) {
+        const msg =
+          (err && err.status === 401) ? '이메일 또는 비밀번호가 올바르지 않습니다.' :
+          (err && err.message) ? err.message :
+          '로그인 중 오류가 발생했습니다.';
+        showError(msg);
+        submitBtn.disabled = false;
+        submitBtn.textContent = origText;
+      }
     });
   </script>
 </body>

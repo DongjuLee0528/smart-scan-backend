@@ -16,9 +16,11 @@
 - 임시 전용 사용자 ID 지원 (개발/테스트용)
 """
 
+import os
 import re
 
 from common.response import make_res, MAIN_QUICK_REPLIES
+from common.token_utils import create_kakao_link_token
 from repositories.user_repository import get_user_by_kakao_id, delete_user_device
 from repositories.item_repository import get_active_items, add_item, deactivate_item, delete_all_items
 
@@ -42,15 +44,19 @@ def handle_chatbot(body: dict) -> dict:
 
     link = get_user_by_kakao_id(kakao_user_id)
     if not link:
+        # 웹 계정과 연동되지 않은 사용자 → magic link 발급 후 버튼으로 전달
+        token = create_kakao_link_token(kakao_user_id)
+        web_base_url = os.environ.get("SMARTSCAN_WEB_URL", "https://smartscan-hub.com").rstrip("/")
+        link_url = f"{web_base_url}/link-kakao?token={token}"
         return make_res(True, (
             "👋 SmartScan Hub에 오신 것을 환영합니다!\n\n"
-            "아직 기기가 연결되지 않았습니다.\n\n"
-            "📱 기기 연결 방법:\n"
-            "1. SmartScan 웹에서 로그인\n"
-            "2. [기기 관리] → [카카오 연동]\n"
-            "3. 연동 완료 후 이 채팅창으로 돌아오세요\n\n"
-            "🌐 https://smartscan-hub.com"
-        ), True)
+            "웹 계정과 카카오톡 연동이 필요합니다.\n"
+            "아래 버튼을 눌러 SmartScan에 로그인한 뒤\n"
+            "연동을 완료해 주세요.\n\n"
+            "⏱ 링크는 5분간 유효합니다."
+        ), True, buttons=[
+            {"label": "🔗 계정 연동하기", "action": "webLink", "webLinkUrl": link_url}
+        ])
 
     member_id = link['member_id']
 

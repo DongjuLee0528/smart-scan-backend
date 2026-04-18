@@ -19,7 +19,6 @@ import json
 import traceback
 
 from common.response import make_res
-from services.device_service import register_device
 from services.chatbot_service import handle_chatbot
 
 
@@ -49,18 +48,15 @@ def lambda_handler(event, context):
         body = json.loads(raw_body) if isinstance(raw_body, str) else raw_body
         is_kakao = 'userRequest' in body
 
-        action = body.get('action')
-        if action == 'register_device':
-            return register_device(body)
-        elif is_kakao or action is not None:
+        if is_kakao or body.get('action') is not None:
             # 카카오 챗봇 요청(userRequest 포함) 또는 명시적 action
             return handle_chatbot(body)
-        else:
-            return {
-                "statusCode": 400,
-                "headers": {"Access-Control-Allow-Origin": "https://smartscan-hub.com"},
-                "body": json.dumps({"success": False, "message": "action 필드가 필요합니다."}, ensure_ascii=False),
-            }
+
+        return {
+            "statusCode": 400,
+            "headers": {"Access-Control-Allow-Origin": "https://smartscan-hub.com"},
+            "body": json.dumps({"success": False, "message": "action 필드가 필요합니다."}, ensure_ascii=False),
+        }
 
     except Exception:
         print(traceback.format_exc())

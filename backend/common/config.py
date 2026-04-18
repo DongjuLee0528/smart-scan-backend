@@ -89,6 +89,17 @@ class Settings(BaseModel):
         os.getenv("PASSWORD_HASH_ITERATIONS", "100000")
     )
 
+    # Kakao account link (magic link)
+    # 외부(챗봇 Lambda)와 공유되는 별도 비밀키. JWT_SECRET_KEY와 격리하여
+    # 한쪽이 유출되어도 다른 쪽 토큰이 위험해지지 않도록 분리.
+    KAKAO_LINK_JWT_SECRET: str = os.getenv(
+        "KAKAO_LINK_JWT_SECRET",
+        "smart-scan-dev-kakao-link-secret"
+    )
+    KAKAO_LINK_TOKEN_EXPIRE_MINUTES: int = int(
+        os.getenv("KAKAO_LINK_TOKEN_EXPIRE_MINUTES", "5")
+    )
+
     # CORS
     ALLOWED_ORIGIN: str = os.getenv("ALLOWED_ORIGIN", "http://localhost:3000")
 
@@ -102,6 +113,8 @@ class Settings(BaseModel):
     def _check_prod_secrets(self):
         if self.ENV == "production" and self.JWT_SECRET_KEY == "smart-scan-dev-secret":
             raise ValueError("JWT_SECRET_KEY must be changed from default in production environment")
+        if self.ENV == "production" and self.KAKAO_LINK_JWT_SECRET == "smart-scan-dev-kakao-link-secret":
+            raise ValueError("KAKAO_LINK_JWT_SECRET must be changed from default in production environment")
         return self
 
 
