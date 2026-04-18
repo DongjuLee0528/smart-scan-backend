@@ -47,7 +47,7 @@ def handle_chatbot(body: dict) -> dict:
         # 웹 계정과 연동되지 않은 사용자 → magic link 발급 후 버튼으로 전달
         token = create_kakao_link_token(kakao_user_id)
         web_base_url = os.environ.get("SMARTSCAN_WEB_URL", "https://smartscan-hub.com").rstrip("/")
-        link_url = f"{web_base_url}/link-kakao?token={token}"
+        link_url = f"{web_base_url}/link-kakao.html?token={token}"
         return make_res(True, (
             "👋 SmartScan Hub에 오신 것을 환영합니다!\n\n"
             "웹 계정과 카카오톡 연동이 필요합니다.\n"
