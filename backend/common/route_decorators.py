@@ -79,7 +79,7 @@ def handle_service_errors(func):
             except ValidationError as e:
                 raise BadRequestException(f"입력값 검증 실패: {str(e)}")
             except Exception as e:
-                if isinstance(e, (BadRequestException, HTTPException)):
+                if isinstance(e, (CustomException, HTTPException)):
                     raise
                 raise _map_exception(e)
         return async_wrapper
