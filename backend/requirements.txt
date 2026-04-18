@@ -1,10 +1,21 @@
-fastapi==0.115.0
-uvicorn==0.30.6
-sqlalchemy==2.0.35
-pydantic==2.9.2
-python-dotenv==1.0.1
-cryptography==43.0.1
-psycopg2-binary==2.9.9
+# Smart Scan Backend Dependencies
+# FastAPI 기반 백엔드 서버의 Python 의존성 목록
 
-slowapi>=0.1.9
-PyJWT>=2.8.0
+# 웹 프레임워크 및 서버
+fastapi==0.115.0          # 현대적인 고성능 Python 웹 프레임워크
+uvicorn==0.30.6           # ASGI 서버 (FastAPI 실행용)
+
+# 데이터베이스 ORM 및 연결
+sqlalchemy==2.0.35        # Python SQL 툴킷 및 ORM
+psycopg2-binary==2.9.9    # PostgreSQL 데이터베이스 어댑터
+
+# 데이터 검증 및 직렬화
+pydantic==2.9.2           # 데이터 검증 및 설정 관리 라이브러리
+
+# 환경 설정 및 보안
+python-dotenv==1.0.1      # .env 파일에서 환경 변수 로드
+cryptography==43.0.1      # 암호화 라이브러리 (JWT 서명용)
+
+# API 보안 및 인증
+slowapi>=0.1.9            # FastAPI용 레이트 리미팅 라이브러리
+PyJWT>=2.8.0              # JSON Web Token 구현체
