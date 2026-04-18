@@ -23,7 +23,6 @@
 </head>
 <body class="bg-slate-50 text-slate-900 flex h-screen overflow-hidden antialiased selection:bg-[#034EA2]/20 selection:text-[#034EA2]">
 
-  <!-- ===== 사이드바 ===== -->
   <aside class="w-64 bg-white border-r border-slate-200 flex-col hidden md:flex shrink-0">
     <div class="h-16 flex items-center px-6 border-b border-slate-200">
       <div class="flex items-center gap-2 text-[#034EA2]">
@@ -66,207 +65,104 @@
     </nav>
     <div class="p-4 border-t border-slate-200">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-full bg-[#034EA2]/10 text-[#034EA2] flex items-center justify-center font-semibold text-sm shrink-0">아</div>
+        <div id="userAvatar" class="w-9 h-9 rounded-full bg-[#034EA2]/10 text-[#034EA2] flex items-center justify-center font-semibold text-sm shrink-0">아</div>
         <div class="min-w-0">
-          <p class="text-sm font-semibold text-slate-800 truncate">아빠</p>
-          <p class="text-xs text-slate-500 truncate">dad@smartscan-hub.com</p>
+          <p id="userName" class="text-sm font-semibold text-slate-800 truncate">아빠</p>
+          <p id="userEmail" class="text-xs text-slate-500 truncate">dad@smartscan-hub.com</p>
         </div>
       </div>
     </div>
   </aside>
 
-  <!-- ===== 메인 영역 ===== -->
   <main class="flex-1 flex flex-col min-w-0 bg-slate-50">
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0">
       <button class="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-lg">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
       </button>
       <div class="hidden md:flex items-center gap-2 text-slate-800 font-semibold">
-        <span>김씨 가족 스마트홈</span>
+        <span id="headerPath">가족 그룹 목록</span>
         <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">시스템 정상</span>
-      </div>
-      <div class="flex items-center gap-1">
-        <button class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-        </button>
       </div>
     </header>
 
     <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
       <div class="flex items-start justify-between mb-6">
         <div>
-          <h1 class="text-2xl font-bold text-slate-900">구성원 관리</h1>
-          <p class="text-slate-500 text-sm mt-1">시스템을 이용할 가족 구성원을 등록하고 관리하세요.</p>
+          <h1 id="pageTitle" class="text-2xl font-bold text-slate-900">나의 가족 그룹</h1>
+          <p id="pageDesc" class="text-slate-500 text-sm mt-1">참여 중인 그룹을 선택하여 구성원과 소지품 상태를 확인하세요.</p>
+          <button id="backToListBtn" class="hidden mt-3 flex items-center gap-1 text-sm font-medium text-[#034EA2] hover:underline">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> 목록으로 돌아가기
+          </button>
         </div>
-        <button id="openModalBtn" class="flex items-center gap-2 px-4 py-2.5 bg-[#034EA2] text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-[#023d82] transition-colors shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-          구성원 추가
-        </button>
+        <div id="actionButtons" class="flex gap-2">
+          <button id="createGroupBtn" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg shadow-sm hover:bg-slate-50 transition-colors shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            그룹 추가
+          </button>
+          <button id="openJoinModalBtn" class="flex items-center gap-2 px-4 py-2.5 bg-[#034EA2] text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-[#023d82] transition-colors shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            그룹 참여
+          </button>
+        </div>
       </div>
 
-      <!-- 구성원 카드 그리드 -->
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-        <!-- 아빠 카드 -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div class="p-6">
-            <div class="flex items-start justify-between mb-4">
-              <div class="flex items-center gap-4">
-                <div class="w-14 h-14 rounded-full bg-[#034EA2]/10 text-[#034EA2] flex items-center justify-center font-bold text-xl shrink-0">아</div>
-                <div>
-                  <h3 class="font-bold text-slate-900 text-lg leading-tight">아빠</h3>
-                  <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold">Owner</span>
-                </div>
-              </div>
-              <div class="flex gap-1">
-                <button class="p-1.5 text-slate-400 hover:text-[#034EA2] hover:bg-[#034EA2]/10 rounded-md transition-colors" title="편집">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-                </button>
-                <button class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="삭제">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                </button>
-              </div>
-            </div>
-            <div class="space-y-3">
-              <div class="flex items-center gap-3 text-sm text-slate-600">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-slate-400"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                <span>dad@smartscan-hub.com</span>
-              </div>
-              <div class="flex items-center gap-3 text-sm text-slate-600">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-slate-400"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.9 1.11h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                <span>010-1234-5678</span>
-              </div>
-            </div>
-          </div>
-          <div class="bg-slate-50 px-6 py-3 border-t border-slate-100 flex items-center justify-between">
-            <span class="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
-              등록된 소지품
-            </span>
-            <span class="text-xs font-semibold text-slate-700">3개</span>
-          </div>
-        </div>
+      <div id="groupListView" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+      <div id="memberDetailView" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 hidden"></div>
 
-        <!-- 엄마 카드 -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div class="p-6">
-            <div class="flex items-start justify-between mb-4">
-              <div class="flex items-center gap-4">
-                <div class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xl shrink-0">엄</div>
-                <div>
-                  <h3 class="font-bold text-slate-900 text-lg leading-tight">엄마</h3>
-                  <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">Member</span>
-                </div>
-              </div>
-              <div class="flex gap-1">
-                <button class="p-1.5 text-slate-400 hover:text-[#034EA2] hover:bg-[#034EA2]/10 rounded-md transition-colors" title="편집">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-                </button>
-                <button class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="삭제">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                </button>
-              </div>
-            </div>
-            <div class="space-y-3">
-              <div class="flex items-center gap-3 text-sm text-slate-600">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-slate-400"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                <span>mom@smartscan-hub.com</span>
-              </div>
-              <div class="flex items-center gap-3 text-sm text-slate-600">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-slate-400"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.9 1.11h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                <span>010-8765-4321</span>
-              </div>
-            </div>
-          </div>
-          <div class="bg-slate-50 px-6 py-3 border-t border-slate-100 flex items-center justify-between">
-            <span class="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
-              등록된 소지품
-            </span>
-            <span class="text-xs font-semibold text-slate-700">2개</span>
-          </div>
+      <div id="emptyView" class="flex flex-col items-center justify-center py-20 text-center">
+        <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
-
-        <!-- 자녀1 카드 -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div class="p-6">
-            <div class="flex items-start justify-between mb-4">
-              <div class="flex items-center gap-4">
-                <div class="w-14 h-14 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center font-bold text-xl shrink-0">자</div>
-                <div>
-                  <h3 class="font-bold text-slate-900 text-lg leading-tight">자녀1</h3>
-                  <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">Member</span>
-                </div>
-              </div>
-              <div class="flex gap-1">
-                <button class="p-1.5 text-slate-400 hover:text-[#034EA2] hover:bg-[#034EA2]/10 rounded-md transition-colors" title="편집">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-                </button>
-                <button class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="삭제">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                </button>
-              </div>
-            </div>
-            <div class="space-y-3">
-              <div class="flex items-center gap-3 text-sm text-slate-600">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-slate-400"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                <span>kid@smartscan-hub.com</span>
-              </div>
-              <div class="flex items-center gap-3 text-sm text-slate-600">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-slate-400"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.9 1.11h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                <span>010-5555-7777</span>
-              </div>
-            </div>
-          </div>
-          <div class="bg-slate-50 px-6 py-3 border-t border-slate-100 flex items-center justify-between">
-            <span class="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
-              등록된 소지품
-            </span>
-            <span class="text-xs font-semibold text-slate-700">2개</span>
-          </div>
-        </div>
+        <h2 class="text-lg font-bold text-slate-700">참여 중인 그룹이 없습니다</h2>
+        <p class="text-slate-500 text-sm mt-1">그룹을 생성하거나 가족 코드를 입력하여 참여하세요.</p>
       </div>
     </div>
   </main>
 
-  <!-- ===== 구성원 추가 모달 ===== -->
-  <div id="addMemberModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4 sm:p-6">
+  <div id="createGroupModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
       <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
-        <h2 class="text-lg font-bold text-slate-900">구성원 추가</h2>
-        <button id="closeModalBtn" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-md transition-colors" aria-label="Close">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-        </button>
+        <h2 class="text-lg font-bold text-slate-900">새 가족 그룹 추가</h2>
+        <button class="close-modal text-slate-400 hover:text-slate-600 p-1.5 rounded-md transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
       </div>
-      <div class="p-6 space-y-5 overflow-y-auto">
+      <div class="p-6 space-y-5">
         <div class="space-y-1.5">
-          <label class="block text-sm font-medium text-slate-700">이름 <span class="text-red-500">*</span></label>
-          <input type="text" placeholder="이름을 입력하세요" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow bg-white placeholder:text-slate-400 text-slate-900" />
+          <label class="block text-sm font-medium text-slate-700">그룹 이름 <span class="text-red-500">*</span></label>
+          <input type="text" id="newGroupName" placeholder="예: 우리집 스마트홈" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow" />
         </div>
         <div class="space-y-1.5">
-          <label class="block text-sm font-medium text-slate-700">전화번호 <span class="text-red-500">*</span></label>
-          <input type="tel" placeholder="010-0000-0000" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow bg-white placeholder:text-slate-400 text-slate-900" />
+          <label class="block text-sm font-medium text-slate-700">가족 코드 생성 <span class="text-red-500">*</span></label>
+          <input type="text" id="newGroupCode" placeholder="예: FAM-2024-0001" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow font-mono" />
         </div>
         <div class="space-y-1.5">
-          <label class="block text-sm font-medium text-slate-700">이메일</label>
-          <input type="email" placeholder="email@example.com" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow bg-white placeholder:text-slate-400 text-slate-900" />
-          <p class="text-xs text-slate-500 mt-1">이메일로 소지품 누락 알림이 발송됩니다.</p>
-        </div>
-        <div class="space-y-1.5">
-          <label class="block text-sm font-medium text-slate-700">역할 <span class="text-red-500">*</span></label>
-          <div class="relative">
-            <select class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow bg-white text-slate-900 appearance-none pr-10">
-              <option value="member">Member (일반 구성원)</option>
-              <option value="owner">Owner (관리자)</option>
-            </select>
-            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400"><path d="m6 9 6 6 6-6"/></svg>
-            </div>
-          </div>
+          <label class="block text-sm font-medium text-slate-700">역할</label>
+          <p class="text-sm font-medium text-amber-700 bg-amber-50 px-3 py-2.5 rounded-lg border border-amber-200">Owner (관리자 - 고정)</p>
         </div>
         <div class="pt-2 flex gap-3">
-          <button type="button" id="cancelModalBtn" class="flex-1 px-4 py-2.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">취소</button>
-          <button type="submit" class="flex-1 px-4 py-2.5 bg-[#034EA2] rounded-lg text-sm font-medium text-white hover:bg-[#023d82] shadow-sm transition-colors">추가</button>
+          <button type="button" class="close-modal flex-1 px-4 py-2.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">취소</button>
+          <button id="submitCreateBtn" class="flex-1 px-4 py-2.5 bg-[#034EA2] rounded-lg text-sm font-medium text-white hover:bg-[#023d82] shadow-sm transition-colors">그룹 생성</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="joinGroupModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
+        <h2 class="text-lg font-bold text-slate-900">가족 그룹 참여</h2>
+        <button class="close-modal text-slate-400 hover:text-slate-600 p-1.5 rounded-md transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <div class="p-6 space-y-5">
+        <div class="space-y-1.5">
+          <label class="block text-sm font-medium text-slate-700">가족 코드 입력 <span class="text-red-500">*</span></label>
+          <input type="text" id="joinGroupCode" placeholder="FAM-0000-0000" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow font-mono" />
+        </div>
+        <div class="p-3 bg-amber-50 rounded-lg border border-amber-100 text-center">
+            <p class="text-[11px] text-amber-700 font-bold">Owner(관리자)에게 권한을 받으세요.</p>
+        </div>
+        <div class="pt-2 flex gap-3">
+          <button type="button" class="close-modal flex-1 px-4 py-2.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">취소</button>
+          <button id="submitJoinBtn" class="flex-1 px-4 py-2.5 bg-[#034EA2] rounded-lg text-sm font-medium text-white hover:bg-[#023d82] shadow-sm transition-colors">그룹 참여</button>
         </div>
       </div>
     </div>
@@ -274,18 +170,152 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const modal = document.getElementById('addMemberModal');
-      const openBtn = document.getElementById('openModalBtn');
-      const closeBtn = document.getElementById('closeModalBtn');
-      const cancelBtn = document.getElementById('cancelModalBtn');
+      const savedName = localStorage.getItem('userName') || '아빠';
+      const savedEmail = localStorage.getItem('userEmail') || 'dad@smartscan-hub.com';
+      const savedPhone = localStorage.getItem('userPhone') || '010-0000-0000';
+      
+      document.getElementById('userName').textContent = savedName;
+      document.getElementById('userEmail').textContent = savedEmail;
+      document.getElementById('userAvatar').textContent = savedName.charAt(0);
 
-      const openModal = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); };
-      const closeModal = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
+      // --- 그룹 데이터 관리 ---
+      // 초기 샘플 데이터
+      let groups = [
+        { 
+          name: "우리집 스마트홈", 
+          code: "FAM-2024-0001", 
+          owner: "김아빠", 
+          members: [
+            {name: "김아빠", email: "dad@test.com", phone: "010-1111-2222", role: 'Owner', items: ['지갑', '차키', '스마트폰']},
+            {name: "이엄마", email: "mom@test.com", phone: "010-3333-4444", role: 'Member', items: ['카드지갑', '차키']},
+            {name: "김자녀", email: "kid@test.com", phone: "010-5555-6666", role: 'Member', items: ['학생증', '에어팟']}
+          ] 
+        }
+      ]; 
 
-      openBtn.addEventListener('click', openModal);
-      closeBtn.addEventListener('click', closeModal);
-      cancelBtn.addEventListener('click', closeModal);
-      modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+      const groupListView = document.getElementById('groupListView');
+      const memberDetailView = document.getElementById('memberDetailView');
+      const emptyView = document.getElementById('emptyView');
+      const createModal = document.getElementById('createGroupModal');
+      const joinModal = document.getElementById('joinGroupModal');
+      const headerPath = document.getElementById('headerPath');
+      const backBtn = document.getElementById('backToListBtn');
+
+      // --- 모달 제어 ---
+      document.getElementById('createGroupBtn').addEventListener('click', () => { createModal.classList.remove('hidden'); createModal.classList.add('flex'); });
+      document.getElementById('openJoinModalBtn').addEventListener('click', () => { joinModal.classList.remove('hidden'); joinModal.classList.add('flex'); });
+      document.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', () => {
+          createModal.classList.add('hidden'); joinModal.classList.add('hidden');
+          createModal.classList.remove('flex'); joinModal.classList.remove('flex');
+        });
+      });
+
+      // --- 그룹 추가 실행 ---
+      document.getElementById('submitCreateBtn').addEventListener('click', () => {
+        const name = document.getElementById('newGroupName').value.trim();
+        const code = document.getElementById('newGroupCode').value.trim();
+        if(!name || !code) return alert("정보를 입력하세요.");
+
+        // 같은 코드가 있는지 확인
+        const existingGroup = groups.find(g => g.code === code);
+        if(existingGroup) {
+          alert("이미 존재하는 가족 코드입니다. 참여하기를 이용해주세요.");
+          return;
+        }
+
+        groups.push({ name: name, code: code, owner: savedName, members: [{name: savedName, email: savedEmail, phone: savedPhone, role: 'Owner', items: ['등록된 물품 없음']}] });
+        renderGroupList();
+        document.querySelector('#createGroupModal .close-modal').click();
+      });
+
+      // --- 그룹 참여 실행 ---
+      document.getElementById('submitJoinBtn').addEventListener('click', () => {
+        const code = document.getElementById('joinGroupCode').value.trim();
+        const group = groups.find(g => g.code === code);
+
+        if(group) {
+          // 이미 멤버인지 확인
+          if(group.members.some(m => m.email === savedEmail)) {
+            alert("이미 이 그룹의 멤버입니다.");
+          } else {
+            group.members.push({name: savedName, email: savedEmail, phone: savedPhone, role: 'Member', items: ['등록된 물품 없음']});
+            alert(`'${group.name}' 그룹에 합류했습니다!`);
+          }
+          renderGroupList();
+          document.querySelector('#joinGroupModal .close-modal').click();
+        } else {
+          alert("해당 코드를 가진 그룹이 없습니다.");
+        }
+      });
+
+      // --- 화면 렌더링 함수들 ---
+      function renderGroupList() {
+        if(groups.length === 0) {
+          emptyView.classList.remove('hidden'); groupListView.classList.add('hidden');
+          return;
+        }
+        emptyView.classList.add('hidden');
+        groupListView.classList.remove('hidden');
+        memberDetailView.classList.add('hidden');
+        backBtn.classList.add('hidden');
+        headerPath.textContent = "가족 그룹 목록";
+
+        groupListView.innerHTML = groups.map((group, index) => `
+          <div onclick="renderMemberDetail(${index})" class="group bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:border-brand hover:shadow-md cursor-pointer transition-all">
+            <div class="flex justify-between items-start mb-4">
+              <div class="w-12 h-12 bg-brand/5 rounded-xl flex items-center justify-center text-brand">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              </div>
+              <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-100 font-mono">${group.code}</span>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">${group.name}</h3>
+            <p class="text-sm text-slate-500 mb-4">관리자: ${group.owner}</p>
+            <div class="flex items-center justify-between border-t border-slate-50 pt-4">
+              <span class="text-xs font-medium text-slate-400">구성원 ${group.members.length}명</span>
+              <span class="text-xs font-bold text-brand flex items-center gap-1">입장하기 →</span>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      window.renderMemberDetail = function(index) {
+        const group = groups[index];
+        groupListView.classList.add('hidden');
+        memberDetailView.classList.remove('hidden');
+        backBtn.classList.remove('hidden');
+        headerPath.textContent = `가족 그룹 > ${group.name}`;
+
+        memberDetailView.innerHTML = group.members.map(member => `
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-slate-50">
+              <div class="flex items-center gap-4 mb-4">
+                <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">${member.name.charAt(0)}</div>
+                <div>
+                  <h3 class="font-bold text-slate-900">${member.name}</h3>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${member.role === 'Owner' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}">${member.role}</span>
+                </div>
+              </div>
+              <div class="space-y-1 text-xs text-slate-500">
+                <p class="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>${member.email}</p>
+              </div>
+            </div>
+            <div class="p-4 bg-slate-50/50">
+              <h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">소지품 상태</h4>
+              <div class="flex flex-wrap gap-2">
+                ${member.items.map(item => `
+                  <span class="bg-white border border-slate-200 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 shadow-sm flex items-center gap-1">
+                    <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div> ${item}
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `).join('');
+      };
+
+      backBtn.addEventListener('click', renderGroupList);
+      renderGroupList();
     });
   </script>
 </body>
