@@ -58,12 +58,14 @@ def handle_chatbot(body: dict) -> dict:
             {"label": "🔗 계정 연동하기", "action": "webLink", "webLinkUrl": link_url}
         ])
 
-    member_id = link['member_id']
+    # A-full: member_id 기반 DB 직접 접근 대신 kakao_user_id 기반 HTTP API 호출로 통일.
+    # member_id는 (호환성 목적으로) link dict에 남아 있지만 이제는 사용하지 않는다.
+    _ = link.get('member_id')
 
     if '목록' in utterance or '리스트' in utterance:
-        return _handle_list(member_id)
+        return _handle_list(kakao_user_id)
     elif '해제' in utterance:
-        return _handle_disconnect(kakao_user_id, member_id)
+        return _handle_disconnect(kakao_user_id)
     elif '등록' in utterance:
         return make_res(True, (
             "기기 등록 방법:\n\n"
@@ -74,9 +76,9 @@ def handle_chatbot(body: dict) -> dict:
             "🌐 https://smartscan-hub.com"
         ), True, quick_replies=MAIN_QUICK_REPLIES)
     elif '추가' in utterance:
-        return _handle_add(utterance, member_id)
+        return _handle_add(utterance, kakao_user_id)
     elif '삭제' in utterance or '제거' in utterance:
-        return _handle_delete(utterance, member_id)
+        return _handle_delete(utterance, kakao_user_id)
     else:
         return make_res(True, (
             "명령어를 이해하지 못했습니다.\n\n"
@@ -88,8 +90,8 @@ def handle_chatbot(body: dict) -> dict:
         ), True, quick_replies=MAIN_QUICK_REPLIES)
 
 
-def _handle_list(member_id: int) -> dict:
-    items = get_active_items(member_id)
+def _handle_list(kakao_user_id: str) -> dict:
+    items = get_active_items(kakao_user_id)
     if not items:
         return make_res(True, "등록된 소지품이 없습니다.\n'[물건명] 추가'로 소지품을 등록해 보세요.", True,
                         quick_replies=MAIN_QUICK_REPLIES)
@@ -102,7 +104,7 @@ def _handle_list(member_id: int) -> dict:
 MAX_ITEM_NAME_LEN = 30
 
 
-def _handle_add(utterance: str, member_id: int) -> dict:
+def _handle_add(utterance: str, kakao_user_id: str) -> dict:
     # "지갑 추가", "지갑추가", "추가 지갑" 등 처리
     # 이모지/접두사 제거 후 처리: "➕ 물품 추가" → "물품 추가"
     clean = re.sub(r'^[^\w가-힣]+', '', utterance).strip()
@@ -122,17 +124,17 @@ def _handle_add(utterance: str, member_id: int) -> dict:
                         quick_replies=MAIN_QUICK_REPLIES)
 
     # 중복 확인
-    existing = get_active_items(member_id)
-    if any(item['name'] == name for item in existing):
+    existing = get_active_items(kakao_user_id)
+    if any(item.get('name') == name for item in existing):
         return make_res(False, f"'{name}'은(는) 이미 등록되어 있습니다.", True,
                         quick_replies=MAIN_QUICK_REPLIES)
 
-    add_item(name, member_id)
+    add_item(name, kakao_user_id)
     return make_res(True, f"✅ '{name}'이(가) 추가되었습니다.\n※ RFID 태그 연결은 웹 사이트에서 진행해 주세요.", True,
                     quick_replies=MAIN_QUICK_REPLIES)
 
 
-def _handle_delete(utterance: str, member_id: int) -> dict:
+def _handle_delete(utterance: str, kakao_user_id: str) -> dict:
     # "지갑 삭제", "지갑 제거"
     # 이모지/접두사 제거 후 처리: "❌ 물품 삭제" → "물품 삭제"
     clean = re.sub(r'^[^\w가-힣]+', '', utterance).strip()
@@ -147,7 +149,7 @@ def _handle_delete(utterance: str, member_id: int) -> dict:
         return make_res(False, "물건 이름을 입력해 주세요.\n예) 지갑 삭제", True,
                         quick_replies=MAIN_QUICK_REPLIES)
 
-    count = deactivate_item(name, member_id)
+    count = deactivate_item(name, kakao_user_id)
     if count == 0:
         return make_res(False, f"'{name}'을(를) 찾을 수 없습니다.\n'물건 목록'으로 확인해 주세요.", True,
                         quick_replies=MAIN_QUICK_REPLIES)
@@ -156,7 +158,8 @@ def _handle_delete(utterance: str, member_id: int) -> dict:
                     quick_replies=MAIN_QUICK_REPLIES)
 
 
-def _handle_disconnect(kakao_user_id: str, member_id: int) -> dict:
-    delete_all_items(member_id)
+def _handle_disconnect(kakao_user_id: str) -> dict:
+    # 먼저 아이템 일괄 soft-delete (HTTP 백엔드). 그 후 users.kakao_user_id 를 pending_으로 리셋.
+    delete_all_items(kakao_user_id)
     delete_user_device(kakao_user_id)
     return make_res(True, "기기 연결이 해제되었습니다.\n소지품 정보도 함께 삭제되었습니다.", True)

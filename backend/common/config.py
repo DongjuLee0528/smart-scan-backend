@@ -100,6 +100,13 @@ class Settings(BaseModel):
         os.getenv("KAKAO_LINK_TOKEN_EXPIRE_MINUTES", "5")
     )
 
+    # Chatbot 서비스 간 공유 시크릿. 챗봇 Lambda가 /api/chatbot/* 엔드포인트 호출 시
+    # X-Chatbot-Key 헤더로 이 값을 전달해야 한다. JWT_SECRET_KEY / KAKAO_LINK_JWT_SECRET 과 격리.
+    CHATBOT_SHARED_KEY: str = os.getenv(
+        "CHATBOT_SHARED_KEY",
+        "smart-scan-dev-chatbot-key"
+    )
+
     # CORS
     ALLOWED_ORIGIN: str = os.getenv("ALLOWED_ORIGIN", "http://localhost:3000")
 
@@ -115,6 +122,8 @@ class Settings(BaseModel):
             raise ValueError("JWT_SECRET_KEY must be changed from default in production environment")
         if self.ENV == "production" and self.KAKAO_LINK_JWT_SECRET == "smart-scan-dev-kakao-link-secret":
             raise ValueError("KAKAO_LINK_JWT_SECRET must be changed from default in production environment")
+        if self.ENV == "production" and self.CHATBOT_SHARED_KEY == "smart-scan-dev-chatbot-key":
+            raise ValueError("CHATBOT_SHARED_KEY must be changed from default in production environment")
         return self
 
 

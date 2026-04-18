@@ -157,6 +157,32 @@
       openModal(item);
     }
 
+    async function bindItem(item) {
+      try {
+        const res = await smartscanApi.getAvailableLabels();
+        const available = (res.data && res.data.available_labels) || [];
+        if (available.length === 0) {
+          smartscanLayout.toast('사용 가능한 라벨이 없습니다.', 'error');
+          return;
+        }
+        const choice = prompt(
+          `'${item.name}'에 연결할 라벨 번호를 입력하세요.\n사용 가능한 라벨: ${available.sort((a,b)=>a-b).map(n=>'#'+n).join(', ')}`,
+          String(available[0])
+        );
+        if (choice === null) return;
+        const label_id = parseInt(choice, 10);
+        if (!label_id || !available.includes(label_id)) {
+          smartscanLayout.toast('유효한 라벨 번호가 아닙니다.', 'error');
+          return;
+        }
+        await smartscanApi.bindItemLabel(item.id, label_id);
+        smartscanLayout.toast('라벨이 연결되었습니다.', 'success');
+        load();
+      } catch (err) {
+        smartscanLayout.toast(err.message || '라벨 연결 실패', 'error');
+      }
+    }
+
     async function removeItem(id, name) {
       if (!confirm(`'${name}'을(를) 삭제하시겠습니까?`)) return;
       try {
@@ -177,23 +203,36 @@
           tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400">등록된 소지품이 없습니다. 우측 상단에서 추가하세요.</td></tr>`;
           return;
         }
-        tbody.innerHTML = items.map((it) => `
+        tbody.innerHTML = items.map((it) => {
+          const isPending = !!it.is_pending;
+          const labelCell = isPending
+            ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-amber-50 text-amber-700 border border-amber-200">라벨 연결 필요</span>`
+            : `<span class="text-slate-600">#${it.label_id}</span>`;
+          const actions = isPending
+            ? `<button data-action="bind" class="px-2.5 py-1 text-xs font-semibold text-white bg-[#034EA2] rounded-md hover:bg-[#023d82] mr-1">라벨 연결</button>
+               <button data-action="delete" class="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50">삭제</button>`
+            : `<button data-action="edit" class="px-2.5 py-1 text-xs font-medium text-slate-600 border border-slate-200 rounded-md hover:bg-slate-50 mr-1">수정</button>
+               <button data-action="delete" class="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50">삭제</button>`;
+          return `
           <tr class="hover:bg-slate-50" data-id="${it.id}">
-            <td class="px-6 py-4 font-semibold text-slate-800">${esc(it.name)}</td>
-            <td class="px-6 py-4 text-slate-600">#${it.label_id}</td>
-            <td class="px-6 py-4 text-slate-500">${fmt(it.created_at)}</td>
-            <td class="px-6 py-4 text-right">
-              <button data-action="edit" class="px-2.5 py-1 text-xs font-medium text-slate-600 border border-slate-200 rounded-md hover:bg-slate-50 mr-1">수정</button>
-              <button data-action="delete" class="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50">삭제</button>
+            <td class="px-6 py-4 font-semibold text-slate-800">
+              ${esc(it.name)}
+              ${isPending ? '<span class="ml-2 text-xs font-medium text-amber-600">· 챗봇 추가</span>' : ''}
             </td>
-          </tr>`).join('');
+            <td class="px-6 py-4">${labelCell}</td>
+            <td class="px-6 py-4 text-slate-500">${fmt(it.created_at)}</td>
+            <td class="px-6 py-4 text-right">${actions}</td>
+          </tr>`;
+        }).join('');
 
         tbody.querySelectorAll('button[data-action]').forEach((btn) => {
           btn.addEventListener('click', () => {
             const row = btn.closest('tr');
             const id = row.dataset.id;
             const item = items.find((x) => String(x.id) === String(id));
-            if (btn.dataset.action === 'edit') editItem(item);
+            const action = btn.dataset.action;
+            if (action === 'edit') editItem(item);
+            else if (action === 'bind') bindItem(item);
             else removeItem(id, item.name);
           });
         });

@@ -22,10 +22,12 @@ class Item(Base):
 
     # 연결 정보
     user_device_id = Column(Integer, ForeignKey("user_devices.id"), nullable=False)  # 소유자의 디바이스 연결
-    tag_uid = Column(String(255), ForeignKey("master_tags.tag_uid"), nullable=False, index=True)  # 연결된 RFID 태그 UID
+    # 챗봇에서 이름만 추가한 경우 tag_uid는 NULL (is_pending=True). 웹에서 라벨을 연결해야 태그가 바인딩됨.
+    tag_uid = Column(String(255), ForeignKey("master_tags.tag_uid"), nullable=True, index=True)
 
     # 상태 정보
     is_active = Column(Boolean, default=True, nullable=False)  # 활성 상태 (비활성시 스캔 제외)
+    is_pending = Column(Boolean, default=False, nullable=False)  # 챗봇으로 이름만 추가되어 라벨(tag_uid) 연결 대기 중인 상태
 
     # 시스템 정보
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)  # 아이템 등록 일시

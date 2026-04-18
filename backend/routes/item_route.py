@@ -18,7 +18,7 @@ from backend.common.dependencies import get_current_user
 from backend.common.db import get_db
 from backend.common.response import success_response
 from backend.common.route_decorators import handle_service_errors
-from backend.schemas.item_schema import ItemAddRequest, ItemUpdateRequest
+from backend.schemas.item_schema import ItemAddRequest, ItemBindRequest, ItemUpdateRequest
 from backend.services.item_service import ItemService
 
 
@@ -48,6 +48,24 @@ def add_item(
         user_id=current_user.id,
         name=request.name,
         label_id=request.label_id
+    )
+    return success_response(data=result.model_dump())
+
+
+@router.patch("/{item_id}/bind", response_model=dict)
+@handle_service_errors
+def bind_item(
+    item_id: int,
+    request: ItemBindRequest,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """챗봇에서 이름만 추가된 pending 아이템에 라벨(마스터 태그) 연결."""
+    item_service = ItemService(db)
+    result = item_service.bind_item(
+        item_id=item_id,
+        user_id=current_user.id,
+        label_id=request.label_id,
     )
     return success_response(data=result.model_dump())
 

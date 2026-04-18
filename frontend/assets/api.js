@@ -239,6 +239,9 @@
   const updateItem = (id, body) =>
     apiFetch(`/api/items/${id}`, { method: "PATCH", auth: true, body });
   const deleteItem = (id) => apiFetch(`/api/items/${id}`, { method: "DELETE", auth: true });
+  // A-full: pending 아이템(챗봇 이름만 추가)에 라벨 연결 → 활성화
+  const bindItemLabel = (id, label_id) =>
+    apiFetch(`/api/items/${id}/bind`, { method: "PATCH", auth: true, body: { label_id } });
 
   // ---------- Labels ----------
   const getAvailableLabels = () => apiFetch("/api/labels/available", { auth: true });
@@ -296,6 +299,7 @@
     addItem,
     updateItem,
     deleteItem,
+    bindItemLabel,
     // labels
     getAvailableLabels,
     // tags
