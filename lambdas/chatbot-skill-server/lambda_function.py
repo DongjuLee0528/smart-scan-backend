@@ -39,6 +39,7 @@ def lambda_handler(event, context):
     method = event.get('httpMethod') or http_info.get('method')
     is_web = 'httpMethod' in event or 'http' in request_context
 
+
     body = {}
     is_kakao = False
     try:
