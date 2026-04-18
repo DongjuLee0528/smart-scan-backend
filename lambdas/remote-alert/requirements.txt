@@ -1,2 +1,5 @@
-supabase
-resend
+# Smart Scan 원격 알림 Lambda 의존성
+# 긴급 상황 원격 알림 Lambda 함수의 Python 라이브러리 목록
+
+supabase          # Supabase 클라이언트 라이브러리 (데이터베이스 연결용)
+resend            # 이메일 발송 서비스 클라이언트 (긴급 알림 발송용)
