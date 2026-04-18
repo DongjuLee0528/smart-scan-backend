@@ -1,2 +1,5 @@
-boto3
-supabase
+# Smart Scan 인바운드 스캐너 Lambda 의존성
+# RFID 태그 스캔 데이터 처리 Lambda 함수의 Python 라이브러리 목록
+
+boto3             # AWS SDK for Python (SQS, Lambda 등 AWS 서비스 연동)
+supabase          # Supabase 클라이언트 라이브러리 (데이터베이스 연결용)
