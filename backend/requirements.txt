@@ -8,3 +8,4 @@ psycopg2-binary==2.9.9
 
 slowapi>=0.1.9
 PyJWT>=2.8.0
+mangum>=0.17.0
