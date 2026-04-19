@@ -83,7 +83,7 @@ smart-scan-backend/
 | `families` | Family group with owner |
 | `family_members` | Members belonging to a family |
 | `devices` | UHF RFID reader devices (identified by serial number) |
-| `items` | Belongings registered per family member |
+| `items` | Belongings registered per family member (`is_pending` flag; `tag_uid` nullable while pending) |
 | `tags` | RFID tag registry (tag_uid → item mapping) |
 | `scan_logs` | RFID scan event records (FOUND / LOST) |
 | `notifications` | Email notification history |
@@ -102,7 +102,7 @@ Invoked directly by `inbound-scanner`. Sends missing item alert emails via Resen
 Triggered by API Gateway POST `/remote-alert`. Allows web users to manually send an alert to a family member. Requires Supabase Bearer JWT in the `Authorization` header.
 
 ### chatbot-skill-server
-Triggered by API Gateway POST `/chatbot`. Handles Kakao chatbot utterances for device registration, item management, and device unlinking.
+Triggered by API Gateway POST `/chatbot` (REST API v1 `f7o6rm5r6a`, stage `prod`). Parses Kakao i OpenBuilder utterances and delegates all item/device state mutations to the FastAPI backend via `/api/chatbot/*` HTTP calls, authenticated with the `X-Chatbot-Key` shared secret. No longer holds Supabase credentials for item operations.
 
 ---
 
@@ -115,12 +115,17 @@ Base URL: configured via Render environment variables.
 | auth | `/api/auth` | Sign up, login, token refresh |
 | devices | `/api/devices` | Device registration and lookup |
 | family_members | `/api/families/members` | Family member management |
-| items | `/api/items` | Belongings CRUD |
+| items | `/api/items` | Belongings CRUD (+ `PATCH /{id}/bind` for pending→active label binding) |
 | labels | `/api/labels` | RFID label management |
 | tags | `/api/tags` | Tag-item mapping |
 | scan_logs | `/api/scan-logs` | Scan history |
 | notifications | `/api/notifications` | Notification history |
 | monitoring | `/api/monitoring` | Device monitoring |
+| chatbot | `/api/chatbot` | Service-to-service endpoints for the Kakao chatbot Lambda (guarded by `X-Chatbot-Key`) |
+
+### Pending items (A-full pattern, 2026-04-18)
+
+The Kakao chatbot lets users register belongings by **name only** (`[물건명] 추가`). Such items are created as **pending** (`items.is_pending = TRUE`, `tag_uid = NULL`) and the user later completes them on the web via `PATCH /api/items/{id}/bind` by selecting an available RFID label. A CHECK constraint guarantees that every non-pending row has a `tag_uid`.
 
 ---
 
@@ -217,17 +222,21 @@ python -c "from lambda_function import lambda_handler; print(lambda_handler({}, 
 |---|---|
 | `DATABASE_URL` | Supabase PostgreSQL connection string |
 | `JWT_SECRET_KEY` | Supabase JWT secret |
+| `KAKAO_LINK_JWT_SECRET` | HS256 secret for short-lived Kakao↔web magic-link tokens |
+| `CHATBOT_SHARED_KEY` | Shared secret validated on `/api/chatbot/*` (must match the chatbot Lambda) |
 | `ALLOWED_ORIGIN` | Frontend origin for CORS |
-| `ENV` | `development` enables `/docs` |
+| `ENV` | `development` enables `/docs`; `production` enforces non-default secrets |
 
 Note: For local development, copy `.env.example` to `.env` and update with your actual Supabase credentials instead of the MySQL placeholders.
 
 ### Lambda (AWS Console / Terraform)
 | Variable | Description |
 |---|---|
-| `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_SERVICE_KEY` | Supabase service role key |
+| `SUPABASE_URL` | Supabase project URL (inbound / outbound / remote) |
+| `SUPABASE_SERVICE_KEY` | Supabase service role key (inbound / outbound / remote) |
 | `RESEND_API_KEY` | Resend API key (outbound / remote only) |
+| `SMARTSCAN_API_BASE` | FastAPI base URL (chatbot only, default `https://smartscan-hub.com`) |
+| `CHATBOT_SHARED_KEY` | Same shared secret as FastAPI (chatbot only) |
 
 ---
 
