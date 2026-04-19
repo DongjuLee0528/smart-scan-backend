@@ -80,25 +80,48 @@
     });
   }
 
-  /**
-   * 저수준 fetch 래퍼. 서버 응답 스키마 { success, message, data } 를 언패킹한다.
-   * 실패 시 Error throw (err.status, err.body 속성 포함).
-   */
-  async function apiFetch(path, options = {}) {
+  // 동시에 여러 요청이 401 을 받아도 refresh 는 한 번만 돌도록 공유 Promise 로 직렬화.
+  let _refreshInFlight = null;
+
+  async function _performRefresh() {
+    const refresh = getRefreshToken();
+    if (!refresh) throw new Error("no refresh token");
+    const res = await fetch(`${API_BASE}/api/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refresh }),
+    });
+    if (!res.ok) {
+      const err = new Error("refresh failed");
+      err.status = res.status;
+      throw err;
+    }
+    const payload = await res.json();
+    if (!payload || !payload.data) {
+      throw new Error("refresh response missing data");
+    }
+    setTokens(payload.data);
+    return payload.data.access_token;
+  }
+
+  function _onAuthFailure() {
+    clearTokens();
+    if (typeof window !== "undefined" && window.location) {
+      // 이미 로그인/회원가입 페이지에 있으면 루프 방지.
+      const p = window.location.pathname || "";
+      const onAuthPage = /\/(index\.html|signup\.html|kakao-link\.html)?$/i.test(p);
+      if (!onAuthPage) {
+        window.location.href = "/index.html";
+      }
+    }
+  }
+
+  async function _rawFetch(path, options, authToken) {
     const headers = Object.assign(
       { "Content-Type": "application/json" },
       options.headers || {}
     );
-
-    if (options.auth) {
-      const token = getAccessToken();
-      if (!token) {
-        const err = new Error("Not authenticated");
-        err.status = 401;
-        throw err;
-      }
-      headers.Authorization = `Bearer ${token}`;
-    }
+    if (authToken) headers.Authorization = `Bearer ${authToken}`;
 
     let res;
     try {
@@ -120,6 +143,61 @@
         payload = JSON.parse(text);
       } catch {
         payload = { message: text };
+      }
+    }
+    return { res, payload };
+  }
+
+  /**
+   * 저수준 fetch 래퍼. 서버 응답 스키마 { success, message, data } 를 언패킹한다.
+   * 실패 시 Error throw (err.status, err.body 속성 포함).
+   *
+   * auth 요청이 401 을 받으면 refresh token 으로 access token 을 자동 재발급한 뒤
+   * 원요청을 1 회 재시도한다. refresh 도 실패하면 로컬 토큰을 비우고 로그인 페이지로 이동.
+   */
+  async function apiFetch(path, options = {}) {
+    // refresh 엔드포인트 자체가 401 받을 때 재귀 호출하지 않도록 플래그 분기.
+    const isRefreshCall = path === "/api/auth/refresh";
+
+    let token = null;
+    if (options.auth) {
+      token = getAccessToken();
+      if (!token) {
+        const err = new Error("Not authenticated");
+        err.status = 401;
+        throw err;
+      }
+    }
+
+    let { res, payload } = await _rawFetch(path, options, token);
+
+    // 401 이면서 auth 요청이고 refresh 자체가 아닌 경우 → 토큰 갱신 후 1회 재시도.
+    if (
+      res.status === 401 &&
+      options.auth &&
+      !isRefreshCall &&
+      !options._retried
+    ) {
+      try {
+        if (!_refreshInFlight) {
+          _refreshInFlight = _performRefresh().finally(() => {
+            _refreshInFlight = null;
+          });
+        }
+        const newToken = await _refreshInFlight;
+        const retry = await _rawFetch(
+          path,
+          Object.assign({}, options, { _retried: true }),
+          newToken
+        );
+        res = retry.res;
+        payload = retry.payload;
+      } catch (refreshErr) {
+        _onAuthFailure();
+        const err = new Error("세션이 만료되었습니다. 다시 로그인해 주세요.");
+        err.status = 401;
+        err.cause = refreshErr;
+        throw err;
       }
     }
 
