@@ -93,7 +93,7 @@ class TestHandleChatbot(unittest.TestCase):
         text = _kakao_text(resp)
         self.assertIn("지갑", text)
         self.assertIn("열쇠", text)
-        _mock_items.assert_called_once_with(10)
+        _mock_items.assert_called_once_with("kakao-uid-001")
 
     # 5. '목록' 발화 — items 없을 때 → 등록 없음 메시지
     @patch("services.chatbot_service.get_active_items", return_value=[])
@@ -120,7 +120,7 @@ class TestHandleChatbot(unittest.TestCase):
         text = _kakao_text(resp)
         self.assertIn("지갑", text)
         self.assertIn("추가", text)
-        mock_add.assert_called_once_with("지갑", 10)
+        mock_add.assert_called_once_with("지갑", "kakao-uid-001")
 
     # 7. 이미 존재하는 물건 추가 → 중복 메시지
     @patch("services.chatbot_service.add_item")
@@ -149,7 +149,7 @@ class TestHandleChatbot(unittest.TestCase):
         text = _kakao_text(resp)
         self.assertIn("지갑", text)
         self.assertIn("삭제", text)
-        mock_deactivate.assert_called_once_with("지갑", 10)
+        mock_deactivate.assert_called_once_with("지갑", "kakao-uid-001")
 
     # 9. deactivate_item 0 반환 → 찾을 수 없음 메시지
     @patch("services.chatbot_service.deactivate_item", return_value=0)
@@ -176,7 +176,7 @@ class TestHandleChatbot(unittest.TestCase):
 
         text = _kakao_text(resp)
         self.assertIn("해제", text)
-        mock_delete_items.assert_called_once_with(10)
+        mock_delete_items.assert_called_once_with("kakao-uid-001")
         mock_delete_device.assert_called_once_with("kakao-uid-001")
 
     # 11. 알 수 없는 발화 → 명령어 안내 메시지
