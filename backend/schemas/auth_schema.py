@@ -172,3 +172,23 @@ class AuthTokenResponse(BaseModel):
 
 class LogoutResponse(BaseModel):
     logged_out: bool
+
+
+class LinkKakaoRequest(BaseModel):
+    token: str
+
+    @field_validator("token")
+    @classmethod
+    def validate_token(cls, v: str) -> str:
+        value = v.strip()
+        if not value:
+            raise ValueError("token is required")
+        return value
+
+
+class LinkKakaoResponse(BaseModel):
+    user_id: int
+    kakao_user_id: str
+    linked: bool
+
+    model_config = ConfigDict(from_attributes=True)
