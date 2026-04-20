@@ -30,11 +30,9 @@
 </head>
 <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors">
 
-  <!-- NAV -->
   <nav class="sticky top-0 z-50 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 transition-colors">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
-        <!-- Logo -->
         <div class="flex items-center space-x-2">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -45,12 +43,9 @@
           </svg>
           <span class="font-bold text-xl tracking-tight text-gray-900 dark:text-white">SmartScan Hub</span>
         </div>
-        <!-- Right side -->
         <div class="flex items-center space-x-3">
-          <!-- Dark mode toggle -->
           <button id="themeToggle"
             class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-900">
-            <!-- Sun icon (shown in light mode) -->
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round" class="block dark:hidden text-gray-600">
@@ -60,16 +55,16 @@
               <path d="M2 12h2"/><path d="M20 12h2"/>
               <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
             </svg>
-            <!-- Moon icon (shown in dark mode) -->
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round" class="hidden dark:block text-gray-300">
               <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
             </svg>
           </button>
-          <a href="login.html"
+          
+          <a id="navLoginBtn" href="login.html"
             class="text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-primary dark:hover:text-primary transition-colors px-3 py-2">로그인</a>
-          <a href="signup.html"
+          <a id="navSignupBtn" href="signup.html"
             class="inline-flex items-center justify-center px-5 py-2.5 text-sm font-bold text-white bg-primary hover:bg-primary-dark rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-900">시작하기</a>
         </div>
       </div>
@@ -77,7 +72,6 @@
   </nav>
 
   <main>
-    <!-- HERO SECTION -->
     <section class="relative pt-20 pb-32 overflow-hidden">
       <div class="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent dark:from-primary/10 -z-10 rounded-b-[4rem] md:rounded-b-[8rem]"></div>
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -89,7 +83,7 @@
           UHF RFID 기반 노터치 소지품 체크 시스템.
         </p>
         <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
-          <a href="signup.html"
+          <a id="mainHeroBtn" href="signup.html"
             class="inline-flex items-center justify-center px-8 py-4 text-base md:text-lg font-bold text-white bg-primary hover:bg-primary-dark rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
             시작하기
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
@@ -100,16 +94,13 @@
           </a>
         </div>
 
-        <!-- Hero UI Card -->
         <div class="mt-16 md:mt-24 relative max-w-2xl mx-auto">
-          <!-- Decorative circle -->
           <div class="absolute -inset-4 md:-inset-8 rounded-full border-2 border-dashed border-primary/10 dark:border-primary/20 animate-[spin_20s_linear_infinite]"></div>
           <div class="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-10 md:p-14 border border-gray-100 dark:border-gray-700">
             <div class="flex justify-center items-end gap-8 md:gap-12">
-              <!-- 지갑 (OK) -->
               <div class="flex flex-col items-center gap-2">
                 <div class="relative">
-                  <div class="w-16 h-16 md:w-20 md:h-20 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center shadow-md border border-blue-100 dark:border-blue-800/50">
+                  <div class="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center shadow-md border border-blue-100 dark:border-blue-800/50">
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
                       fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                       stroke-linejoin="round" class="text-primary">
@@ -126,10 +117,9 @@
                 </div>
                 <span class="text-sm font-medium text-gray-600 dark:text-gray-400">지갑</span>
               </div>
-              <!-- 차키 (OK) -->
               <div class="flex flex-col items-center gap-2">
                 <div class="relative">
-                  <div class="w-16 h-16 md:w-20 md:h-20 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center shadow-md border border-blue-100 dark:border-blue-800/50">
+                  <div class="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center shadow-md border border-blue-100 dark:border-blue-800/50">
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
                       fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                       stroke-linejoin="round" class="text-primary">
@@ -145,7 +135,6 @@
                 </div>
                 <span class="text-sm font-medium text-gray-600 dark:text-gray-400">차키</span>
               </div>
-              <!-- 학생증 (누락) -->
               <div class="flex flex-col items-center gap-2">
                 <div class="relative">
                   <div class="w-16 h-16 md:w-20 md:h-20 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center shadow-md border border-red-200 dark:border-red-900/50 opacity-80">
@@ -171,11 +160,9 @@
       </div>
     </section>
 
-    <!-- FEATURES SECTION -->
     <section class="py-24 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
-          <!-- Feature 1 -->
           <div class="bg-gray-50 dark:bg-gray-800/40 rounded-3xl p-8 md:p-10 border border-gray-100 dark:border-gray-800 hover:shadow-xl transition-all duration-300">
             <div class="w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-8 shadow-sm border border-gray-100 dark:border-gray-700 text-primary">
               <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
@@ -191,7 +178,6 @@
               현관 통과만으로 소지품 자동 체크. 주머니나 가방 안에 있는 태그도 완벽하게 인식하여 따로 꺼낼 필요가 없습니다.
             </p>
           </div>
-          <!-- Feature 2 -->
           <div class="bg-gray-50 dark:bg-gray-800/40 rounded-3xl p-8 md:p-10 border border-gray-100 dark:border-gray-800 hover:shadow-xl transition-all duration-300">
             <div class="w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-8 shadow-sm border border-gray-100 dark:border-gray-700 text-primary">
               <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
@@ -206,7 +192,6 @@
               누락 물품 즉시 이메일 알림. 필수 소지품을 챙기지 않고 문 밖을 나서는 순간, 설정된 이메일로 경고 알림이 발송됩니다.
             </p>
           </div>
-          <!-- Feature 3 -->
           <div class="bg-gray-50 dark:bg-gray-800/40 rounded-3xl p-8 md:p-10 border border-gray-100 dark:border-gray-800 hover:shadow-xl transition-all duration-300">
             <div class="w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-8 shadow-sm border border-gray-100 dark:border-gray-700 text-primary">
               <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
@@ -214,8 +199,7 @@
                 stroke-linejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
                 <circle cx="9" cy="7" r="4"/>
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
               </svg>
             </div>
             <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">가족 관리</h3>
@@ -227,7 +211,6 @@
       </div>
     </section>
 
-    <!-- HOW IT WORKS SECTION -->
     <section class="py-24 bg-gray-50 dark:bg-gray-950">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-20">
@@ -235,12 +218,10 @@
           <h3 class="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white">단 4단계로 완벽한 소지품 체크</h3>
         </div>
         <div class="relative">
-          <!-- Connecting line (desktop) -->
           <div class="hidden md:block absolute top-[52px] left-12 right-12 h-[2px] bg-gray-200 dark:bg-gray-800" aria-hidden="true">
             <div class="absolute left-0 top-0 h-full bg-primary w-full origin-left" style="transform: scaleX(1)"></div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-6">
-            <!-- Step 1 -->
             <div class="relative text-center group">
               <div class="w-28 h-28 mx-auto bg-white dark:bg-gray-900 rounded-full flex items-center justify-center border-[6px] border-gray-50 dark:border-gray-950 shadow-lg relative z-10 transition-transform group-hover:-translate-y-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
@@ -258,7 +239,6 @@
                 <p class="text-gray-600 dark:text-gray-400 text-sm">관리할 소지품에 소형 태그를<br>부착합니다.</p>
               </div>
             </div>
-            <!-- Step 2 -->
             <div class="relative text-center group">
               <div class="w-28 h-28 mx-auto bg-white dark:bg-gray-900 rounded-full flex items-center justify-center border-[6px] border-gray-50 dark:border-gray-950 shadow-lg relative z-10 transition-transform group-hover:-translate-y-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
@@ -274,7 +254,6 @@
                 <p class="text-gray-600 dark:text-gray-400 text-sm">외출 시 평소처럼<br>현관을 나섭니다.</p>
               </div>
             </div>
-            <!-- Step 3 -->
             <div class="relative text-center group">
               <div class="w-28 h-28 mx-auto bg-white dark:bg-gray-900 rounded-full flex items-center justify-center border-[6px] border-gray-50 dark:border-gray-950 shadow-lg relative z-10 transition-transform group-hover:-translate-y-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
@@ -293,7 +272,6 @@
                 <p class="text-gray-600 dark:text-gray-400 text-sm">리더기가 부착된 모든<br>태그를 즉시 스캔합니다.</p>
               </div>
             </div>
-            <!-- Step 4 -->
             <div class="relative text-center group">
               <div class="w-28 h-28 mx-auto bg-white dark:bg-gray-900 rounded-full flex items-center justify-center border-[6px] border-gray-50 dark:border-gray-950 shadow-[0_0_0_2px_rgba(239,68,68,0.2)] relative z-10 transition-transform group-hover:-translate-y-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
@@ -313,9 +291,7 @@
       </div>
     </section>
 
-    <!-- CTA SECTION -->
     <section class="py-24 bg-primary dark:bg-[#022A5A] relative overflow-hidden">
-      <!-- Grid background pattern -->
       <div class="absolute inset-0 opacity-10">
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -329,7 +305,7 @@
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
         <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-6">지금 바로 소지품 걱정 없는 일상을 시작하세요</h2>
         <p class="text-primary-light dark:text-blue-200 mb-10 text-lg md:text-xl font-medium">단 1분의 회원가입으로 가족 모두의 평화를 지킬 수 있습니다.</p>
-        <a href="signup.html"
+        <a id="ctaStartBtn" href="signup.html"
           class="inline-flex items-center justify-center px-10 py-4 text-lg font-bold text-primary bg-white hover:bg-gray-50 rounded-xl shadow-xl transition-all transform hover:-translate-y-1 w-full sm:w-auto">
           무료로 시작하기
         </a>
@@ -337,7 +313,6 @@
     </section>
   </main>
 
-  <!-- FOOTER -->
   <footer class="bg-gray-900 text-gray-400 py-12 border-t border-gray-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex flex-col md:flex-row justify-between items-center md:items-start mb-8">
@@ -386,6 +361,48 @@
     const btn = document.getElementById('themeToggle');
     btn.addEventListener('click', () => {
       document.documentElement.classList.toggle('dark');
+    });
+
+    // 로그인 상태 확인 및 UI 변경
+    window.addEventListener('DOMContentLoaded', () => {
+      const email = localStorage.getItem('userEmail');
+      const loginBtn = document.getElementById('navLoginBtn');
+      const signupBtn = document.getElementById('navSignupBtn');
+      const mainHeroBtn = document.getElementById('mainHeroBtn');
+      const ctaStartBtn = document.getElementById('ctaStartBtn');
+
+      if (email) {
+        // 1. 네비게이션 로그인 버튼 -> 이메일로 변경
+        if (loginBtn) {
+          loginBtn.textContent = email;
+          loginBtn.href = "#"; 
+        }
+        
+        // 2. 네비게이션 시작하기 버튼 -> 로그아웃으로 변경
+        if (signupBtn) {
+          signupBtn.textContent = "로그아웃";
+          signupBtn.href = "#";
+          signupBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if(confirm("로그아웃 하시겠습니까?")) {
+                localStorage.removeItem('userEmail');
+                window.location.reload();
+            }
+          });
+        }
+
+        // 3. 메인 히어로 영역의 '시작하기' 버튼 -> 대시보드로 이동
+        if (mainHeroBtn) {
+          mainHeroBtn.textContent = "대시보드 가기";
+          mainHeroBtn.href = "dashboard.html"; // 새롭게 보내주신 dashboard 파일로 연결
+        }
+
+        // 4. 하단 CTA 영역의 '무료로 시작하기' 버튼 -> 대시보드로 이동
+        if (ctaStartBtn) {
+          ctaStartBtn.textContent = "대시보드 바로가기";
+          ctaStartBtn.href = "dashboard.html";
+        }
+      }
     });
   </script>
 </body>
