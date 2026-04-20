@@ -89,21 +89,40 @@
             </div>
           </div>
 
-          <!-- 이메일 -->
+          <!-- 이메일 + 인증 -->
           <div class="space-y-1.5">
             <label for="email" class="text-sm font-medium text-gray-700 dark:text-gray-300">이메일</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                     class="text-gray-400">
-                  <rect width="20" height="16" x="2" y="4" rx="2"></rect>
-                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
-                </svg>
+            <div class="flex gap-2">
+              <div class="relative flex-1">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                       fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                       class="text-gray-400">
+                    <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                  </svg>
+                </div>
+                <input id="email" type="email" placeholder="example@smartscan.com"
+                  class="block w-full pl-10 pr-8 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#034EA2] focus:border-transparent transition-all sm:text-sm" />
+                <span id="email-verified-check" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-green-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </span>
               </div>
-              <input id="email" type="email" placeholder="example@smartscan.com"
-                class="block w-full pl-10 pr-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#034EA2] focus:border-transparent transition-all sm:text-sm" />
+              <button id="send-code-btn" type="button"
+                class="shrink-0 px-3 py-2.5 text-xs font-semibold rounded-lg border border-[#034EA2] text-[#034EA2] hover:bg-[#034EA2] hover:text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap">
+                인증 코드 받기
+              </button>
             </div>
+            <!-- 인증 코드 입력 (코드 발송 후 표시) -->
+            <div id="verify-code-row" class="hidden gap-2 pt-1">
+              <input id="verify-code" type="text" inputmode="numeric" maxlength="6" placeholder="6자리 인증 코드"
+                class="block flex-1 px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#034EA2] focus:border-transparent transition-all sm:text-sm tracking-widest" />
+              <button id="verify-code-btn" type="button"
+                class="shrink-0 px-4 py-2.5 text-xs font-semibold rounded-lg bg-[#034EA2] text-white hover:bg-blue-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap">
+                확인
+              </button>
+            </div>
+            <p id="verify-hint" class="hidden text-xs text-gray-500 dark:text-gray-400 pt-1"></p>
           </div>
 
           <!-- 비밀번호 -->
@@ -186,10 +205,11 @@
           </div>
 
           <!-- 가입 버튼 -->
-          <button id="signup-submit" type="submit"
+          <button id="signup-submit" type="submit" disabled
             class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-[#034EA2] hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#034EA2] transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
             회원가입
           </button>
+          <p id="submit-hint" class="text-xs text-center text-gray-500 dark:text-gray-400 -mt-2">이메일 인증을 먼저 완료해주세요</p>
         </form>
 
         <!-- Login link -->
@@ -225,8 +245,162 @@
     // ---- Signup 처리 ----
     const form = document.getElementById('signup-form');
     const submitBtn = document.getElementById('signup-submit');
+    const submitHint = document.getElementById('submit-hint');
     const errorBox = document.getElementById('signup-error');
     const successBox = document.getElementById('signup-success');
+
+    // ---- 이메일 인증 상태 ----
+    const emailInput = document.getElementById('email');
+    const sendCodeBtn = document.getElementById('send-code-btn');
+    const verifyRow = document.getElementById('verify-code-row');
+    const verifyInput = document.getElementById('verify-code');
+    const verifyBtn = document.getElementById('verify-code-btn');
+    const verifyHint = document.getElementById('verify-hint');
+    const verifiedCheck = document.getElementById('email-verified-check');
+
+    let emailVerified = false;
+    let verifiedEmail = null;      // 인증 완료된 이메일
+    let pendingEmail = null;       // 코드 발송 당시의 이메일 (verify 시점 기준)
+    let cooldownTimer = null;
+
+    function setHint(state, msg) {
+      // state: 'info' | 'success' | 'error'
+      verifyHint.textContent = msg || '';
+      verifyHint.classList.remove('hidden', 'text-gray-500', 'text-green-600', 'text-red-600', 'dark:text-gray-400');
+      if (!msg) { verifyHint.classList.add('hidden'); return; }
+      if (state === 'success') verifyHint.classList.add('text-green-600');
+      else if (state === 'error') verifyHint.classList.add('text-red-600');
+      else verifyHint.classList.add('text-gray-500', 'dark:text-gray-400');
+    }
+
+    function setVerified(email) {
+      emailVerified = true;
+      verifiedEmail = email;
+      emailInput.readOnly = true;
+      emailInput.classList.add('bg-gray-50', 'dark:bg-gray-700/40');
+      verifiedCheck.classList.remove('hidden');
+      sendCodeBtn.disabled = true;
+      verifyBtn.disabled = true;
+      verifyInput.disabled = true;
+      setHint('success', '이메일 인증이 완료되었습니다.');
+      submitBtn.disabled = false;
+      submitHint.classList.add('hidden');
+    }
+
+    function resetVerification() {
+      // 인증 상태 전체 리셋 (이메일 변경, 재시작 등)
+      emailVerified = false;
+      verifiedEmail = null;
+      pendingEmail = null;
+      if (cooldownTimer) { clearInterval(cooldownTimer); cooldownTimer = null; }
+
+      emailInput.readOnly = false;
+      emailInput.classList.remove('bg-gray-50', 'dark:bg-gray-700/40');
+      verifiedCheck.classList.add('hidden');
+
+      sendCodeBtn.disabled = false;
+      sendCodeBtn.textContent = '인증 코드 받기';
+
+      verifyRow.classList.add('hidden');
+      verifyRow.classList.remove('flex');
+      verifyInput.disabled = false;
+      verifyInput.value = '';
+      verifyBtn.disabled = false;
+      verifyBtn.textContent = '확인';
+
+      setHint('info', '');
+      submitBtn.disabled = true;
+      submitHint.classList.remove('hidden');
+    }
+
+    function startCooldown(seconds) {
+      let remaining = seconds;
+      sendCodeBtn.disabled = true;
+      const tick = () => {
+        if (emailVerified) return;
+        if (remaining <= 0) {
+          sendCodeBtn.disabled = false;
+          sendCodeBtn.textContent = '인증 코드 재전송';
+          clearInterval(cooldownTimer);
+          cooldownTimer = null;
+          return;
+        }
+        sendCodeBtn.textContent = `재전송 (${remaining}s)`;
+        remaining -= 1;
+      };
+      tick();
+      cooldownTimer = setInterval(tick, 1000);
+    }
+
+    // 이메일 변경 시 인증 상태 전체 리셋 (부분 리셋 버그 방지)
+    emailInput.addEventListener('input', () => {
+      const cur = emailInput.value.trim();
+      // 인증된 이메일과 다르거나, 코드 발송 후 이메일을 수정한 경우 → 리셋
+      if ((emailVerified && cur !== verifiedEmail) ||
+          (!emailVerified && pendingEmail && cur !== pendingEmail)) {
+        resetVerification();
+      }
+    });
+
+    // 숫자만 허용 (desktop 에서 inputmode 가 무시되는 경우 대비)
+    verifyInput.addEventListener('input', () => {
+      const cleaned = verifyInput.value.replace(/\D/g, '').slice(0, 6);
+      if (cleaned !== verifyInput.value) verifyInput.value = cleaned;
+    });
+
+    sendCodeBtn.addEventListener('click', async () => {
+      clearBanners();
+      const email = emailInput.value.trim();
+      if (!email || !emailInput.checkValidity()) {
+        showError('유효한 이메일 주소를 입력해주세요.');
+        return;
+      }
+      sendCodeBtn.disabled = true;
+      const prev = sendCodeBtn.textContent;
+      sendCodeBtn.textContent = '전송 중...';
+      try {
+        await smartscanApi.sendVerificationEmail(email);
+        pendingEmail = email;                        // 코드 발송 시점의 이메일 고정
+        emailInput.readOnly = true;                  // verify 전에도 이메일 잠금 (stale email 방지)
+        emailInput.classList.add('bg-gray-50', 'dark:bg-gray-700/40');
+        verifyRow.classList.remove('hidden');
+        verifyRow.classList.add('flex');
+        setHint('info', '이메일로 전송된 6자리 코드를 입력하세요. (5분 이내 유효) 이메일 변경은 하단 새로고침 후 가능합니다.');
+        showSuccess('인증 코드가 이메일로 발송되었습니다.');
+        startCooldown(60);
+      } catch (err) {
+        const msg = (err && err.message) ? err.message : '인증 코드 발송에 실패했습니다.';
+        showError(msg);
+        sendCodeBtn.disabled = false;
+        sendCodeBtn.textContent = prev;
+      }
+    });
+
+    verifyBtn.addEventListener('click', async () => {
+      clearBanners();
+      // verify 는 "코드 발송 당시의 이메일" 을 사용해야 서버 키와 일치
+      const email = pendingEmail || emailInput.value.trim();
+      const code = verifyInput.value.trim();
+      if (!/^\d{6}$/.test(code)) {
+        showError('6자리 숫자 코드를 입력해주세요.');
+        return;
+      }
+      verifyBtn.disabled = true;
+      const prev = verifyBtn.textContent;
+      verifyBtn.textContent = '확인 중...';
+      try {
+        await smartscanApi.verifyEmail(email, code);
+        if (cooldownTimer) { clearInterval(cooldownTimer); cooldownTimer = null; }
+        setVerified(email);
+        showSuccess('이메일 인증이 완료되었습니다.');
+      } catch (err) {
+        const msg = (err && err.message) ? err.message : '인증에 실패했습니다. 코드를 확인해주세요.';
+        showError(msg);
+        setHint('error', '인증 코드가 올바르지 않거나 만료되었습니다.');
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = prev;
+      }
+    });
 
     function showError(msg) {
       successBox.classList.add('hidden');
@@ -246,6 +420,11 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       clearBanners();
+
+      if (!emailVerified) {
+        showError('이메일 인증을 먼저 완료해주세요.');
+        return;
+      }
 
       const name = document.getElementById('name').value.trim();
       const email = document.getElementById('email').value.trim();
