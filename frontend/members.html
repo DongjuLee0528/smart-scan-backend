@@ -27,7 +27,7 @@
         </div>
         <button id="add-btn" class="px-4 py-2.5 bg-[#034EA2] text-white text-sm font-semibold rounded-lg hover:bg-[#023d82] flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-          구성원 추가
+          구성원 초대
         </button>
       </div>
 
@@ -48,13 +48,35 @@
           </tbody>
         </table>
       </div>
+
+      <!-- 대기 중인 초대 섹션 -->
+      <div class="mt-8">
+        <h2 class="text-xl font-bold text-slate-900 mb-3">대기 중인 초대</h2>
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-100 text-slate-500 bg-slate-50/50">
+                <th class="text-left font-medium px-6 py-3">이메일</th>
+                <th class="text-left font-medium px-6 py-3">초대자</th>
+                <th class="text-left font-medium px-6 py-3">발송일</th>
+                <th class="text-left font-medium px-6 py-3">만료일</th>
+                <th class="text-left font-medium px-6 py-3">상태</th>
+                <th class="text-right font-medium px-6 py-3">작업</th>
+              </tr>
+            </thead>
+            <tbody id="invitations-tbody" class="divide-y divide-slate-100">
+              <tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">불러오는 중...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </main>
 
   <div id="modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
       <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-        <h3 class="text-lg font-bold text-slate-900">구성원 추가</h3>
+        <h3 class="text-lg font-bold text-slate-900">구성원 초대</h3>
         <button id="modal-close" class="p-1 text-slate-400 hover:text-slate-600">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
         </button>
@@ -76,9 +98,10 @@
           <label class="block text-sm font-medium text-slate-700 mb-1.5">나이 (선택)</label>
           <input id="m-age" type="number" min="0" max="150" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg bg-white" />
         </div>
+        <p class="text-xs text-slate-400 mt-1">입력한 이메일로 초대 링크가 전송됩니다. 수신자가 수락하면 구성원으로 추가됩니다.</p>
         <div class="flex justify-end gap-2 pt-2">
           <button type="button" id="modal-cancel" class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50">취소</button>
-          <button id="m-submit" type="submit" class="px-4 py-2 bg-[#034EA2] text-white text-sm font-semibold rounded-lg hover:bg-[#023d82] disabled:opacity-60">추가</button>
+          <button id="m-submit" type="submit" class="px-4 py-2 bg-[#034EA2] text-white text-sm font-semibold rounded-lg hover:bg-[#023d82] disabled:opacity-60">초대 보내기</button>
         </div>
       </form>
     </div>
@@ -87,6 +110,7 @@
   <script>
     smartscanLayout.init({ active: 'members' });
     const esc = smartscanLayout.escapeHtml;
+    const fmt = smartscanLayout.formatDateTime;
     const modal = document.getElementById('modal');
 
     document.getElementById('add-btn').addEventListener('click', () => modal.classList.remove('hidden'));
@@ -105,13 +129,13 @@
       const btn = document.getElementById('m-submit');
       btn.disabled = true;
       try {
-        await smartscanApi.addFamilyMember(body);
-        smartscanLayout.toast('추가되었습니다.', 'success');
+        await smartscanApi.createInvitation(body);
+        smartscanLayout.toast('초대 메일을 발송했습니다', 'success');
         document.getElementById('member-form').reset();
         modal.classList.add('hidden');
         load();
       } catch (err) {
-        smartscanLayout.toast(err.message || '추가 실패', 'error');
+        smartscanLayout.toast(err.message || '초대 실패', 'error');
       } finally {
         btn.disabled = false;
       }
@@ -128,9 +152,56 @@
       }
     }
 
+    async function cancelInvite(id, email) {
+      if (!confirm(`'${email}' 초대를 취소하시겠습니까?`)) return;
+      try {
+        await smartscanApi.cancelInvitation(id);
+        smartscanLayout.toast('초대가 취소되었습니다.', 'success');
+        loadInvitations();
+      } catch (err) {
+        smartscanLayout.toast(err.message || '취소 실패', 'error');
+      }
+    }
+
     function roleBadge(role) {
       if (role === 'admin' || role === 'ADMIN') return `<span class="px-2 py-0.5 rounded bg-[#034EA2]/10 text-[#034EA2] text-xs font-semibold">관리자</span>`;
       return `<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-semibold">구성원</span>`;
+    }
+
+    async function loadInvitations() {
+      const tbody = document.getElementById('invitations-tbody');
+      try {
+        const res = await smartscanApi.listInvitations();
+        const list = (res && res.data) || [];
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">대기 중인 초대가 없습니다.</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = list.map((inv) => `
+          <tr class="hover:bg-slate-50" data-inv-id="${inv.id}">
+            <td class="px-6 py-4 text-slate-700">${esc(inv.email)}</td>
+            <td class="px-6 py-4 text-slate-600">${esc(inv.inviter_name || '-')}</td>
+            <td class="px-6 py-4 text-slate-500 text-xs">${fmt(inv.created_at)}</td>
+            <td class="px-6 py-4 text-slate-500 text-xs">${fmt(inv.expires_at)}</td>
+            <td class="px-6 py-4">
+              <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-700 text-xs font-semibold">수락 대기</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <button data-action="cancel-invite" class="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50">취소</button>
+            </td>
+          </tr>`).join('');
+
+        tbody.querySelectorAll('button[data-action="cancel-invite"]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const row = btn.closest('tr');
+            const id = row.dataset.invId;
+            const inv = list.find((x) => String(x.id) === String(id));
+            cancelInvite(id, inv ? inv.email : id);
+          });
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">조회 실패: ${esc(err.message)}</td></tr>`;
+      }
     }
 
     async function load() {
@@ -142,39 +213,40 @@
         const list = d.members || [];
         if (list.length === 0) {
           tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">등록된 구성원이 없습니다.</td></tr>`;
-          return;
-        }
-        tbody.innerHTML = list.map((m) => {
-          const initial = esc((m.name || '?').charAt(0));
-          return `
-            <tr class="hover:bg-slate-50" data-id="${m.id}">
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-full bg-[#034EA2]/10 text-[#034EA2] flex items-center justify-center font-semibold text-sm">${initial}</div>
-                  <span class="font-semibold text-slate-800">${esc(m.name)}</span>
-                </div>
-              </td>
-              <td class="px-6 py-4 text-slate-600">${esc(m.email || '-')}</td>
-              <td class="px-6 py-4 text-slate-600">${esc(m.phone_number || '-')}</td>
-              <td class="px-6 py-4 text-slate-600">${m.age != null ? m.age : '-'}</td>
-              <td class="px-6 py-4">${roleBadge(m.role)}</td>
-              <td class="px-6 py-4 text-right">
-                <button data-action="delete" class="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50">삭제</button>
-              </td>
-            </tr>`;
-        }).join('');
+        } else {
+          tbody.innerHTML = list.map((m) => {
+            const initial = esc((m.name || '?').charAt(0));
+            return `
+              <tr class="hover:bg-slate-50" data-id="${m.id}">
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-[#034EA2]/10 text-[#034EA2] flex items-center justify-center font-semibold text-sm">${initial}</div>
+                    <span class="font-semibold text-slate-800">${esc(m.name)}</span>
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-slate-600">${esc(m.email || '-')}</td>
+                <td class="px-6 py-4 text-slate-600">${esc(m.phone_number || '-')}</td>
+                <td class="px-6 py-4 text-slate-600">${m.age != null ? m.age : '-'}</td>
+                <td class="px-6 py-4">${roleBadge(m.role)}</td>
+                <td class="px-6 py-4 text-right">
+                  <button data-action="delete" class="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50">삭제</button>
+                </td>
+              </tr>`;
+          }).join('');
 
-        tbody.querySelectorAll('button[data-action="delete"]').forEach((btn) => {
-          btn.addEventListener('click', () => {
-            const row = btn.closest('tr');
-            const id = row.dataset.id;
-            const m = list.find((x) => String(x.id) === String(id));
-            removeMember(id, m.name);
+          tbody.querySelectorAll('button[data-action="delete"]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              const row = btn.closest('tr');
+              const id = row.dataset.id;
+              const m = list.find((x) => String(x.id) === String(id));
+              removeMember(id, m.name);
+            });
           });
-        });
+        }
       } catch (err) {
         tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">조회 실패: ${esc(err.message)}</td></tr>`;
       }
+      loadInvitations();
     }
 
     load();
