@@ -348,6 +348,49 @@
   const createScanLog = (body) =>
     apiFetch("/api/scan-logs", { method: "POST", auth: true, body });
 
+  // ---------- Family Invitations ----------
+
+  /** 인증 없이 GET 요청 (초대 토큰 조회 등 public 엔드포인트용). */
+  async function _getPublic(path) {
+    const headers = { "Content-Type": "application/json" };
+    let res;
+    try {
+      res = await fetch(`${API_BASE}${path}`, { method: "GET", headers });
+    } catch (networkErr) {
+      const err = new Error("네트워크 오류: 서버에 접속할 수 없습니다.");
+      err.cause = networkErr;
+      throw err;
+    }
+    let payload = null;
+    const text = await res.text();
+    if (text) {
+      try { payload = JSON.parse(text); } catch { payload = { message: text }; }
+    }
+    if (!res.ok || (payload && payload.success === false)) {
+      const err = new Error(
+        (payload && (payload.message || payload.detail)) ||
+          `Request failed with status ${res.status}`
+      );
+      err.status = res.status;
+      err.body = payload;
+      throw err;
+    }
+    return payload;
+  }
+
+  const createInvitation = (body) =>
+    apiFetch("/api/family-invitations", { method: "POST", auth: true, body });
+  const listInvitations = () =>
+    apiFetch("/api/family-invitations", { auth: true });
+  const cancelInvitation = (id) =>
+    apiFetch(`/api/family-invitations/${id}`, { method: "DELETE", auth: true });
+  const getInvitationByToken = (token) =>
+    _getPublic(`/api/family-invitations/by-token/${encodeURIComponent(token)}`);
+  const acceptInvitation = (token) =>
+    apiFetch(`/api/family-invitations/${encodeURIComponent(token)}/accept`, { method: "POST", auth: true, body: {} });
+  const declineInvitation = (token) =>
+    apiFetch(`/api/family-invitations/${encodeURIComponent(token)}/decline`, { method: "POST", auth: true, body: {} });
+
   window.smartscanApi = {
     API_BASE,
     getAccessToken,
@@ -395,5 +438,12 @@
     markNotificationAsRead,
     // scan logs
     createScanLog,
+    // family invitations
+    createInvitation,
+    listInvitations,
+    cancelInvitation,
+    getInvitationByToken,
+    acceptInvitation,
+    declineInvitation,
   };
 })();

@@ -58,6 +58,7 @@ def create_app() -> FastAPI:
         auth_route,
         chatbot_route,
         device_route,
+        family_invitation_route,
         family_member_route,
         item_route,
         label_route,
@@ -70,6 +71,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_route.router, prefix="/api/auth")
     app.include_router(chatbot_route.router, prefix="/api/chatbot")
     app.include_router(device_route.router, prefix="/api/devices")
+    app.include_router(family_invitation_route.router, prefix="/api/family-invitations")
     app.include_router(family_member_route.router, prefix="/api/families/members")
     app.include_router(item_route.router, prefix="/api/items")
     app.include_router(label_route.router, prefix="/api/labels")
