@@ -12,6 +12,9 @@ psycopg2-binary==2.9.9    # PostgreSQL 데이터베이스 어댑터
 # 데이터 검증 및 직렬화
 pydantic==2.9.2           # 데이터 검증 및 설정 관리 라이브러리
 
+slowapi>=0.1.9
+PyJWT>=2.8.0
+mangum>=0.17.0
 # 환경 설정 및 보안
 python-dotenv==1.0.1      # .env 파일에서 환경 변수 로드
 cryptography==43.0.1      # 암호화 라이브러리 (JWT 서명용)
@@ -19,3 +22,4 @@ cryptography==43.0.1      # 암호화 라이브러리 (JWT 서명용)
 # API 보안 및 인증
 slowapi>=0.1.9            # FastAPI용 레이트 리미팅 라이브러리
 PyJWT>=2.8.0              # JSON Web Token 구현체
+pytest
