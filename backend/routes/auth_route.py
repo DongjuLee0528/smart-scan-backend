@@ -24,6 +24,7 @@ from backend.common.response import success_response
 from backend.common.route_decorators import handle_service_errors
 from backend.common.rate_limiter import limiter, auth_rate_limit, api_rate_limit
 from backend.schemas.auth_schema import (
+    LinkKakaoRequest,
     LoginRequest,
     LogoutRequest,
     RefreshRequest,
@@ -45,8 +46,8 @@ def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
 @limiter.limit(auth_rate_limit)
 @handle_service_errors
 async def send_verification_email(
-    request: SendVerificationEmailRequest,
-    http_request: Request,
+    request: Request,
+    payload: SendVerificationEmailRequest,
     auth_service: AuthService = Depends(get_auth_service)
 ):
     """
@@ -56,7 +57,8 @@ async def send_verification_email(
     Rate limiting이 적용되어 스팸 방지를 위해 요청 제한이 있습니다.
 
     Args:
-        request: 이메일 주소가 포함된 요청 데이터
+        request: slowapi가 rate limit 키(IP)를 뽑기 위한 starlette Request
+        payload: 이메일 주소가 포함된 요청 본문
 
     Returns:
         성공 시 인증 코드 발송 완료 메시지
@@ -65,7 +67,7 @@ async def send_verification_email(
         ValidationError: 이메일 형식이 잘못된 경우
         RateLimitExceeded: 요청 제한 초과 시
     """
-    result = auth_service.send_verification_email(request.email)
+    result = auth_service.send_verification_email(payload.email)
     return success_response(
         "Verification email sent successfully",
         result.model_dump()
@@ -76,11 +78,11 @@ async def send_verification_email(
 @limiter.limit(auth_rate_limit)
 @handle_service_errors
 async def verify_email(
-    request: VerifyEmailRequest,
-    http_request: Request,
+    request: Request,
+    payload: VerifyEmailRequest,
     auth_service: AuthService = Depends(get_auth_service)
 ):
-    result = auth_service.verify_email(request.email, request.code)
+    result = auth_service.verify_email(payload.email, payload.code)
     return success_response(
         "Email verified successfully",
         result.model_dump()
@@ -91,18 +93,18 @@ async def verify_email(
 @limiter.limit(auth_rate_limit)
 @handle_service_errors
 async def register(
-    request: RegisterRequest,
-    http_request: Request,
+    request: Request,
+    payload: RegisterRequest,
     auth_service: AuthService = Depends(get_auth_service)
 ):
     result = auth_service.register(
-        kakao_user_id=request.kakao_user_id,
-        name=request.name,
-        email=request.email,
-        password=request.password,
-        phone=request.phone,
-        age=request.age,
-        family_name=request.family_name
+        kakao_user_id=payload.kakao_user_id,
+        name=payload.name,
+        email=payload.email,
+        password=payload.password,
+        phone=payload.phone,
+        age=payload.age,
+        family_name=payload.family_name
     )
     return success_response(
         "Registration completed successfully",
@@ -114,11 +116,11 @@ async def register(
 @limiter.limit(auth_rate_limit)
 @handle_service_errors
 async def login(
-    request: LoginRequest,
-    http_request: Request,
+    request: Request,
+    payload: LoginRequest,
     auth_service: AuthService = Depends(get_auth_service)
 ):
-    result = auth_service.login(request.email, request.password)
+    result = auth_service.login(payload.email, payload.password)
     return success_response(
         "Login completed successfully",
         result.model_dump()
@@ -129,11 +131,11 @@ async def login(
 @limiter.limit(auth_rate_limit)
 @handle_service_errors
 async def refresh(
-    request: RefreshRequest,
-    http_request: Request,
+    request: Request,
+    payload: RefreshRequest,
     auth_service: AuthService = Depends(get_auth_service)
 ):
-    result = auth_service.refresh(request.refresh_token)
+    result = auth_service.refresh(payload.refresh_token)
     return success_response(
         "Token refreshed successfully",
         result.model_dump()
@@ -150,5 +152,27 @@ async def logout(
     result = auth_service.logout(current_user.id, request.refresh_token)
     return success_response(
         "Logout completed successfully",
+        result.model_dump()
+    )
+
+
+@router.post("/link-kakao")
+@limiter.limit(auth_rate_limit)
+@handle_service_errors
+async def link_kakao(
+    request: Request,
+    payload: LinkKakaoRequest,
+    current_user=Depends(get_current_user),
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """
+    카카오 계정 연동 (magic link)
+
+    챗봇 Lambda가 발급한 단기 JWT를 검증하여 현재 로그인 사용자의
+    kakao_user_id를 실제 카카오 UID로 교체한다.
+    """
+    result = auth_service.link_kakao(current_user.id, payload.token)
+    return success_response(
+        "Kakao account linked successfully",
         result.model_dump()
     )
