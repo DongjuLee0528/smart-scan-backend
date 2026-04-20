@@ -15,6 +15,7 @@ from backend.common.exceptions import (
 from backend.common.security import (
     create_access_token,
     create_refresh_token,
+    decode_kakao_link_token,
     decode_token,
     generate_token_id,
     hash_password,
@@ -35,6 +36,7 @@ from backend.repositories.refresh_token_repository import RefreshTokenRepository
 from backend.repositories.user_repository import UserRepository
 from backend.schemas.auth_schema import (
     AuthTokenResponse,
+    LinkKakaoResponse,
     LogoutResponse,
     RegisterResponse,
     SendVerificationEmailResponse,
@@ -347,6 +349,71 @@ class AuthService:
                 self.refresh_token_repository.revoke(refresh_token_row, datetime.now(timezone.utc))
             self.db.commit()
             return LogoutResponse(logged_out=True)
+        except Exception:
+            self.db.rollback()
+            raise
+
+    def link_kakao(self, user_id: int, token: str) -> LinkKakaoResponse:
+        """
+        카카오 계정 연동 (magic link)
+
+        챗봇 Lambda가 발급한 단기 JWT(토큰)를 검증하여 현재 로그인 사용자의
+        kakao_user_id 를 실제 카카오 UID로 업데이트한다.
+
+        동작 규칙:
+        - 토큰이 유효하지 않거나 만료된 경우 UnauthorizedException
+        - 이미 동일한 kakao_user_id로 연동되어 있으면 멱등 성공 처리
+        - 다른 사용자가 같은 kakao_user_id로 이미 연동되어 있으면 ConflictException
+        - 현재 사용자의 kakao_user_id 가 실제 UID(= pending_xxx 가 아님)로 이미
+          설정되어 있으면 덮어쓰지 않고 ConflictException. placeholder(pending_xxx)
+          상태일 때만 덮어쓰기 허용
+        """
+        validate_non_empty_string(token, "token")
+
+        # 토큰 검증 및 kakao_user_id 추출
+        payload = decode_kakao_link_token(token.strip())
+        new_kakao_user_id = payload["kakao_user_id"].strip()
+        if not new_kakao_user_id:
+            raise UnauthorizedException("Invalid kakao link token payload")
+
+        # 현재 사용자 조회
+        user = self.user_repository.find_by_id(user_id)
+        if not user:
+            raise NotFoundException("User not found")
+
+        # 멱등 처리: 이미 동일한 값이면 그대로 성공
+        if user.kakao_user_id == new_kakao_user_id:
+            return LinkKakaoResponse(
+                user_id=user.id,
+                kakao_user_id=user.kakao_user_id,
+                linked=True,
+            )
+
+        # 다른 사용자가 이미 이 kakao_user_id 를 점유하고 있는지 확인
+        conflicting_user = self.user_repository.find_by_kakao_user_id(new_kakao_user_id)
+        if conflicting_user and conflicting_user.id != user.id:
+            raise ConflictException("kakao_user_id is already linked to another user")
+
+        # 실제 UID 가 이미 설정된 계정이라면 덮어쓰기 금지
+        # (placeholder "pending_xxx" 상태에서만 실제 UID 로 교체 허용)
+        if user.kakao_user_id and not user.kakao_user_id.startswith("pending_"):
+            raise ConflictException("User is already linked to a kakao account")
+
+        try:
+            self.user_repository.update_kakao_user_id(user, new_kakao_user_id)
+            self.db.commit()
+            self.db.refresh(user)
+            return LinkKakaoResponse(
+                user_id=user.id,
+                kakao_user_id=user.kakao_user_id,
+                linked=True,
+            )
+        except IntegrityError as e:
+            self.db.rollback()
+            # 동시성으로 인한 UNIQUE 제약 위반 대응
+            if "kakao_user_id" in str(e.orig).lower():
+                raise ConflictException("kakao_user_id is already linked to another user")
+            raise
         except Exception:
             self.db.rollback()
             raise
