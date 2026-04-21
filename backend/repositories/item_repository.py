@@ -72,9 +72,13 @@ class ItemRepository:
         ).order_by(Item.created_at.desc(), Item.id.desc())
         return self.db.execute(stmt).scalars().all()
 
-    def get_active_items_with_label_by_user_device_id(self, user_device_id: int) -> List[Tuple[Item, int]]:
-        """사용자 디바이스의 활성 아이템과 라벨 정보 함께 조회"""
-        stmt = select(Item, MasterTag.label_id).join(
+    def get_active_items_with_label_by_user_device_id(self, user_device_id: int) -> List[Tuple[Item, Optional[int]]]:
+        """사용자 디바이스의 활성 아이템과 라벨 정보 함께 조회.
+
+        A-full: pending 아이템(tag_uid NULL)도 목록에 포함하기 위해 LEFT OUTER JOIN 사용.
+        pending 아이템의 label_id는 None으로 반환된다.
+        """
+        stmt = select(Item, MasterTag.label_id).outerjoin(
             MasterTag,
             Item.tag_uid == MasterTag.tag_uid
         ).where(
@@ -84,6 +88,66 @@ class ItemRepository:
             )
         ).order_by(Item.created_at.desc())
         return self.db.execute(stmt).all()
+
+    def get_active_items_by_kakao_user_id(self, kakao_user_id: str) -> List[Item]:
+        """카카오 사용자의 활성 아이템 목록 조회 (pending 포함).
+
+        챗봇 HTTP 엔드포인트 전용. user_device는 User 테이블과 조인해 kakao_user_id로 필터.
+        """
+        from backend.models.user import User
+        from backend.models.user_device import UserDevice
+        stmt = select(Item).join(
+            UserDevice, Item.user_device_id == UserDevice.id
+        ).join(
+            User, UserDevice.user_id == User.id
+        ).where(
+            and_(
+                User.kakao_user_id == kakao_user_id,
+                Item.is_active == True
+            )
+        ).order_by(Item.created_at.desc())
+        return self.db.execute(stmt).scalars().all()
+
+    def get_active_by_user_device_and_name(self, user_device_id: int, name: str) -> Optional[Item]:
+        """이름으로 활성 아이템 조회 (챗봇 이름 기반 삭제)."""
+        stmt = select(Item).where(
+            and_(
+                Item.user_device_id == user_device_id,
+                Item.name == name,
+                Item.is_active == True
+            )
+        ).order_by(Item.created_at.desc(), Item.id.desc())
+        return self.db.execute(stmt).scalars().first()
+
+    def get_all_active_by_user_device_id(self, user_device_id: int) -> List[Item]:
+        """사용자 디바이스의 모든 활성 아이템 반환 (기기 해제 시 일괄 soft-delete)."""
+        stmt = select(Item).where(
+            and_(
+                Item.user_device_id == user_device_id,
+                Item.is_active == True
+            )
+        )
+        return self.db.execute(stmt).scalars().all()
+
+    def create_pending(self, user_device_id: int, name: str) -> Item:
+        """라벨 미연결 pending 아이템 생성 (챗봇에서 이름만 추가)."""
+        item = Item(
+            user_device_id=user_device_id,
+            name=name,
+            tag_uid=None,
+            is_active=True,
+            is_pending=True
+        )
+        self.db.add(item)
+        self.db.flush()
+        return item
+
+    def bind_tag(self, item: Item, tag_uid: str) -> Item:
+        """pending 아이템에 tag_uid 연결하여 활성 아이템으로 전환."""
+        item.tag_uid = tag_uid
+        item.is_pending = False
+        self.db.flush()
+        return item
 
     def get_by_id(self, item_id: int) -> Optional[Item]:
         """아이템 ID로 조회"""
