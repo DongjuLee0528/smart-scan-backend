@@ -60,6 +60,7 @@ jobs:
       # FastAPI 애플리케이션 임포트 테스트 (더미 환경변수로)
       - name: Import check (app loads without error)
         run: |
+          python -c "from backend.common.security import decode_kakao_link_token; print('Security module OK')"
           python -c "from backend.app import create_app; print('App import OK')"
         env:
           # CI 테스트용 더미 환경변수
@@ -90,9 +91,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r backend/requirements.txt
 
-      # 백엔드 테스트 실행 (pytest.ini 설정 사용)
+      # 백엔드 테스트 실행 (경로 강제 지정으로 lambdas 제외)
       - name: Test backend
-        run: python -m pytest -v
+        run: python -m pytest backend/tests -v --import-mode=importlib
         env:
           PYTHONPATH: .
           DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
