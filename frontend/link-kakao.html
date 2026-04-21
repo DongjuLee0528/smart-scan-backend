@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartScan Hub - 카카오 연동</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', 'Noto Sans KR', sans-serif; }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .dark .glass-card {
+      background: rgba(31, 41, 55, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 2.5rem; height: 2.5rem;
+      border: 3px solid rgba(3, 78, 162, 0.15);
+      border-top-color: #034EA2;
+      border-radius: 9999px;
+      animation: spin 0.8s linear infinite;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300 min-h-screen flex flex-col">
+
+  <header class="fixed top-0 right-0 p-6 z-50">
+    <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           class="w-5 h-5 text-gray-600 dark:hidden">
+        <circle cx="12" cy="12" r="4"></circle>
+        <path d="M12 2v2"></path><path d="M12 20v2"></path>
+        <path d="M4.93 4.93l1.41 1.41"></path><path d="M17.66 17.66l1.41 1.41"></path>
+        <path d="M2 12h2"></path><path d="M20 12h2"></path>
+        <path d="M6.34 17.66l-1.41 1.41"></path><path d="M19.07 4.93l-1.41 1.41"></path>
+      </svg>
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           class="w-5 h-5 text-gray-300 hidden dark:block">
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+      </svg>
+    </button>
+  </header>
+
+  <main class="flex-grow flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+
+      <!-- Logo & Title -->
+      <div class="flex flex-col items-center mb-8">
+        <div class="w-16 h-16 bg-[#FEE500] rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+          <!-- 말풍선 (카카오톡 분위기) -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+               fill="#3C1E1E" stroke="#3C1E1E" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round"
+               class="w-10 h-10">
+            <path d="M12 3C6.48 3 2 6.58 2 11c0 2.77 1.79 5.21 4.5 6.64-.2.74-.73 2.7-.84 3.12-.14.52.19.52.4.38.17-.11 2.69-1.84 3.78-2.58.71.1 1.43.16 2.16.16 5.52 0 10-3.58 10-8s-4.48-8-10-8z"/>
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">카카오 계정 연동</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">SmartScan Hub 챗봇 사용을 위한 1회 인증</p>
+      </div>
+
+      <!-- Card -->
+      <div class="glass-card shadow-xl rounded-2xl p-8 transition-all">
+
+        <!-- 상태: 로딩 -->
+        <div id="state-loading" class="flex flex-col items-center py-6">
+          <div class="spinner mb-4"></div>
+          <p class="text-sm text-gray-600 dark:text-gray-300">카카오 계정을 연동하는 중입니다...</p>
+        </div>
+
+        <!-- 상태: 성공 -->
+        <div id="state-success" class="hidden flex-col items-center py-6">
+          <div class="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                 class="text-green-600 dark:text-green-300">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">연동이 완료되었습니다</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
+            이제 카카오톡 챗봇에서 SmartScan Hub 기능을 사용할 수 있습니다.
+          </p>
+          <a href="dashboard.html"
+             class="w-full text-center py-2.5 px-4 rounded-lg shadow-sm text-sm font-semibold text-white bg-[#034EA2] hover:bg-blue-800 transition-colors">
+            대시보드로 이동
+          </a>
+        </div>
+
+        <!-- 상태: 실패 -->
+        <div id="state-error" class="hidden flex-col items-center py-6">
+          <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                 class="text-red-600 dark:text-red-300">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+          </div>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">연동에 실패했습니다</h2>
+          <p id="error-message" class="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
+            링크가 만료되었거나 유효하지 않습니다.
+          </p>
+          <p class="text-xs text-gray-400 dark:text-gray-500 text-center mb-6">
+            카카오톡 챗봇에서 "연동하기"를 다시 요청해주세요. 링크는 5분간 유효합니다.
+          </p>
+          <a href="dashboard.html"
+             class="w-full text-center py-2.5 px-4 rounded-lg shadow-sm text-sm font-semibold text-white bg-gray-500 hover:bg-gray-600 transition-colors">
+            대시보드로 돌아가기
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- SmartScan Hub API client -->
+  <script src="assets/api.js"></script>
+
+  <script>
+    lucide.createIcons && lucide.createIcons();
+
+    const toggle = document.getElementById('theme-toggle');
+    toggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+    });
+
+    const loading = document.getElementById('state-loading');
+    const success = document.getElementById('state-success');
+    const errorEl = document.getElementById('state-error');
+    const errorMsg = document.getElementById('error-message');
+
+    function show(el) {
+      [loading, success, errorEl].forEach(e => e.classList.add('hidden'));
+      el.classList.remove('hidden');
+      el.classList.add('flex');
+    }
+
+    function showError(msg) {
+      if (msg) errorMsg.textContent = msg;
+      show(errorEl);
+    }
+
+    (async function run() {
+      const params = new URLSearchParams(location.search);
+      const token = params.get('token');
+
+      if (!token) {
+        showError('연동 토큰이 없습니다. 카카오톡에서 전달받은 링크로 접속해주세요.');
+        return;
+      }
+
+      // 미로그인 시: 현재 URL 전체를 redirect 파라미터로 보존하여 로그인 후 복귀
+      if (!smartscanApi.isLoggedIn()) {
+        const redirect = encodeURIComponent(location.pathname + location.search);
+        location.replace(`login.html?redirect=${redirect}`);
+        return;
+      }
+
+      try {
+        await smartscanApi.linkKakao(token);
+        show(success);
+      } catch (err) {
+        let msg = '링크가 만료되었거나 유효하지 않습니다.';
+        if (err) {
+          if (err.status === 401) {
+            // 세션 만료: 재로그인 후 복귀
+            smartscanApi.clearTokens();
+            const redirect = encodeURIComponent(location.pathname + location.search);
+            location.replace(`login.html?redirect=${redirect}`);
+            return;
+          }
+          if (err.message) msg = err.message;
+        }
+        showError(msg);
+      }
+    })();
+  </script>
+</body>
+</html>
