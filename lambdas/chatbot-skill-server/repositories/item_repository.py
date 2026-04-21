@@ -1,117 +1,111 @@
 """
-카카오톡 챗봇용 아이템 데이터 리포지토리
+카카오톡 챗봇용 아이템 리포지토리 (HTTP 클라이언트)
 
-카카오톡 챗봇에서 소지품(아이템) 관리를 위한 데이터베이스 접근 계층입니다.
-사용자가 챗봇을 통해 소지품을 조회, 추가, 삭제할 때 사용되는 간단한 CRUD 연산을 제공합니다.
+A-full (2026-04-18): 스키마 드리프트로 인한 500 오류(`items.is_required`, `items.member_id` 존재 X)를
+제거하기 위해 Supabase 직접 접근 → SmartScan FastAPI `/api/chatbot/*` HTTP 호출로 전환.
 
-주요 기능:
-- 활성 소지품 목록 조회 (필수 아이템 여부 포함)
-- 새로운 소지품 추가 (기본값: 필수 아이템으로 등록)
-- 소지품 비활성화 (소프트 삭제)
-- 가족 구성원의 모든 소지품 일괄 비활성화
+인증: 공유 비밀키를 `X-Chatbot-Key` 헤더로 전달. (JWT와 격리된 별도 시크릿)
 
-비즈니스 규칙:
-- 모든 소지품은 기본적으로 필수 아이템(is_required=True)으로 등록
-- 삭제는 비활성화(is_active=False)를 통한 소프트 삭제
-- member_id를 통한 가족 구성원별 소지품 관리
-- 카카오톡 챗봇 환경에 최적화된 간소화된 인터페이스
-
-사용 컨텍스트:
-- 카카오톡에서 "목록", "추가", "삭제" 명령어 처리
-- 소지품 관리 대화형 인터페이스 지원
-- 메인 백엔드 시스템과의 데이터 동기화 유지
+환경변수:
+- SMARTSCAN_API_BASE: FastAPI 베이스 URL (기본: https://smartscan-hub.com)
+- CHATBOT_SHARED_KEY: 공유 비밀키 (서버와 동일 값)
 """
 
-from common.db import get_client
+import json
+import os
+import urllib.error
+import urllib.parse
+import urllib.request
+from typing import Any
 
 
-def get_active_items(member_id: int) -> list:
+_API_BASE = os.environ.get("SMARTSCAN_API_BASE", "https://smartscan-hub.com").rstrip("/")
+_SHARED_KEY = os.environ.get("CHATBOT_SHARED_KEY", "")
+_DEFAULT_TIMEOUT_SEC = 8.0
+
+
+class ChatbotApiError(RuntimeError):
+    """백엔드 호출 실패를 명시적으로 시그널링."""
+
+
+def _request(method: str, path: str, *, params: dict | None = None, body: dict | None = None) -> Any:
+    url = f"{_API_BASE}{path}"
+    if params:
+        url = f"{url}?{urllib.parse.urlencode(params)}"
+
+    data = None
+    headers = {
+        "X-Chatbot-Key": _SHARED_KEY,
+        "Accept": "application/json",
+    }
+    if body is not None:
+        data = json.dumps(body, ensure_ascii=False).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+
+    req = urllib.request.Request(url=url, data=data, method=method, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=_DEFAULT_TIMEOUT_SEC) as resp:
+            raw = resp.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace") if hasattr(exc, "read") else str(exc)
+        print(f"[ChatbotApi] HTTPError {exc.code} {method} {url}: {detail}")
+        raise ChatbotApiError(f"backend {exc.code}: {detail}") from exc
+    except urllib.error.URLError as exc:
+        print(f"[ChatbotApi] URLError {method} {url}: {exc}")
+        raise ChatbotApiError(f"backend unreachable: {exc}") from exc
+
+    try:
+        payload = json.loads(raw) if raw else {}
+    except json.JSONDecodeError as exc:
+        raise ChatbotApiError(f"invalid JSON from backend: {raw[:200]}") from exc
+
+    if not isinstance(payload, dict) or not payload.get("success", False):
+        raise ChatbotApiError(f"backend returned failure: {payload}")
+
+    return payload.get("data")
+
+
+def get_active_items(kakao_user_id: str) -> list:
     """
-    가족 구성원의 활성 소지품 목록 조회
-
-    카카오톡에서 "목록" 명령어 실행 시 호출되는 함수입니다.
-    해당 구성원이 등록한 모든 활성 소지품의 이름과 필수 여부를 반환합니다.
-
-    Args:
-        member_id: 가족 구성원 ID
+    활성 아이템 목록 조회 (pending 포함).
 
     Returns:
-        list: 소지품 정보 리스트 (id, name, is_required 포함)
-              생성일자 순으로 정렬되어 반환
-
-    사용 예시:
-        카카오톡에서 현재 등록된 소지품 목록을 확인할 때
+        list[dict]: [{id, name, is_pending, label_id, ...}]
     """
-    res = (get_client()
-           .table('items')
-           .select('id, name, is_required')
-           .eq('member_id', member_id)
-           .eq('is_active', True)
-           .order('created_at')
-           .execute())
-    return res.data or []
+    data = _request("GET", "/api/chatbot/items", params={"kakao_user_id": kakao_user_id})
+    if not data:
+        return []
+    return data.get("items", []) or []
 
 
-def add_item(name: str, member_id: int) -> dict:
-    """
-    새로운 소지품 등록
-
-    카카오톡에서 "추가 [아이템명]" 명령어 실행 시 호출되는 함수입니다.
-    새로운 소지품을 필수 아이템으로 등록하고 활성 상태로 설정합니다.
-
-    Args:
-        name: 등록할 소지품 이름
-        member_id: 소지품을 등록하는 가족 구성원 ID
-
-    Returns:
-        dict | None: 생성된 소지품 정보 또는 실패 시 None
-
-    기본 설정:
-        - is_required: True (필수 소지품으로 등록)
-        - is_active: True (활성 상태)
-    """
-    res = (get_client()
-           .table('items')
-           .insert({'name': name, 'member_id': member_id, 'is_required': True, 'is_active': True})
-           .execute())
-    return res.data[0] if res.data else None
+def add_item(name: str, kakao_user_id: str) -> dict | None:
+    """이름만으로 pending 아이템 추가."""
+    return _request(
+        "POST",
+        "/api/chatbot/items",
+        body={"kakao_user_id": kakao_user_id, "name": name},
+    )
 
 
-def deactivate_item(name: str, member_id: int) -> int:
-    """
-    특정 소지품 비활성화 (소프트 삭제)
-
-    카카오톡에서 "삭제 [아이템명]" 명령어 실행 시 호출되는 함수입니다.
-    지정된 이름의 소지품을 비활성화하여 목록에서 제외합니다.
-
-    Args:
-        name: 삭제할 소지품 이름
-        member_id: 가족 구성원 ID
-
-    Returns:
-        int: 비활성화된 소지품 수 (성공 시 1, 실패 시 0)
-    """
-    res = (get_client()
-           .table('items')
-           .update({'is_active': False})
-           .eq('member_id', member_id)
-           .eq('name', name)
-           .eq('is_active', True)
-           .execute())
-    return len(res.data) if res.data else 0
+def deactivate_item(name: str, kakao_user_id: str) -> int:
+    """이름으로 활성 아이템을 찾아 soft-delete. 삭제된 개수 반환 (0 or 1)."""
+    data = _request(
+        "POST",
+        "/api/chatbot/items/delete-by-name",
+        body={"kakao_user_id": kakao_user_id, "name": name},
+    )
+    if not data:
+        return 0
+    return int(data.get("deleted_count", 0))
 
 
-def delete_all_items(member_id: int):
-    """
-    가족 구성원의 모든 소지품 일괄 비활성화
-
-    카카오톡에서 "기기 해제" 명령어 실행 시 호출되는 함수입니다.
-    해당 구성원이 등록한 모든 활성 소지품을 한 번에 비활성화합니다.
-
-    Args:
-        member_id: 가족 구성원 ID
-
-    사용 컨텍스트:
-        디바이스 해제 시 관련된 모든 소지품 데이터 정리
-    """
-    get_client().table('items').update({'is_active': False}).eq('member_id', member_id).eq('is_active', True).execute()
+def delete_all_items(kakao_user_id: str) -> int:
+    """해당 사용자의 모든 활성 아이템 일괄 soft-delete."""
+    data = _request(
+        "POST",
+        "/api/chatbot/device/unlink",
+        body={"kakao_user_id": kakao_user_id},
+    )
+    if not data:
+        return 0
+    return int(data.get("deleted_count", 0))
