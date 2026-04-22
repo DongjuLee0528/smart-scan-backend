@@ -4,310 +4,180 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>구성원 관리 - SmartScan Hub</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: { brand: '#034EA2' }
-        }
-      }
-    }
-  </script>
-  <style>
-    body { font-family: 'Noto Sans KR', sans-serif; }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>body { font-family: 'Noto Sans KR', sans-serif; }</style>
+  <script src="assets/api.js"></script>
+  <script src="assets/layout.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-900 flex h-screen overflow-hidden antialiased selection:bg-[#034EA2]/20 selection:text-[#034EA2]">
-
-  <aside class="w-64 bg-white border-r border-slate-200 flex-col hidden md:flex shrink-0">
-    <div class="h-16 flex items-center px-6 border-b border-slate-200">
-      <div class="flex items-center gap-2 text-[#034EA2]">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>
-          <path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
-          <circle cx="12" cy="12" r="3"/>
-        </svg>
-        <span class="text-xl font-bold tracking-tight">SmartScan Hub</span>
-      </div>
-    </div>
-    <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-      <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-        <span class="font-medium text-sm">대시보드</span>
-      </a>
-      <a href="devices.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
-        <span class="font-medium text-sm">기기 관리</span>
-      </a>
-      <a href="items.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
-        <span class="font-medium text-sm">소지품 관리</span>
-      </a>
-      <a href="members.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#034EA2]/10 text-[#034EA2] transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <span class="font-medium text-sm">구성원 관리</span>
-      </a>
-      <a href="notifications.html" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-        <div class="flex items-center gap-3">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-          <span class="font-medium text-sm">알림</span>
-        </div>
-        <span class="text-xs font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">2</span>
-      </a>
-      <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-        <span class="font-medium text-sm">설정</span>
-      </a>
-    </nav>
-    <div class="p-4 border-t border-slate-200">
-      <div class="flex items-center gap-3">
-        <div id="userAvatar" class="w-9 h-9 rounded-full bg-[#034EA2]/10 text-[#034EA2] flex items-center justify-center font-semibold text-sm shrink-0">아</div>
-        <div class="min-w-0">
-          <p id="userName" class="text-sm font-semibold text-slate-800 truncate">아빠</p>
-          <p id="userEmail" class="text-xs text-slate-500 truncate">dad@smartscan-hub.com</p>
-        </div>
-      </div>
-    </div>
-  </aside>
+<body class="bg-slate-50 text-slate-900 flex h-screen overflow-hidden antialiased">
+  <aside id="sidebar-mount"></aside>
 
   <main class="flex-1 flex flex-col min-w-0 bg-slate-50">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0">
-      <button class="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-lg">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
-      </button>
-      <div class="hidden md:flex items-center gap-2 text-slate-800 font-semibold">
-        <span id="headerPath">가족 그룹 목록</span>
-        <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">시스템 정상</span>
-      </div>
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
+      <h1 class="text-lg font-semibold text-slate-800">구성원 관리</h1>
+      <span id="family-name-pill" class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">-</span>
     </header>
 
-    <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+    <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-5xl w-full mx-auto">
       <div class="flex items-start justify-between mb-6">
         <div>
-          <h1 id="pageTitle" class="text-2xl font-bold text-slate-900">나의 가족 그룹</h1>
-          <p id="pageDesc" class="text-slate-500 text-sm mt-1">참여 중인 그룹을 선택하여 구성원과 소지품 상태를 확인하세요.</p>
-          <button id="backToListBtn" class="hidden mt-3 flex items-center gap-1 text-sm font-medium text-[#034EA2] hover:underline">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> 목록으로 돌아가기
-          </button>
+          <h2 class="text-2xl font-bold text-slate-900">가족 구성원</h2>
+          <p class="text-slate-500 text-sm mt-1">구성원 추가는 Admin 권한이 필요합니다.</p>
         </div>
-        <div id="actionButtons" class="flex gap-2">
-          <button id="createGroupBtn" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg shadow-sm hover:bg-slate-50 transition-colors shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-            그룹 추가
-          </button>
-          <button id="openJoinModalBtn" class="flex items-center gap-2 px-4 py-2.5 bg-[#034EA2] text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-[#023d82] transition-colors shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            그룹 참여
-          </button>
-        </div>
+        <button id="add-btn" class="px-4 py-2.5 bg-[#034EA2] text-white text-sm font-semibold rounded-lg hover:bg-[#023d82] flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          구성원 추가
+        </button>
       </div>
 
-      <div id="groupListView" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"></div>
-      <div id="memberDetailView" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 hidden"></div>
-
-      <div id="emptyView" class="flex flex-col items-center justify-center py-20 text-center hidden">
-        <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </div>
-        <h2 class="text-lg font-bold text-slate-700">참여 중인 그룹이 없습니다</h2>
-        <p class="text-slate-500 text-sm mt-1">그룹을 생성하거나 가족 코드를 입력하여 참여하세요.</p>
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-100 text-slate-500 bg-slate-50/50">
+              <th class="text-left font-medium px-6 py-3">이름</th>
+              <th class="text-left font-medium px-6 py-3">이메일</th>
+              <th class="text-left font-medium px-6 py-3">전화번호</th>
+              <th class="text-left font-medium px-6 py-3">나이</th>
+              <th class="text-left font-medium px-6 py-3">역할</th>
+              <th class="text-right font-medium px-6 py-3">작업</th>
+            </tr>
+          </thead>
+          <tbody id="members-tbody" class="divide-y divide-slate-100">
+            <tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">불러오는 중...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </main>
 
-  <div id="createGroupModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
-      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
-        <h2 class="text-lg font-bold text-slate-900">새 가족 그룹 추가</h2>
-        <button class="close-modal text-slate-400 hover:text-slate-600 p-1.5 rounded-md transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+  <div id="modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-slate-900">구성원 추가</h3>
+        <button id="modal-close" class="p-1 text-slate-400 hover:text-slate-600">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
       </div>
-      <div class="p-6 space-y-5">
-        <div class="space-y-1.5">
-          <label class="block text-sm font-medium text-slate-700">그룹 이름 <span class="text-red-500">*</span></label>
-          <input type="text" id="newGroupName" placeholder="예: 우리집 스마트홈" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow" />
+      <form id="member-form" class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">이름</label>
+          <input id="m-name" type="text" required class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg bg-white" />
         </div>
-        <div class="space-y-1.5">
-          <label class="block text-sm font-medium text-slate-700">가족 코드 생성 <span class="text-red-500">*</span></label>
-          <input type="text" id="newGroupCode" placeholder="예: FAM-2024-0001" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow font-mono" />
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">이메일</label>
+          <input id="m-email" type="email" required class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg bg-white" />
         </div>
-        <div class="space-y-1.5">
-          <label class="block text-sm font-medium text-slate-700">역할</label>
-          <p class="text-sm font-medium text-amber-700 bg-amber-50 px-3 py-2.5 rounded-lg border border-amber-200">Owner (관리자 - 고정)</p>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">전화번호</label>
+          <input id="m-phone" type="tel" required placeholder="010-0000-0000" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg bg-white" />
         </div>
-        <div class="pt-2 flex gap-3">
-          <button type="button" class="close-modal flex-1 px-4 py-2.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">취소</button>
-          <button id="submitCreateBtn" class="flex-1 px-4 py-2.5 bg-[#034EA2] rounded-lg text-sm font-medium text-white hover:bg-[#023d82] shadow-sm transition-colors">그룹 생성</button>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">나이 (선택)</label>
+          <input id="m-age" type="number" min="0" max="150" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg bg-white" />
         </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="joinGroupModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
-      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
-        <h2 class="text-lg font-bold text-slate-900">가족 그룹 참여</h2>
-        <button class="close-modal text-slate-400 hover:text-slate-600 p-1.5 rounded-md transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-      </div>
-      <div class="p-6 space-y-5">
-        <div class="space-y-1.5">
-          <label class="block text-sm font-medium text-slate-700">가족 코드 입력 <span class="text-red-500">*</span></label>
-          <input type="text" id="joinGroupCode" placeholder="FAM-0000-0000" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#034EA2]/20 focus:border-[#034EA2] transition-shadow font-mono" />
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" id="modal-cancel" class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50">취소</button>
+          <button id="m-submit" type="submit" class="px-4 py-2 bg-[#034EA2] text-white text-sm font-semibold rounded-lg hover:bg-[#023d82] disabled:opacity-60">추가</button>
         </div>
-        <div class="p-3 bg-amber-50 rounded-lg border border-amber-100 text-center">
-            <p class="text-[11px] text-amber-700 font-bold">Owner(관리자)에게 권한을 받으세요.</p>
-        </div>
-        <div class="pt-2 flex gap-3">
-          <button type="button" class="close-modal flex-1 px-4 py-2.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">취소</button>
-          <button id="submitJoinBtn" class="flex-1 px-4 py-2.5 bg-[#034EA2] rounded-lg text-sm font-medium text-white hover:bg-[#023d82] shadow-sm transition-colors">그룹 참여</button>
-        </div>
-      </div>
+      </form>
     </div>
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // 1. 초기 정보 로드
-      const savedName = localStorage.getItem('userName') || '아빠';
-      const savedEmail = localStorage.getItem('userEmail') || 'dad@smartscan-hub.com';
-      const savedPhone = localStorage.getItem('userPhone') || '010-0000-0000';
-      
-      document.getElementById('userName').textContent = savedName;
-      document.getElementById('userEmail').textContent = savedEmail;
-      document.getElementById('userAvatar').textContent = savedName.charAt(0);
+    smartscanLayout.init({ active: 'members' });
+    const esc = smartscanLayout.escapeHtml;
+    const modal = document.getElementById('modal');
 
-      // 2. 그룹 데이터 로드 (고정핀 연동 핵심)
-      let groups = JSON.parse(localStorage.getItem('familyGroups')) || [
-        { 
-          id: 1,
-          name: "우리집 스마트홈", 
-          code: "FAM-2024-0001", 
-          owner: "김아빠", 
-          isPinned: true,
-          members: [
-            {name: "김아빠", email: "dad@test.com", phone: "010-1111-2222", role: 'Owner', items: ['지갑', '차키', '스마트폰']},
-            {name: "이엄마", email: "mom@test.com", phone: "010-3333-4444", role: 'Member', items: ['핸드백', '열쇠']},
-            {name: "김자녀", email: "kid@test.com", phone: "010-5555-6666", role: 'Member', items: ['학생증', '에어팟']}
-          ] 
-        }
-      ]; 
+    document.getElementById('add-btn').addEventListener('click', () => modal.classList.remove('hidden'));
+    document.getElementById('modal-close').addEventListener('click', () => modal.classList.add('hidden'));
+    document.getElementById('modal-cancel').addEventListener('click', () => modal.classList.add('hidden'));
 
-      const groupListView = document.getElementById('groupListView');
-      const memberDetailView = document.getElementById('memberDetailView');
-      const emptyView = document.getElementById('emptyView');
-      const headerPath = document.getElementById('headerPath');
-      const backBtn = document.getElementById('backToListBtn');
-
-      // --- 고정핀 기능 ---
-      window.togglePin = function(e, id) {
-        e.stopPropagation();
-        groups.forEach(g => g.isPinned = false); // 하나만 고정
-        const target = groups.find(g => g.id === id);
-        if(target) target.isPinned = true;
-        localStorage.setItem('familyGroups', JSON.stringify(groups));
-        renderGroupList();
+    document.getElementById('member-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = {
+        name: document.getElementById('m-name').value.trim(),
+        email: document.getElementById('m-email').value.trim(),
+        phone_number: document.getElementById('m-phone').value.trim(),
       };
-
-      // --- 모달 제어 ---
-      const createModal = document.getElementById('createGroupModal');
-      const joinModal = document.getElementById('joinGroupModal');
-      document.getElementById('createGroupBtn').addEventListener('click', () => { createModal.classList.remove('hidden'); createModal.classList.add('flex'); });
-      document.getElementById('openJoinModalBtn').addEventListener('click', () => { joinModal.classList.remove('hidden'); joinModal.classList.add('flex'); });
-      document.querySelectorAll('.close-modal').forEach(btn => {
-        btn.addEventListener('click', () => {
-          createModal.classList.add('hidden'); joinModal.classList.add('hidden');
-          createModal.classList.remove('flex'); joinModal.classList.remove('flex');
-        });
-      });
-
-      // --- 그룹 추가 ---
-      document.getElementById('submitCreateBtn').addEventListener('click', () => {
-        const name = document.getElementById('newGroupName').value.trim();
-        const code = document.getElementById('newGroupCode').value.trim();
-        if(!name || !code) return alert("정보를 입력하세요.");
-        
-        groups.push({ 
-          id: Date.now(), name, code, owner: savedName, isPinned: false,
-          members: [{name: savedName, email: savedEmail, phone: savedPhone, role: 'Owner', items: ['등록된 물품 없음']}] 
-        });
-        localStorage.setItem('familyGroups', JSON.stringify(groups));
-        renderGroupList();
-        document.querySelector('.close-modal').click();
-      });
-
-      // --- 그룹 참여 ---
-      document.getElementById('submitJoinBtn').addEventListener('click', () => {
-        const code = document.getElementById('joinGroupCode').value.trim();
-        const group = groups.find(g => g.code === code);
-        if(group) {
-          if(!group.members.some(m => m.email === savedEmail)) {
-            group.members.push({name: savedName, email: savedEmail, phone: savedPhone, role: 'Member', items: ['등록된 물품 없음']});
-            localStorage.setItem('familyGroups', JSON.stringify(groups));
-          }
-          renderGroupList();
-          document.querySelector('.close-modal').click();
-        } else { alert("코드를 찾을 수 없습니다."); }
-      });
-
-      // --- 화면 렌더링 ---
-      function renderGroupList() {
-        if(groups.length === 0) { emptyView.classList.remove('hidden'); groupListView.classList.add('hidden'); return; }
-        emptyView.classList.add('hidden'); groupListView.classList.remove('hidden');
-        memberDetailView.classList.add('hidden'); backBtn.classList.add('hidden');
-        headerPath.textContent = "가족 그룹 목록";
-
-        // 고정핀 순서 정렬
-        const sorted = [...groups].sort((a,b) => b.isPinned - a.isPinned);
-
-        groupListView.innerHTML = sorted.map(g => `
-          <div onclick="renderMemberDetail(${g.id})" class="group bg-white rounded-2xl border ${g.isPinned ? 'border-brand ring-1 ring-brand' : 'border-slate-200'} p-6 shadow-sm hover:shadow-md cursor-pointer transition-all relative">
-            <button onclick="togglePin(event, ${g.id})" class="absolute top-4 right-4 p-1.5 rounded-full ${g.isPinned ? 'text-brand bg-brand/10' : 'text-slate-300 hover:bg-slate-100'} transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="${g.isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
-            </button>
-            <div class="mb-4">
-              <div class="w-12 h-12 bg-brand/5 rounded-xl flex items-center justify-center text-brand">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-              </div>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900">${g.name}</h3>
-            <p class="text-sm text-slate-500 mb-4 font-medium">관리자: ${g.owner}</p>
-            <div class="flex items-center justify-between border-t border-slate-50 pt-4 text-xs">
-              <span class="text-slate-400">구성원 ${g.members.length}명</span>
-              <span class="text-brand font-bold">입장하기 →</span>
-            </div>
-          </div>
-        `).join('');
+      const ageRaw = document.getElementById('m-age').value.trim();
+      if (ageRaw) body.age = parseInt(ageRaw, 10);
+      const btn = document.getElementById('m-submit');
+      btn.disabled = true;
+      try {
+        await smartscanApi.addFamilyMember(body);
+        smartscanLayout.toast('추가되었습니다.', 'success');
+        document.getElementById('member-form').reset();
+        modal.classList.add('hidden');
+        load();
+      } catch (err) {
+        smartscanLayout.toast(err.message || '추가 실패', 'error');
+      } finally {
+        btn.disabled = false;
       }
-
-      window.renderMemberDetail = function(id) {
-        const g = groups.find(x => x.id === id);
-        groupListView.classList.add('hidden');
-        memberDetailView.classList.remove('hidden');
-        backBtn.classList.remove('hidden');
-        headerPath.textContent = `가족 그룹 > ${g.name}`;
-
-        memberDetailView.innerHTML = g.members.map(m => `
-          <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-            <div class="p-6 border-b border-slate-50 flex items-center gap-4">
-              <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">${m.name.charAt(0)}</div>
-              <div><h3 class="font-bold text-slate-900">${m.name}</h3><span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${m.role==='Owner'?'bg-amber-100 text-amber-700':'bg-slate-100 text-slate-500'}">${m.role}</span></div>
-            </div>
-            <div class="p-4 bg-slate-50/50">
-              <h4 class="text-[11px] font-bold text-slate-400 mb-3 tracking-wider">소지품 상태</h4>
-              <div class="flex flex-wrap gap-2">
-                ${m.items.map(i => `<span class="bg-white border border-slate-200 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 shadow-sm flex items-center gap-1"><div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div> ${i}</span>`).join('')}
-              </div>
-            </div>
-          </div>
-        `).join('');
-      };
-
-      backBtn.addEventListener('click', renderGroupList);
-      renderGroupList();
     });
+
+    async function removeMember(id, name) {
+      if (!confirm(`'${name}'을(를) 삭제하시겠습니까?`)) return;
+      try {
+        await smartscanApi.deleteFamilyMember(id);
+        smartscanLayout.toast('삭제되었습니다.', 'success');
+        load();
+      } catch (err) {
+        smartscanLayout.toast(err.message || '삭제 실패', 'error');
+      }
+    }
+
+    function roleBadge(role) {
+      if (role === 'admin' || role === 'ADMIN') return `<span class="px-2 py-0.5 rounded bg-[#034EA2]/10 text-[#034EA2] text-xs font-semibold">관리자</span>`;
+      return `<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-semibold">구성원</span>`;
+    }
+
+    async function load() {
+      const tbody = document.getElementById('members-tbody');
+      try {
+        const res = await smartscanApi.getFamilyMembers();
+        const d = res.data || {};
+        document.getElementById('family-name-pill').textContent = d.family_name || '-';
+        const list = d.members || [];
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">등록된 구성원이 없습니다.</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = list.map((m) => {
+          const initial = esc((m.name || '?').charAt(0));
+          return `
+            <tr class="hover:bg-slate-50" data-id="${m.id}">
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full bg-[#034EA2]/10 text-[#034EA2] flex items-center justify-center font-semibold text-sm">${initial}</div>
+                  <span class="font-semibold text-slate-800">${esc(m.name)}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-slate-600">${esc(m.email || '-')}</td>
+              <td class="px-6 py-4 text-slate-600">${esc(m.phone_number || '-')}</td>
+              <td class="px-6 py-4 text-slate-600">${m.age != null ? m.age : '-'}</td>
+              <td class="px-6 py-4">${roleBadge(m.role)}</td>
+              <td class="px-6 py-4 text-right">
+                <button data-action="delete" class="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50">삭제</button>
+              </td>
+            </tr>`;
+        }).join('');
+
+        tbody.querySelectorAll('button[data-action="delete"]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const row = btn.closest('tr');
+            const id = row.dataset.id;
+            const m = list.find((x) => String(x.id) === String(id));
+            removeMember(id, m.name);
+          });
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">조회 실패: ${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    load();
   </script>
 </body>
 </html>
