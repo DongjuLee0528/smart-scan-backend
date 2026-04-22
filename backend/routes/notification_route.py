@@ -51,22 +51,22 @@ def get_notification_service(db: Session = Depends(get_db)) -> NotificationServi
 @limiter.limit(api_rate_limit)
 @handle_service_errors
 def send_notification(
+    request: Request,
     user_id: int,
-    request: SendNotificationRequest,
-    http_request: Request,
+    payload: SendNotificationRequest,
     current_user=Depends(get_current_user),
     notification_service: NotificationService = Depends(get_notification_service)
 ):
     validate_positive_id("user_id", user_id)
-    validate_required_string("title", request.title)
-    validate_required_string("message", request.message)
+    validate_required_string("title", payload.title)
+    validate_required_string("message", payload.message)
 
     result = notification_service.send_manual_notification(
         user_id=current_user.id,
         recipient_user_id=user_id,
-        channel=request.channel,
-        title=request.title,
-        message=request.message
+        channel=payload.channel,
+        title=payload.title,
+        message=payload.message
     )
     return success_response("Notification sent successfully", result.model_dump())
 
