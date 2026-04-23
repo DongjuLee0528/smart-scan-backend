@@ -82,3 +82,15 @@ class UserRepository:
         if not user:
             user = self.create(kakao_user_id)
         return user
+
+    def update_kakao_user_id(self, user: User, kakao_user_id: str) -> User:
+        """
+        사용자의 kakao_user_id 업데이트
+
+        카카오 계정 연동(magic link) 과정에서 기존 placeholder 값(pending_xxx)을
+        실제 카카오 UID 로 교체하기 위해 사용한다.
+        UNIQUE 제약은 DB 수준에서 처리되며, 호출 측에서 사전에 중복을 확인해야 한다.
+        """
+        user.kakao_user_id = kakao_user_id
+        self.db.flush()
+        return user
