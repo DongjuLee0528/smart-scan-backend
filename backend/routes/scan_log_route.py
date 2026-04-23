@@ -43,17 +43,17 @@ router = APIRouter(tags=["scan-logs"])
 @limiter.limit(api_rate_limit)
 @handle_service_errors
 def create_scan_log(
-    request: ScanLogCreateRequest,
-    http_request: Request,
+    request: Request,
+    payload: ScanLogCreateRequest,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    validate_positive_id("item_id", request.item_id or 0)
+    validate_positive_id("item_id", payload.item_id or 0)
 
     scan_log_service = ScanLogService(db)
     result = scan_log_service.create_scan_log(
         user_id=current_user.id,
-        item_id=request.item_id,
-        status=request.status
+        item_id=payload.item_id,
+        status=payload.status
     )
     return success_response(data=result.model_dump())
