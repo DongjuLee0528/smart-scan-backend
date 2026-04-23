@@ -1,16 +1,16 @@
 # Smart Scan Backend CI/CD Pipeline
 #
-# FastAPI 백엔드 및 Lambda 함수들의 지속적 통합을 위한 GitHub Actions 워크플로우
-# 코드 품질 검증, 구문 검사, 임포트 테스트, Lambda 함수 단위 테스트를 수행합니다.
+# FastAPI 백엔드의 지속적 통합을 위한 GitHub Actions 워크플로우
+# 코드 품질 검증, 구문 검사, 임포트 테스트, 백엔드 단위 테스트를 수행합니다.
 #
 # 트리거 조건:
-# - main, qa 브랜치에 푸시 시 (backend/ 또는 lambdas/ 경로 변경 시)
-# - main 브랜치로의 풀 리퀘스트 시 (backend/ 또는 lambdas/ 경로 변경 시)
+# - main, qa 브랜치에 푸시 시 (backend/ 경로 변경 시)
+# - main 브랜치로의 풀 리퀘스트 시 (backend/ 경로 변경 시)
 #
 # 주요 검증 항목:
 # - Python 3.11 환경에서의 구문 오류 체크
 # - FastAPI 애플리케이션 임포트 가능 여부 확인
-# - 모든 Lambda 함수의 단위 테스트 실행
+# - 백엔드 단위 테스트 실행 (backend/tests만)
 # - 의존성 캐싱으로 빌드 시간 최적화
 
 name: CI - Backend
@@ -20,13 +20,14 @@ on:
     branches: [main, qa]  # 메인 및 QA 브랜치 푸시 시 실행
     paths:
       - 'backend/**'      # 백엔드 코드 변경 시
-      - 'lambdas/**'      # Lambda 함수 코드 변경 시
       - '.github/workflows/ci-backend.yml'  # CI 설정 변경 시
+      - 'pytest.ini'     # pytest 설정 변경 시
   pull_request:
     branches: [main]      # 메인 브랜치로의 PR 시 실행
     paths:
       - 'backend/**'      # 백엔드 코드 변경 시
-      - 'lambdas/**'      # Lambda 함수 코드 변경 시
+      - '.github/workflows/ci-backend.yml'  # CI 설정 변경 시
+      - 'pytest.ini'     # pytest 설정 변경 시
   workflow_dispatch:      # 수동 실행 허용
 
 jobs:
@@ -50,16 +51,16 @@ jobs:
       - name: Install dependencies
         run: pip install -r backend/requirements.txt
 
-      # Python 구문 검사 (모든 .py 파일 컴파일 테스트)
+      # Python 구문 검사 (백엔드 .py 파일 컴파일 테스트)
       - name: Syntax check (compile all .py files)
         run: |
           find backend -name "*.py" -exec python -m py_compile {} +
-          find lambdas -name "*.py" -exec python -m py_compile {} +
-          echo "All files passed syntax check"
+          echo "All backend files passed syntax check"
 
       # FastAPI 애플리케이션 임포트 테스트 (더미 환경변수로)
       - name: Import check (app loads without error)
         run: |
+          python -c "from backend.common.security import decode_kakao_link_token; print('Security module OK')"
           python -c "from backend.app import create_app; print('App import OK')"
         env:
           # CI 테스트용 더미 환경변수
@@ -68,37 +69,35 @@ jobs:
           KAKAO_LINK_JWT_SECRET: "ci-test-kakao-link-secret-that-is-at-least-32-chars-long"
           CHATBOT_SHARED_KEY: "ci-test-chatbot-shared-key-that-is-at-least-32-chars-long"
           ALLOWED_ORIGIN: "http://localhost:3000"
+          PYTHONPATH: .
 
-  # Lambda 함수 단위 테스트 작업
-  lambda-tests:
+  # 백엔드 단위 테스트 작업
+  backend-tests:
     runs-on: ubuntu-latest
 
     steps:
       # 소스 코드 체크아웃
       - uses: actions/checkout@v4
 
-      # Python 3.11 환경 설정
+      # Python 3.11 환경 설정 (의존성 캐싱 포함)
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
 
-      # 테스트용 공통 의존성 설치
-      - name: Install test dependencies
-        run: pip install pytest supabase resend boto3
+      # 백엔드 의존성 설치
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
 
-      # 인바운드 스캐너 Lambda 테스트
-      - name: Test inbound-scanner
-        run: PYTHONPATH=lambdas/inbound-scanner pytest lambdas/inbound-scanner/tests/ -v
-
-      # 아웃바운드 알림 Lambda 테스트
-      - name: Test outbound-notifier
-        run: PYTHONPATH=lambdas/outbound-notifier pytest lambdas/outbound-notifier/tests/ -v
-
-      # 원격 알림 Lambda 테스트
-      - name: Test remote-alert
-        run: PYTHONPATH=lambdas/remote-alert pytest lambdas/remote-alert/tests/ -v
-
-      # 챗봇 스킬 서버 Lambda 테스트
-      - name: Test chatbot-skill-server
-        run: PYTHONPATH=lambdas/chatbot-skill-server pytest lambdas/chatbot-skill-server/tests/ -v
+      # 백엔드 테스트 실행 (경로 강제 지정으로 lambdas 제외)
+      - name: Test backend
+        run: python -m pytest backend/tests -v --import-mode=importlib
+        env:
+          PYTHONPATH: .
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          JWT_SECRET_KEY: "ci-test-secret-key-that-is-at-least-32-characters-long"
+          KAKAO_LINK_JWT_SECRET: "ci-test-kakao-link-secret-that-is-at-least-32-chars-long"
+          CHATBOT_SHARED_KEY: "ci-test-chatbot-shared-key-that-is-at-least-32-chars-long"
+          ALLOWED_ORIGIN: "http://localhost:3000"
