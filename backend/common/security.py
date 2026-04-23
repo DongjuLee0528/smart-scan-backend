@@ -144,3 +144,59 @@ def decode_token(token: str, expected_type: str | None = None) -> dict:
 
     except InvalidTokenError as exc:
         raise UnauthorizedException("Invalid or expired token") from exc
+
+
+def create_kakao_link_token(kakao_user_id: str) -> tuple[str, datetime]:
+    """
+    카카오 계정 연동용 단기 JWT 발급
+
+    챗봇 Lambda 에서 미연동 사용자에게 전달할 링크에 포함되는 토큰.
+    웹에서 사용자가 로그인 상태로 이 토큰을 제출하면 해당 kakao_user_id 를
+    현재 로그인 사용자의 계정에 연결한다.
+
+    JWT_SECRET_KEY 와 분리된 KAKAO_LINK_JWT_SECRET 으로 서명하여
+    한쪽이 유출되어도 다른 쪽 토큰 체계가 위험해지지 않도록 격리한다.
+    """
+    if not kakao_user_id or not kakao_user_id.strip():
+        raise ValueError("kakao_user_id is required")
+
+    issued_at = datetime.now(timezone.utc)
+    expires_at = issued_at + timedelta(minutes=settings.KAKAO_LINK_TOKEN_EXPIRE_MINUTES)
+    payload = {
+        "kakao_user_id": kakao_user_id.strip(),
+        "type": "kakao_link",
+        "iat": int(issued_at.timestamp()),
+        "exp": int(expires_at.timestamp()),
+    }
+    token = jwt.encode(
+        payload,
+        settings.KAKAO_LINK_JWT_SECRET,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+    return token, expires_at
+
+
+def decode_kakao_link_token(token: str) -> dict:
+    """
+    카카오 계정 연동 JWT 검증 및 페이로드 반환
+
+    KAKAO_LINK_JWT_SECRET 로 서명 검증, type=="kakao_link" 여부와 만료 확인.
+    반환 페이로드는 {"kakao_user_id", "type", "iat", "exp"} 구조.
+    """
+    try:
+        payload = jwt.decode(
+            token,
+            settings.KAKAO_LINK_JWT_SECRET,
+            algorithms=[settings.JWT_ALGORITHM],
+        )
+    except InvalidTokenError as exc:
+        raise UnauthorizedException("Invalid or expired kakao link token") from exc
+
+    if payload.get("type") != "kakao_link":
+        raise UnauthorizedException("Invalid token type")
+
+    kakao_user_id = payload.get("kakao_user_id")
+    if not kakao_user_id or not isinstance(kakao_user_id, str):
+        raise UnauthorizedException("Invalid kakao link token payload")
+
+    return payload
