@@ -13,6 +13,7 @@
 
 ---
 
+
 ## Step 2. DB 스키마 생성
 
 1. 좌측 메뉴 → **SQL Editor** → **New Query**
