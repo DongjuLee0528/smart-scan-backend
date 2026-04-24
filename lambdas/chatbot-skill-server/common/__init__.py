@@ -1,13 +1,13 @@
 """
-Common utilities for Smart Scan chatbot skill server.
+Smart Scan 챗봇 스킬 서버 공통 유틸리티
 
-This package contains shared utility modules for common operations.
-Includes database connections, response formatting, and helper functions.
+카카오톡 챗봇 스킬 서버에서 사용되는 공통 유틸리티 모듈들을 제공합니다.
+데이터베이스 연결, 응답 포맷팅, JWT 토큰 생성 등의 기능을 포함합니다.
 
-Available modules:
-- db: Supabase database client
-- response: Standard response formatting
-- Other utility functions
+제공 모듈:
+- db: Supabase 데이터베이스 클라이언트
+- response: 카카오톡 챗봇 응답 포맷팅
+- token_utils: 카카오 계정 연동용 JWT 토큰 생성
 
-Used across the chatbot skill server Lambda function.
+챗봇 스킬 서버 Lambda 함수 전체에서 공통으로 사용됩니다.
 """
