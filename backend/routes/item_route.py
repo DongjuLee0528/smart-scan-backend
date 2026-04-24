@@ -31,6 +31,19 @@ def get_items(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """
+    아이템 목록 조회
+
+    로그인한 사용자가 속한 가족의 모든 아이템을 조회합니다.
+    pending 상태와 일반 아이템을 모두 포함하여 반환합니다.
+
+    Returns:
+        가족의 모든 아이템 목록과 총 개수
+
+    Raises:
+        AuthenticationError: 인증 토큰이 유효하지 않은 경우
+        ForbiddenError: 가족에 속하지 않은 경우
+    """
     item_service = ItemService(db)
     result = item_service.get_items(current_user.id)
     return success_response(data=result.model_dump())
