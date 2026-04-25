@@ -1,0 +1,29 @@
+body {
+  font-family: 'Inter', 'Noto Sans KR', sans-serif;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass-card {
+  background: rgba(31, 41, 55, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid rgba(3, 78, 162, 0.15);
+  border-top-color: #034EA2;
+  border-radius: 9999px;
+  animation: spin 0.8s linear infinite;
+}
