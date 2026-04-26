@@ -365,21 +365,19 @@ class FamilyInvitationService(ServiceBase):
             # 2. 현재 family_member 삭제
             self.family_member_repository.delete(current_member)
 
-            # 3. 현재 family가 본인만 있고 owner였으면 family 자체 삭제
+            # 3. 현재 family가 본인만 있고 owner였으면 device 연결만 해제
+            #    (families 하위 items/tags/master_tags 등에 ON DELETE CASCADE 미설정 FK가
+            #     있어 family 자체를 삭제하면 IntegrityError로 500 발생함.
+            #     빈 family는 멤버가 없어 아무도 조회 불가하므로 남겨둬도 무해하며,
+            #     정리는 별도 배치/관리 엔드포인트로 분리한다.)
             if (
                 current_family
                 and current_family.owner_user_id == actor.id
                 and current_member_count == 1
             ):
-                # TODO: family 삭제 전 연관 devices/tags/items의 FK 제약 확인 필요
-                # 현재 devices 테이블은 families.id ON DELETE CASCADE 미설정 가능성이 있음
-                # 디바이스가 있으면 먼저 family 연결 해제 시도
                 orphan_device = self.device_repository.find_by_family_id(current_family.id)
                 if orphan_device:
                     self.device_repository.clear_family(orphan_device)
-
-                self.db.delete(current_family)
-                self.db.flush()
 
             # 4. 새 family_member 생성
             new_member = self.family_member_repository.create(

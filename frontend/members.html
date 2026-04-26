@@ -49,8 +49,8 @@
         </table>
       </div>
 
-      <!-- 대기 중인 초대 섹션 -->
-      <div class="mt-8">
+      <!-- 대기 중인 초대 섹션 (owner 전용) -->
+      <div id="invitations-section" class="mt-8 hidden">
         <h2 class="text-xl font-bold text-slate-900 mb-3">대기 중인 초대</h2>
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <table class="w-full text-sm">
@@ -172,7 +172,7 @@
       const tbody = document.getElementById('invitations-tbody');
       try {
         const res = await smartscanApi.listInvitations();
-        const list = (res && res.data) || [];
+        const list = (res && res.data && res.data.invitations) || [];
         if (list.length === 0) {
           tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">대기 중인 초대가 없습니다.</td></tr>`;
           return;
@@ -211,6 +211,20 @@
         const d = res.data || {};
         document.getElementById('family-name-pill').textContent = d.family_name || '-';
         const list = d.members || [];
+
+        // 현재 로그인 유저의 role 확인 → owner만 초대 UI 노출
+        const currentUser = smartscanApi.getUser();
+        const currentMember = list.find((m) => m.email === (currentUser && currentUser.email));
+        const isOwner = currentMember && currentMember.role === 'owner';
+        document.getElementById('add-btn').style.display = isOwner ? '' : 'none';
+        const invSection = document.getElementById('invitations-section');
+        if (isOwner) {
+          invSection.classList.remove('hidden');
+          loadInvitations();
+        } else {
+          invSection.classList.add('hidden');
+        }
+
         if (list.length === 0) {
           tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">등록된 구성원이 없습니다.</td></tr>`;
         } else {
@@ -246,7 +260,6 @@
       } catch (err) {
         tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">조회 실패: ${esc(err.message)}</td></tr>`;
       }
-      loadInvitations();
     }
 
     load();

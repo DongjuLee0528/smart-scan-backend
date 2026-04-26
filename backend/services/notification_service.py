@@ -51,6 +51,7 @@ from backend.schemas.notification_schema import (
     NotificationResponse,
     NotificationType,
 )
+from backend.services.email_service import EmailService
 from backend.services.monitoring_service import MonitoringService
 
 
@@ -59,6 +60,7 @@ class NotificationService(ServiceBase):
         super().__init__(db)
         self.notification_repository = NotificationRepository(db)
         self.monitoring_service = MonitoringService(db)
+        self.email_service = EmailService()
 
     def send_manual_notification(
         self,
@@ -73,9 +75,8 @@ class NotificationService(ServiceBase):
         validate_non_empty_string(title, "title")
         validate_non_empty_string(message, "message")
 
-        # 발신자 권한 및 가족 컨텍스트 확인
+        # 발신자 가족 컨텍스트 확인 (모든 가족 구성원 허용)
         actor, actor_family_member, family = self._get_actor_context(user_id)
-        self._ensure_family_owner(actor.id, actor_family_member.role, family.owner_user_id)
 
         # 수신자가 발신자와 동일한 가족에 속하는지 확인
         recipient_member = self._get_family_member_or_raise(family.id, recipient_user_id)
@@ -205,7 +206,20 @@ class NotificationService(ServiceBase):
             created_at=notification.created_at
         )
 
-    @staticmethod
-    def _dispatch_notification(notification) -> None:
-        # TODO: 실시간 알림 발송 미구현 (카카오톡/Push 등)
-        logger.info("_dispatch_notification called for notification_id=%s (not yet implemented)", notification.id if hasattr(notification, 'id') else notification)
+    def _dispatch_notification(self, notification) -> None:
+        channel = notification.channel
+        if channel == NotificationChannel.EMAIL.value:
+            try:
+                sender = self.user_repository.find_by_id(notification.sender_user_id)
+                recipient = self.user_repository.find_by_id(notification.recipient_user_id)
+                if recipient and recipient.email:
+                    self.email_service.send_alert_email(
+                        to_email=recipient.email,
+                        sender_name=sender.name if sender else "SmartScan",
+                        title=notification.title,
+                        message=notification.message,
+                    )
+            except Exception as e:
+                logger.warning("이메일 알림 발송 실패 notification_id=%s: %s", notification.id, e)
+        else:
+            logger.info("_dispatch_notification: channel=%s not yet implemented (notification_id=%s)", channel, notification.id)

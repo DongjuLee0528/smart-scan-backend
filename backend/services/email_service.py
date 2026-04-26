@@ -73,6 +73,56 @@ class EmailService:
             server.login(self.smtp_username, self.smtp_password)
             server.send_message(message)
 
+    def send_alert_email(
+        self,
+        to_email: str,
+        sender_name: str,
+        title: str,
+        message: str,
+    ) -> None:
+        """수동 알림 이메일 발송 (원격 알림 기능용)"""
+        if not all([self.smtp_host, self.smtp_username, self.smtp_password, self.from_email]):
+            raise CustomException(500, "SMTP settings are not configured")
+
+        plain_text = "\n".join([
+            f"{sender_name}님으로부터 SmartScan Hub 알림이 도착했습니다.",
+            "",
+            f"제목: {title}",
+            f"내용: {message}",
+        ])
+        html_body = f"""
+        <html>
+          <body style="font-family:Arial,sans-serif;color:#333;">
+            <h2 style="color:#034EA2;">SmartScan Hub 알림</h2>
+            <p><strong>{sender_name}</strong>님으로부터 알림이 도착했습니다.</p>
+            <div style="background:#f8fafc;border-left:4px solid #034EA2;
+                        padding:12px 16px;margin:16px 0;border-radius:4px;">
+              <p style="font-weight:600;margin:0 0 8px;">{title}</p>
+              <p style="margin:0;">{message}</p>
+            </div>
+          </body>
+        </html>
+        """
+
+        msg = EmailMessage()
+        msg["Subject"] = f"[SmartScan] {title}"
+        msg["From"] = f"{self.from_name} <{self.from_email}>"
+        msg["To"] = to_email
+        msg.set_content(plain_text)
+        msg.add_alternative(html_body, subtype="html")
+
+        if self.smtp_use_ssl:
+            with smtplib.SMTP_SSL(self.smtp_host, self.smtp_port) as server:
+                server.login(self.smtp_username, self.smtp_password)
+                server.send_message(msg)
+            return
+
+        with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
+            if self.smtp_use_tls:
+                server.starttls()
+            server.login(self.smtp_username, self.smtp_password)
+            server.send_message(msg)
+
     def send_invitation_email(
         self,
         to_email: str,
