@@ -97,5 +97,20 @@ window.smartscanCommon = {
     // 같은 origin 내부 경로만 허용 (open redirect 방지)
     if (redirect && redirect.startsWith('/')) return redirect;
     return defaultTarget;
+  },
+
+  // 모달 상태 전환: activeId만 flex로 표시, 나머지 hidden
+  showModalState: function(activeId, allIds) {
+    allIds.forEach(function(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+    });
+    const active = document.getElementById(activeId);
+    if (active) {
+      active.classList.remove('hidden');
+      active.classList.add('flex');
+    }
   }
 };
