@@ -6,8 +6,9 @@
   <title>구성원 관리 - SmartScan Hub</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <style>body { font-family: 'Noto Sans KR', sans-serif; }</style>
+  <link href="assets/styles.css" rel="stylesheet" />
   <script src="assets/api.js"></script>
+  <script src="assets/common.js"></script>
   <script src="assets/layout.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900 flex h-screen overflow-hidden antialiased">
@@ -47,6 +48,28 @@
             <tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">불러오는 중...</td></tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- 대기 중인 초대 섹션 (owner 전용) -->
+      <div id="invitations-section" class="mt-8 hidden">
+        <h2 class="text-xl font-bold text-slate-900 mb-3">대기 중인 초대</h2>
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-100 text-slate-500 bg-slate-50/50">
+                <th class="text-left font-medium px-6 py-3">이메일</th>
+                <th class="text-left font-medium px-6 py-3">초대자</th>
+                <th class="text-left font-medium px-6 py-3">발송일</th>
+                <th class="text-left font-medium px-6 py-3">만료일</th>
+                <th class="text-left font-medium px-6 py-3">상태</th>
+                <th class="text-right font-medium px-6 py-3">작업</th>
+              </tr>
+            </thead>
+            <tbody id="invitations-tbody" class="divide-y divide-slate-100">
+              <tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">불러오는 중...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </main>
@@ -133,6 +156,43 @@
       return `<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-semibold">구성원</span>`;
     }
 
+    async function loadInvitations() {
+      const tbody = document.getElementById('invitations-tbody');
+      try {
+        const res = await smartscanApi.listInvitations();
+        const list = (res && res.data && res.data.invitations) || [];
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">대기 중인 초대가 없습니다.</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = list.map((inv) => `
+          <tr class="hover:bg-slate-50" data-inv-id="${inv.id}">
+            <td class="px-6 py-4 text-slate-700">${esc(inv.email)}</td>
+            <td class="px-6 py-4 text-slate-600">${esc(inv.inviter_name || '-')}</td>
+            <td class="px-6 py-4 text-slate-500 text-xs">${fmt(inv.created_at)}</td>
+            <td class="px-6 py-4 text-slate-500 text-xs">${fmt(inv.expires_at)}</td>
+            <td class="px-6 py-4">
+              <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-700 text-xs font-semibold">수락 대기</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <button data-action="cancel-invite" class="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50">취소</button>
+            </td>
+          </tr>`).join('');
+
+        tbody.querySelectorAll('button[data-action="cancel-invite"]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const row = btn.closest('tr');
+            const id = row.dataset.invId;
+            const inv = list.find((x) => String(x.id) === String(id));
+            cancelInvite(id, inv ? inv.email : id);
+          });
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">조회 실패: ${esc(err.message)}</td></tr>`;
+      }
+    }
+
+
     async function load() {
       const tbody = document.getElementById('members-tbody');
       try {
@@ -140,6 +200,20 @@
         const d = res.data || {};
         document.getElementById('family-name-pill').textContent = d.family_name || '-';
         const list = d.members || [];
+
+        // 현재 로그인 유저의 role 확인 → owner만 초대 UI 노출
+        const currentUser = smartscanApi.getUser();
+        const currentMember = list.find((m) => m.email === (currentUser && currentUser.email));
+        const isOwner = currentMember && currentMember.role === 'owner';
+        document.getElementById('add-btn').style.display = isOwner ? '' : 'none';
+        const invSection = document.getElementById('invitations-section');
+        if (isOwner) {
+          invSection.classList.remove('hidden');
+          loadInvitations();
+        } else {
+          invSection.classList.add('hidden');
+        }
+
         if (list.length === 0) {
           tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">등록된 구성원이 없습니다.</td></tr>`;
           return;

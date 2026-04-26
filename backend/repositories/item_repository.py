@@ -50,7 +50,15 @@ class ItemRepository:
         self.db = db
 
     def get_active_items_by_user_device_id(self, user_device_id: int) -> List[Item]:
-        """사용자 디바이스의 활성 아이템 목록 조회"""
+        """
+        사용자 디바이스의 활성 아이템 목록 조회
+
+        Args:
+            user_device_id: 조회할 사용자-디바이스 연결 ID
+
+        Returns:
+            List[Item]: 활성 아이템 목록 (최신 등록순)
+        """
         stmt = select(Item).where(
             and_(
                 Item.user_device_id == user_device_id,
@@ -60,7 +68,17 @@ class ItemRepository:
         return self.db.execute(stmt).scalars().all()
 
     def get_active_items_by_user_device_ids(self, user_device_ids: List[int]) -> List[Item]:
-        """여러 사용자 디바이스의 활성 아이템 목록 조회"""
+        """
+        여러 사용자 디바이스의 활성 아이템 목록 조회
+
+        가족 구성원 전체의 아이템을 조회할 때 사용합니다.
+
+        Args:
+            user_device_ids: 조회할 사용자-디바이스 연결 ID 목록
+
+        Returns:
+            List[Item]: 모든 활성 아이템 목록 (최신 등록순)
+        """
         if not user_device_ids:
             return []
 

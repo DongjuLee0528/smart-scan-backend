@@ -7,26 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: 'Inter', 'Noto Sans KR', sans-serif; }
-    .glass-card {
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    .dark .glass-card {
-      background: rgba(31, 41, 55, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .spinner {
-      width: 2.5rem; height: 2.5rem;
-      border: 3px solid rgba(3, 78, 162, 0.15);
-      border-top-color: #034EA2;
-      border-radius: 9999px;
-      animation: spin 0.8s linear infinite;
-    }
-  </style>
+  <link href="assets/styles.css" rel="stylesheet" />
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300 min-h-screen flex flex-col">
 
@@ -124,65 +105,8 @@
 
   <!-- SmartScan Hub API client -->
   <script src="assets/api.js"></script>
+  <script src="assets/common.js"></script>
 
-  <script>
-    lucide.createIcons && lucide.createIcons();
-
-    const toggle = document.getElementById('theme-toggle');
-    toggle.addEventListener('click', () => {
-      document.documentElement.classList.toggle('dark');
-    });
-
-    const loading = document.getElementById('state-loading');
-    const success = document.getElementById('state-success');
-    const errorEl = document.getElementById('state-error');
-    const errorMsg = document.getElementById('error-message');
-
-    function show(el) {
-      [loading, success, errorEl].forEach(e => e.classList.add('hidden'));
-      el.classList.remove('hidden');
-      el.classList.add('flex');
-    }
-
-    function showError(msg) {
-      if (msg) errorMsg.textContent = msg;
-      show(errorEl);
-    }
-
-    (async function run() {
-      const params = new URLSearchParams(location.search);
-      const token = params.get('token');
-
-      if (!token) {
-        showError('연동 토큰이 없습니다. 카카오톡에서 전달받은 링크로 접속해주세요.');
-        return;
-      }
-
-      // 미로그인 시: 현재 URL 전체를 redirect 파라미터로 보존하여 로그인 후 복귀
-      if (!smartscanApi.isLoggedIn()) {
-        const redirect = encodeURIComponent(location.pathname + location.search);
-        location.replace(`login.html?redirect=${redirect}`);
-        return;
-      }
-
-      try {
-        await smartscanApi.linkKakao(token);
-        show(success);
-      } catch (err) {
-        let msg = '링크가 만료되었거나 유효하지 않습니다.';
-        if (err) {
-          if (err.status === 401) {
-            // 세션 만료: 재로그인 후 복귀
-            smartscanApi.clearTokens();
-            const redirect = encodeURIComponent(location.pathname + location.search);
-            location.replace(`login.html?redirect=${redirect}`);
-            return;
-          }
-          if (err.message) msg = err.message;
-        }
-        showError(msg);
-      }
-    })();
-  </script>
+  <script src="assets/pages/link-kakao.js"></script>
 </body>
 </html>

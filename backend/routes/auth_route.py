@@ -82,6 +82,23 @@ async def verify_email(
     payload: VerifyEmailRequest,
     auth_service: AuthService = Depends(get_auth_service)
 ):
+    """
+    이메일 인증 코드 검증
+
+    발송된 6자리 인증 코드를 검증하여 이메일 주소 소유권을 확인합니다.
+    인증 완료 시 회원가입 절차를 계속 진행할 수 있습니다.
+
+    Args:
+        request: slowapi가 rate limit 키(IP)를 뽑기 위한 starlette Request
+        payload: 이메일 주소와 인증 코드가 포함된 요청 본문
+
+    Returns:
+        성공 시 이메일 인증 완료 메시지
+
+    Raises:
+        ValidationError: 인증 코드가 잘못되었거나 만료된 경우
+        RateLimitExceeded: 요청 제한 초과 시
+    """
     result = auth_service.verify_email(payload.email, payload.code)
     return success_response(
         "Email verified successfully",
@@ -97,6 +114,24 @@ async def register(
     payload: RegisterRequest,
     auth_service: AuthService = Depends(get_auth_service)
 ):
+    """
+    회원가입
+
+    이메일 인증을 완료한 후 카카오 연동 회원가입을 진행합니다.
+    회원가입과 동시에 개인 가족을 생성하고 소유자로 등록됩니다.
+
+    Args:
+        request: slowapi가 rate limit 키(IP)를 뽑기 위한 starlette Request
+        payload: 회원가입 정보 (카카오 ID, 이름, 이메일, 비밀번호 등)
+
+    Returns:
+        성공 시 생성된 사용자 및 가족 정보
+
+    Raises:
+        ValidationError: 필수 정보 누락 또는 형식 오류
+        ConflictError: 이미 등록된 이메일 또는 카카오 ID
+        RateLimitExceeded: 요청 제한 초과 시
+    """
     result = auth_service.register(
         kakao_user_id=payload.kakao_user_id,
         name=payload.name,

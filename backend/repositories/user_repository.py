@@ -20,19 +20,55 @@ class UserRepository:
         self.db = db
 
     def find_by_kakao_user_id(self, kakao_user_id: str) -> Optional[User]:
-        """카카오 사용자 ID로 사용자 조회"""
+        """
+        카카오 사용자 ID로 사용자 조회
+
+        카카오 로그인 시 사용자 식별과 챗봇 서비스 연동에 사용됩니다.
+
+        Args:
+            kakao_user_id: 카카오 고유 사용자 식별자
+
+        Returns:
+            Optional[User]: 일치하는 사용자 또는 None
+        """
         return self.db.query(User).filter(User.kakao_user_id == kakao_user_id).first()
 
     def find_by_id(self, user_id: int) -> Optional[User]:
-        """사용자 ID로 사용자 조회"""
+        """
+        사용자 ID로 사용자 조회
+
+        Args:
+            user_id: 조회할 사용자의 고유 ID
+
+        Returns:
+            Optional[User]: 일치하는 사용자 또는 None
+        """
         return self.db.query(User).filter(User.id == user_id).first()
 
     def find_by_email(self, email: str) -> Optional[User]:
-        """이메일 주소로 사용자 조회"""
+        """
+        이메일 주소로 사용자 조회
+
+        로그인 시 이메일 기반 사용자 인증에 사용됩니다.
+
+        Args:
+            email: 조회할 사용자의 이메일 주소
+
+        Returns:
+            Optional[User]: 일치하는 사용자 또는 None
+        """
         return self.db.query(User).filter(User.email == email).first()
 
     def find_by_phone(self, phone: str) -> Optional[User]:
-        """전화번호로 사용자 조회"""
+        """
+        전화번호로 사용자 조회
+
+        Args:
+            phone: 조회할 사용자의 전화번호
+
+        Returns:
+            Optional[User]: 일치하는 사용자 또는 None
+        """
         return self.db.query(User).filter(User.phone == phone).first()
 
     def create(
@@ -44,7 +80,20 @@ class UserRepository:
         phone: str | None = None,
         age: int | None = None
     ) -> User:
-        """새 사용자 생성 (카카오 ID 필수, 나머지 선택사항)"""
+        """
+        새 사용자 생성 (카카오 ID 필수, 나머지 선택사항)
+
+        Args:
+            kakao_user_id: 카카오 고유 사용자 식별자 (필수)
+            name: 사용자 이름 (선택사항)
+            email: 이메일 주소 (선택사항)
+            password_hash: 해시된 비밀번호 (선택사항)
+            phone: 전화번호 (선택사항)
+            age: 나이 (선택사항)
+
+        Returns:
+            User: 생성된 사용자 엔티티
+        """
         user = User(
             kakao_user_id=kakao_user_id,
             name=name,
@@ -66,7 +115,20 @@ class UserRepository:
         phone: str | None = None,
         age: int | None = None
     ) -> User:
-        """사용자 프로필 정보 업데이트 (회원가입 완성 시 사용)"""
+        """
+        사용자 프로필 정보 업데이트 (회원가입 완성 시 사용)
+
+        Args:
+            user: 업데이트할 사용자 엔티티
+            name: 새로운 사용자 이름
+            email: 새로운 이메일 주소
+            password_hash: 새로운 해시된 비밀번호 (선택사항)
+            phone: 새로운 전화번호 (선택사항)
+            age: 새로운 나이 (선택사항)
+
+        Returns:
+            User: 업데이트된 사용자 엔티티
+        """
         user.name = name
         user.email = email
         if password_hash is not None:
@@ -77,7 +139,15 @@ class UserRepository:
         return user
 
     def get_or_create(self, kakao_user_id: str) -> User:
-        """카카오 사용자 조회 또는 신규 생성 (소셜 로그인 시 사용)"""
+        """
+        카카오 사용자 조회 또는 신규 생성 (소셜 로그인 시 사용)
+
+        Args:
+            kakao_user_id: 카카오 고유 사용자 식별자
+
+        Returns:
+            User: 기존 사용자 또는 새로 생성된 사용자
+        """
         user = self.find_by_kakao_user_id(kakao_user_id)
         if not user:
             user = self.create(kakao_user_id)

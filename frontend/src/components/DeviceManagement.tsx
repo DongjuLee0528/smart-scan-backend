@@ -1,22 +1,42 @@
+/**
+ * RFID 디바이스 관리 컴포넌트
+ *
+ * Smart Scan 시스템에 연결된 RFID 리더기 디바이스들을 등록하고 관리하는 페이지입니다.
+ * 새로운 디바이스 등록, 기존 디바이스 목록 조회, 디바이스 삭제 기능을 제공합니다.
+ */
+
 import { useState } from "react";
 
+// RFID 디바이스 정보 인터페이스
 interface Device {
-  id: string;
-  name: string;
-  serial: string;
-  status: "활성" | "비활성";
-  registeredAt: string;
+  id: string;          // 고유 식별자
+  name: string;        // 사용자 정의 디바이스 이름 (예: "현관 리더기")
+  serial: string;      // 하드웨어 시리얼 번호
+  status: "활성" | "비활성";  // 디바이스 동작 상태
+  registeredAt: string;     // 등록 날짜
 }
 
+// 초기 등록된 디바이스 데이터 (임시 데이터)
 const initialDevices: Device[] = [
   { id: "1", name: "현관 리더기", serial: "SH-0001", status: "활성", registeredAt: "2023.10.27" },
 ];
 
+/**
+ * 디바이스 관리 메인 컴포넌트
+ *
+ * 디바이스 등록 폼과 기존 등록된 디바이스 목록을 테이블 형태로 표시합니다.
+ * 실제 환경에서는 백엔드 API와 연동하여 데이터를 관리해야 합니다.
+ */
 export default function DeviceManagement() {
-  const [devices, setDevices] = useState<Device[]>(initialDevices);
-  const [serial, setSerial] = useState("SH-0001");
-  const [deviceName, setDeviceName] = useState("현관 리더기");
+  const [devices, setDevices] = useState<Device[]>(initialDevices);  // 디바이스 목록 상태
+  const [serial, setSerial] = useState("SH-0001");                   // 입력 중인 시리얼 번호
+  const [deviceName, setDeviceName] = useState("현관 리더기");        // 입력 중인 디바이스 이름
 
+  /**
+   * 새 디바이스 등록 핸들러
+   *
+   * 시리얼 번호와 디바이스 이름을 검증한 후 새로운 디바이스를 목록에 추가합니다.
+   */
   const handleRegister = () => {
     if (!serial || !deviceName) return;
     const newDevice: Device = {
