@@ -117,7 +117,9 @@
     const errorMsg = document.getElementById('error-message');
 
     function show(el) {
-      smartscanCommon.showModalState(el.id, ['state-loading', 'state-success', 'state-error']);
+      [loading, success, errorEl].forEach(e => e.classList.add('hidden'));
+      el.classList.remove('hidden');
+      el.classList.add('flex');
     }
 
     function showError(msg) {
