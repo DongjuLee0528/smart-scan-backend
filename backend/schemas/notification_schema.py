@@ -54,6 +54,7 @@ class NotificationChannel(str, Enum):
     """
     KAKAO = "kakao"  # 카카오톡 알림
     SMS = "sms"  # SMS 문자 메시지
+    EMAIL = "email"  # 이메일 알림
 
 
 def _validate_required_text(value: str, field_name: str) -> str:
