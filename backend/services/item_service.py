@@ -4,6 +4,7 @@ from backend.common.exceptions import BadRequestException, ForbiddenException, N
 from backend.common.validator import validate_positive_int
 from backend.repositories.item_repository import ItemRepository
 from backend.repositories.master_tag_repository import MasterTagRepository
+from backend.repositories.tag_repository import TagRepository
 from backend.repositories.user_device_repository import UserDeviceRepository
 from backend.schemas.item_schema import ItemListResponse, ItemResponse
 
@@ -27,6 +28,7 @@ class ItemService:
         self.item_repository = ItemRepository(db)
         self.master_tag_repository = MasterTagRepository(db)
         self.user_device_repository = UserDeviceRepository(db)
+        self.tag_repository = TagRepository(db)
 
     def get_items(self, user_id: int) -> ItemListResponse:
         """
@@ -84,6 +86,11 @@ class ItemService:
                 user_device_id=user_device.id,
                 name=name,
                 tag_uid=master_tag.tag_uid
+            )
+            self._upsert_tag_for_item(
+                tag_uid=master_tag.tag_uid,
+                name=name,
+                user_device=user_device,
             )
             self.db.commit()
             self.db.refresh(item)
@@ -150,6 +157,13 @@ class ItemService:
                 name=name,
                 tag_uid=new_tag_uid
             )
+            tag_uid_to_sync = new_tag_uid if new_tag_uid else item.tag_uid
+            if tag_uid_to_sync:
+                self._upsert_tag_for_item(
+                    tag_uid=tag_uid_to_sync,
+                    name=name if name is not None else item.name,
+                    user_device=user_device,
+                )
             self.db.commit()
             self.db.refresh(updated_item)
             return ItemResponse(
@@ -221,6 +235,11 @@ class ItemService:
 
         try:
             updated = self.item_repository.bind_tag(item=item, tag_uid=master_tag.tag_uid)
+            self._upsert_tag_for_item(
+                tag_uid=master_tag.tag_uid,
+                name=item.name,
+                user_device=user_device,
+            )
             self.db.commit()
             self.db.refresh(updated)
             return ItemResponse(
@@ -326,6 +345,26 @@ class ItemService:
         if not user_device.device or user_device.device.family_id is None:
             raise BadRequestException("사용자 기기가 가족에 등록되어 있지 않습니다")
         return user_device
+
+    def _upsert_tag_for_item(self, tag_uid: str, name: str, user_device) -> None:
+        """item에 tag_uid가 세팅될 때 tags 레코드를 생성하거나 갱신한다."""
+        existing = self.tag_repository.find_by_tag_uid(tag_uid)
+        if existing:
+            self.tag_repository.update(
+                existing,
+                name=name,
+                owner_user_id=user_device.user_id,
+                device_id=user_device.device_id,
+                is_active=True,
+            )
+        else:
+            self.tag_repository.create(
+                tag_uid=tag_uid,
+                name=name,
+                family_id=user_device.device.family_id,
+                owner_user_id=user_device.user_id,
+                device_id=user_device.device_id,
+            )
 
     def _ensure_family_tag_uid_available(
         self,
