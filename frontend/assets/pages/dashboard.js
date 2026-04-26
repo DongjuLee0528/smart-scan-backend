@@ -1,7 +1,3 @@
-smartscanLayout.init({ active: 'dashboard' });
-const esc = smartscanLayout.escapeHtml;
-const fmt = smartscanLayout.formatDateTime;
-
 function statusBadge(status, count) {
   if (status === 'LOST' || (count != null && count > 0 && status === 'lost')) {
     return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>누락</span>`;
@@ -13,6 +9,7 @@ function statusBadge(status, count) {
 }
 
 async function loadDashboard() {
+  const esc = smartscanLayout.escapeHtml;
   try {
     const res = await smartscanApi.getDashboard();
     const d = res.data;
@@ -74,6 +71,8 @@ async function loadDashboard() {
 }
 
 async function loadMyTags() {
+  const esc = smartscanLayout.escapeHtml;
+  const fmt = smartscanLayout.formatDateTime;
   try {
     const res = await smartscanApi.getMyTags();
     const tbody = document.getElementById('mytags-tbody');
@@ -95,28 +94,34 @@ async function loadMyTags() {
   }
 }
 
-document.getElementById('notify-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const userId = document.getElementById('notify-user').value;
-  const channel = document.getElementById('notify-channel').value;
-  const title = document.getElementById('notify-title').value.trim();
-  const message = document.getElementById('notify-message').value.trim();
-  if (!userId) return smartscanLayout.toast('구성원을 선택하세요.', 'error');
-  if (!title || !message) return smartscanLayout.toast('제목과 메시지를 입력하세요.', 'error');
+document.addEventListener('DOMContentLoaded', function() {
+  smartscanLayout.init({ active: 'dashboard' });
+  const esc = smartscanLayout.escapeHtml;
+  const fmt = smartscanLayout.formatDateTime;
 
-  const btn = document.getElementById('notify-submit');
-  btn.disabled = true;
-  try {
-    await smartscanApi.sendNotification(userId, { channel, title, message });
-    smartscanLayout.toast('알림을 전송했습니다.', 'success');
-    document.getElementById('notify-title').value = '';
-    document.getElementById('notify-message').value = '';
-  } catch (err) {
-    smartscanLayout.toast(err.message || '알림 전송 실패', 'error');
-  } finally {
-    btn.disabled = false;
-  }
+  document.getElementById('notify-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const userId = document.getElementById('notify-user').value;
+    const channel = document.getElementById('notify-channel').value;
+    const title = document.getElementById('notify-title').value.trim();
+    const message = document.getElementById('notify-message').value.trim();
+    if (!userId) return smartscanLayout.toast('구성원을 선택하세요.', 'error');
+    if (!title || !message) return smartscanLayout.toast('제목과 메시지를 입력하세요.', 'error');
+
+    const btn = document.getElementById('notify-submit');
+    btn.disabled = true;
+    try {
+      await smartscanApi.sendNotification(userId, { channel, title, message });
+      smartscanLayout.toast('알림을 전송했습니다.', 'success');
+      document.getElementById('notify-title').value = '';
+      document.getElementById('notify-message').value = '';
+    } catch (err) {
+      smartscanLayout.toast(err.message || '알림 전송 실패', 'error');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  loadDashboard();
+  loadMyTags();
 });
-
-loadDashboard();
-loadMyTags();
