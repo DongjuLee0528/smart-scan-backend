@@ -43,6 +43,7 @@ jobs:
         run: |
           cd lambdas/remote-alert
           pip install -r requirements.txt -t ./package --quiet
+          cp -r ../lambda_shared ./package/
           cp -r common ./package/
           cp -r services ./package/
           cp lambda_function.py ./package/
