@@ -69,6 +69,7 @@ jobs:
           pip install -r requirements.txt -t ./package --quiet \
             --platform manylinux2014_x86_64 --only-binary=:all: --python-version 3.12
           # 소스 코드 복사
+          cp -r ../lambda_shared ./package/ # 공유 모듈
           cp -r common ./package/          # 공통 모듈
           cp -r repositories ./package/    # 데이터 접근 계층
           cp -r services ./package/        # 비즈니스 로직 계층
