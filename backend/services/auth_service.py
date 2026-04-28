@@ -47,19 +47,19 @@ from backend.services.email_service import EmailService
 
 class AuthService:
     """
-    인증 관련 비즈니스 로직을 처리하는 서비스 클래스
+    Service class for authentication-related business logic
 
-    이 서비스는 사용자 가입, 로그인, 토큰 관리, 이메일 인증의 전체 플로우를 관리한다.
-    카카오 소셜 로그인과 이메일 기반 회원가입을 지원하며, JWT 기반 인증을 사용한다.
+    This service manages the entire flow of user registration, login, token management, and email verification.
+    Supports Kakao social login and email-based registration, using JWT-based authentication.
 
-    설계 의도:
-    - 이메일 인증 필수: 스팸 방지 및 유효한 연락처 확보
-    - 카카오 ID와 이메일 연동: 소셜 로그인 편의성과 독립적인 계정 관리 병행
-    - 가족 단위 서비스: 회원가입 시 자동으로 가족 생성 및 소유자 권한 부여
-    - 보안 강화: refresh token 로테이션, 비밀번호 해싱, 중복 가입 방지
+    Design principles:
+    - Mandatory email verification: Prevent spam and secure valid contact information
+    - Kakao ID and email integration: Balance social login convenience with independent account management
+    - Family-based service: Automatically create family and grant owner privileges upon registration
+    - Enhanced security: Refresh token rotation, password hashing, duplicate registration prevention
     """
     def __init__(self, db: Session):
-        """의존성 주입을 통한 리포지토리 및 서비스 초기화"""
+        """Initialize repositories and services through dependency injection"""
         self.db = db
         self.user_repository = UserRepository(db)
         self.family_repository = FamilyRepository(db)
@@ -70,26 +70,26 @@ class AuthService:
 
     def send_verification_email(self, email: str) -> SendVerificationEmailResponse:
         """
-        이메일 인증 코드 발송
+        Send email verification code
 
-        회원가입 전 필수 단계로, 6자리 숫자 코드를 생성하여 이메일로 발송한다.
-        기존 미사용 인증 코드는 무효화하여 보안을 강화한다.
+        Mandatory step before registration, generates and sends a 6-digit numeric code via email.
+        Invalidates existing unused verification codes to enhance security.
         """
         validate_email(email)
         normalized_email = email.strip()
 
-        # 중복 이메일 확인 - 이미 가입된 이메일은 인증 코드 발송 불가
+        # Check for duplicate email - cannot send verification code to already registered email
         existing_user = self.user_repository.find_by_email(normalized_email)
         if existing_user:
             raise ConflictException("Email is already registered")
 
-        # 인증 코드 생성 및 만료 시간 설정
+        # Generate verification code and set expiration time
         now = datetime.now(timezone.utc)
         expires_at = now + timedelta(minutes=settings.EMAIL_VERIFICATION_EXPIRE_MINUTES)
         code = self._generate_verification_code()
 
         try:
-            # 기존 미완료 인증 코드 무효화 후 새 코드 생성 및 발송
+            # Invalidate existing incomplete verification codes then generate and send new code
             self.email_verification_repository.invalidate_pending_by_email(normalized_email, now)
             verification = self.email_verification_repository.create(normalized_email, code, expires_at)
             self.email_service.send_verification_code(normalized_email, code, expires_at)

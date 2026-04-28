@@ -1,28 +1,28 @@
 """
-인증 관련 API 스키마
+Authentication-related API schemas
 
-Smart Scan 시스템의 사용자 인증 플로우를 위한 API 요청/응답 스키마를 정의합니다.
-이메일 인증, 회원가입, 로그인, JWT 토큰 관리 등의 모든 인증 과정을 지원합니다.
+Defines API request/response schemas for user authentication flow in Smart Scan system.
+Supports all authentication processes including email verification, registration, login, and JWT token management.
 
-주요 스키마:
-- SendVerificationEmailRequest/Response: 이메일 인증 코드 발송
-- VerifyEmailRequest/Response: 이메일 인증 코드 검증
-- RegisterRequest/Response: 카카오 연동 회원가입
-- LoginRequest: 이메일/비밀번호 로그인
-- AuthTokenResponse: JWT 토큰 쌍 (access + refresh)
-- LogoutRequest/Response: 로그아웃
+Main schemas:
+- SendVerificationEmailRequest/Response: Email verification code sending
+- VerifyEmailRequest/Response: Email verification code validation
+- RegisterRequest/Response: Kakao-linked registration
+- LoginRequest: Email/password login
+- AuthTokenResponse: JWT token pair (access + refresh)
+- LogoutRequest/Response: Logout
 
-데이터 검증:
-- 이메일 형식 및 중복 검사
-- 6자리 숫자 인증 코드 검증
-- 카카오 사용자 ID 연동
-- 비밀번호 강도 검증 (공통 유틸리티에서 처리)
+Data validation:
+- Email format and duplicate checking
+- 6-digit numeric verification code validation
+- Kakao user ID integration
+- Password strength validation (handled by common utilities)
 
-비즈니스 규칙:
-- 이메일 인증 필수 회원가입 정책
-- 카카오 ID와 이메일 연동 지원
-- JWT 기반 인증 (access token + refresh token)
-- Refresh token rotation을 통한 보안 강화
+Business rules:
+- Mandatory email verification for registration policy
+- Kakao ID and email integration support
+- JWT-based authentication (access token + refresh token)
+- Security enhancement through refresh token rotation
 """
 
 from datetime import datetime

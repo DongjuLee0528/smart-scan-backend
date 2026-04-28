@@ -1,18 +1,18 @@
 """
-보안 관련 유틸리티 모듈
+Security-related utility module
 
-SmartScan 시스템의 인증, 비밀번호 해싱, JWT 토큰 관리 등 보안 기능을 담당하는 모듈입니다.
-PBKDF2 기반 비밀번호 해싱과 JWT 액세스/리프레시 토큰 시스템을 구현합니다.
+Module responsible for authentication, password hashing, JWT token management and other security features of SmartScan system.
+Implements PBKDF2-based password hashing and JWT access/refresh token system.
 
-보안 기능:
-- PBKDF2 + Salt를 이용한 안전한 비밀번호 해싱
-- JWT 액세스 토큰 (15분 만료)과 리프레시 토큰 (30일 만료) 발급
-- 토큰 검증 및 페이로드 추출
-- HMAC 기반 보안 해시 생성
+Security features:
+- Secure password hashing using PBKDF2 + Salt
+- JWT access token (15-minute expiry) and refresh token (30-day expiry) issuance
+- Token validation and payload extraction
+- HMAC-based secure hash generation
 
-보안 정책:
-- 비밀번호: PBKDF2-HMAC-SHA256, 100,000회 반복, 16바이트 솔트
-- JWT: HS256 알고리즘, 동적 만료 시간 설정
+Security policies:
+- Password: PBKDF2-HMAC-SHA256, 100,000 iterations, 16-byte salt
+- JWT: HS256 algorithm, dynamic expiration time settings
 """
 
 import hashlib
@@ -30,21 +30,21 @@ from backend.common.exceptions import UnauthorizedException
 
 def hash_password(password: str) -> str:
     """
-    비밀번호 해싱 (PBKDF2-HMAC-SHA256)
+    Password hashing (PBKDF2-HMAC-SHA256)
 
-    안전한 비밀번호 저장을 위해 PBKDF2 알고리즘과 무작위 솔트를 사용하여 해시를 생성합니다.
-    Rainbow table 공격과 브루트 포스 공격에 대한 보안을 강화합니다.
+    Generates hash using PBKDF2 algorithm and random salt for secure password storage.
+    Strengthens security against rainbow table attacks and brute force attacks.
 
     Args:
-        password: 평문 비밀번호
+        password: Plain text password
 
     Returns:
-        형식화된 해시 문자열 (pbkdf2_sha256$iterations$salt$hash)
+        Formatted hash string (pbkdf2_sha256$iterations$salt$hash)
 
     Security:
-        - PBKDF2-HMAC-SHA256 알고리즘 사용
-        - 100,000회 반복 (settings.PASSWORD_HASH_ITERATIONS)
-        - 16바이트 랜덤 솔트 생성
+        - Uses PBKDF2-HMAC-SHA256 algorithm
+        - 100,000 iterations (settings.PASSWORD_HASH_ITERATIONS)
+        - 16-byte random salt generation
     """
     salt = secrets.token_bytes(16)
     digest = hashlib.pbkdf2_hmac(
@@ -61,22 +61,22 @@ def hash_password(password: str) -> str:
 
 def verify_password(password: str, password_hash: str | None) -> bool:
     """
-    비밀번호 검증
+    Password verification
 
-    사용자가 입력한 평문 비밀번호와 저장된 해시를 비교하여 일치하는지 확인합니다.
-    타이밍 어택을 방지하기 위해 hmac.compare_digest를 사용합니다.
+    Compares user-entered plain password with stored hash to check if they match.
+    Uses hmac.compare_digest to prevent timing attacks.
 
     Args:
-        password: 사용자가 입력한 평문 비밀번호
-        password_hash: 데이터베이스에 저장된 해시 (None 허용)
+        password: User-entered plain password
+        password_hash: Hash stored in database (None allowed)
 
     Returns:
-        비밀번호 일치 여부 (bool)
+        Password match status (bool)
 
     Security:
-        - hmac.compare_digest로 타이밍 어택 방지
-        - 잘못된 형식의 해시는 False 반환
-        - None 해시는 안전하게 False 처리
+        - Prevents timing attacks with hmac.compare_digest
+        - Returns False for invalid format hash
+        - Safely handles None hash as False
     """
     if not password_hash:
         return False
@@ -148,14 +148,14 @@ def decode_token(token: str, expected_type: str | None = None) -> dict:
 
 def create_kakao_link_token(kakao_user_id: str) -> tuple[str, datetime]:
     """
-    카카오 계정 연동용 단기 JWT 발급
+    Issue short-term JWT for Kakao account linking
 
-    챗봇 Lambda 에서 미연동 사용자에게 전달할 링크에 포함되는 토큰.
-    웹에서 사용자가 로그인 상태로 이 토큰을 제출하면 해당 kakao_user_id 를
-    현재 로그인 사용자의 계정에 연결한다.
+    Token included in links sent to unlinked users by chatbot Lambda.
+    When user submits this token while logged in on web, the kakao_user_id
+    is linked to the current logged-in user's account.
 
-    JWT_SECRET_KEY 와 분리된 KAKAO_LINK_JWT_SECRET 으로 서명하여
-    한쪽이 유출되어도 다른 쪽 토큰 체계가 위험해지지 않도록 격리한다.
+    Signs with KAKAO_LINK_JWT_SECRET separate from JWT_SECRET_KEY to isolate
+    token systems so that if one is compromised, the other remains secure.
     """
     if not kakao_user_id or not kakao_user_id.strip():
         raise ValueError("kakao_user_id is required")
@@ -178,10 +178,10 @@ def create_kakao_link_token(kakao_user_id: str) -> tuple[str, datetime]:
 
 def decode_kakao_link_token(token: str) -> dict:
     """
-    카카오 계정 연동 JWT 검증 및 페이로드 반환
+    Verify Kakao account linking JWT and return payload
 
-    KAKAO_LINK_JWT_SECRET 로 서명 검증, type=="kakao_link" 여부와 만료 확인.
-    반환 페이로드는 {"kakao_user_id", "type", "iat", "exp"} 구조.
+    Verifies signature with KAKAO_LINK_JWT_SECRET, checks type=="kakao_link" and expiration.
+    Returns payload with {"kakao_user_id", "type", "iat", "exp"} structure.
     """
     try:
         payload = jwt.decode(

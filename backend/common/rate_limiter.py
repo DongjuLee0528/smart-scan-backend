@@ -5,12 +5,12 @@ from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 
 
-# Rate limiter 인스턴스 생성
+# Create rate limiter instance
 limiter = Limiter(key_func=get_remote_address)
 
 
 def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> Response:
-    """Rate limit 초과 시 사용자 친화적 에러 메시지 반환"""
+    """Return user-friendly error message when rate limit is exceeded"""
     response = JSONResponse(
         status_code=429,
         content={"detail": "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."}
@@ -19,6 +19,6 @@ def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> Res
     return response
 
 
-# 공통 rate limit 설정
-auth_rate_limit = "5/minute"  # 로그인/회원가입
-api_rate_limit = "30/minute"  # 일반 API
+# Common rate limit settings
+auth_rate_limit = "5/minute"  # Login/registration
+api_rate_limit = "30/minute"  # General API

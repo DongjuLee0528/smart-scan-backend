@@ -1,17 +1,17 @@
 """
-API 라우트 데코레이터 모듈
+API route decorator module
 
-FastAPI 라우트 함수에 적용할 수 있는 공통 데코레이터들을 제공합니다.
-예외 처리, 입력 검증, 보안 처리 등을 자동화하여 코드 중복을 방지합니다.
+Provides common decorators that can be applied to FastAPI route functions.
+Automates exception handling, input validation, security processing to prevent code duplication.
 
-제공 데코레이터:
-- @handle_service_errors: 서비스 레이어 예외 자동 처리
-- validate_required_string(): 필수 문자열 검증
-- 민감 정보 노출 방지 기능
+Provided decorators:
+- @handle_service_errors: Automatic service layer exception handling
+- validate_required_string(): Required string validation
+- Sensitive information exposure prevention features
 
-보안 기능:
-- 에러 메시지에서 비밀번호, 토큰 등 민감 정보 제거
-- 개발/운영 환경별 에러 세부 수준 조절
+Security features:
+- Remove sensitive information like passwords, tokens from error messages
+- Adjust error detail level by development/production environment
 """
 
 import asyncio
@@ -26,11 +26,11 @@ from backend.common.config import settings
 
 
 def _sanitize_error_message(error_msg: str) -> str:
-    """개발 환경에서도 민감한 정보를 제거한 에러 메시지 반환"""
+    """Return error message with sensitive information removed even in development environment"""
     if not error_msg:
         return "서버 오류가 발생했습니다"
 
-    # 패스워드, 토큰, 키 등이 포함된 라인 제거
+    # Remove lines containing passwords, tokens, keys, etc.
     sensitive_patterns = [
         r'password[=\s:][^\s]+',
         r'token[=\s:][^\s]+',
@@ -47,7 +47,7 @@ def _sanitize_error_message(error_msg: str) -> str:
     for pattern in sensitive_patterns:
         sanitized = re.sub(pattern, '[REDACTED]', sanitized, flags=re.IGNORECASE)
 
-    # 긴 스택 트레이스는 첫 번째 라인만 유지
+    # Keep only first line for long stack traces
     lines = sanitized.split('\n')
     if len(lines) > 1:
         sanitized = lines[0]
@@ -56,8 +56,8 @@ def _sanitize_error_message(error_msg: str) -> str:
 
 
 def _map_exception(e: Exception) -> HTTPException:
-    """공통 예외 매핑 로직. BadRequest/HTTPException 은 그대로 재전파하도록
-    호출부에서 isinstance 체크 후 사용한다."""
+    """Common exception mapping logic. BadRequest/HTTPException should be re-propagated
+    as-is using isinstance check in caller."""
     if settings.ENV == "development":
         error_detail = _sanitize_error_message(str(e))
     else:
@@ -68,8 +68,8 @@ def _map_exception(e: Exception) -> HTTPException:
 def handle_service_errors(func):
     """Decorator to handle common service errors in routes.
 
-    async def 핸들러는 async wrapper 로, def 핸들러는 sync wrapper 로
-    감싸야 FastAPI 가 coroutine 을 올바르게 await 한다.
+    async def handlers use async wrapper, def handlers use sync wrapper
+    so FastAPI can properly await coroutines.
     """
     if asyncio.iscoroutinefunction(func):
         @wraps(func)
@@ -92,8 +92,8 @@ def handle_service_errors(func):
             raise BadRequestException(f"입력값 검증 실패: {str(e)}")
         except Exception as e:
             # CustomException (Unauthorized/NotFound/Conflict/Forbidden/Database/BadRequest)
-            # 과 HTTPException 은 global exception handler 로 위임해 올바른
-            # status code 와 메시지를 유지한다.
+            # and HTTPException are delegated to global exception handler to maintain
+            # proper status codes and messages.
             if isinstance(e, (CustomException, HTTPException)):
                 raise
             raise _map_exception(e)
