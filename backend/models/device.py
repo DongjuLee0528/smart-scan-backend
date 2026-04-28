@@ -1,30 +1,30 @@
 """
-RFID 디바이스 데이터베이스 모델
+RFID device database model
 
-Smart Scan 시스템의 UHF RFID 리더기 디바이스를 관리하는 데이터베이스 모델입니다.
-라즈베리파이에 연결된 RFID 리더기의 등록, 관리, 가족 연결 정보를 저장합니다.
+Database model for managing UHF RFID reader devices in Smart Scan system.
+Stores registration, management, and family connection information for RFID readers connected to Raspberry Pi.
 
-비즈니스 모델:
-- 디바이스 등록: 시리얼 번호 기반 고유 디바이스 식별
-- 가족 연결: 가족 단위 디바이스 소유권 관리
-- 태그 연결: 디바이스에 등록된 RFID 태그들과의 관계
+Business model:
+- Device registration: Unique device identification based on serial number
+- Family connection: Family-unit device ownership management
+- Tag connection: Relationship with RFID tags registered to device
 
-디바이스 생명주기:
-1. 등록 (created_at): 새 디바이스의 시리얼 번호 등록
-2. 할당 (family_id): 특정 가족에게 디바이스 소유권 부여
-3. 사용: RFID 태그 스캔 및 아이템 추적
-4. 해제: 가족 연결 해제 및 재할당 대기
+Device lifecycle:
+1. Registration (created_at): Serial number registration of new device
+2. Assignment (family_id): Grant device ownership to specific family
+3. Usage: RFID tag scanning and item tracking
+4. Release: Family connection release and reassignment waiting
 
-하드웨어 구성:
-- 라즈베리파이 + UHF RFID 리더기 모듈
-- 고유 시리얼 번호를 통한 디바이스 식별
-- 네트워크 연결을 통한 클라우드 통신
+Hardware configuration:
+- Raspberry Pi + UHF RFID reader module
+- Device identification through unique serial number
+- Cloud communication through network connection
 
-관계 연결:
-- N:1 관계: family (디바이스가 소속된 가족)
-- 1:N 관계: tags (디바이스에 등록된 태그들)
-- 1:N 관계: master_tags (디바이스별 마스터 태그들)
-- 1:N 관계: user_devices (사용자별 디바이스 접근 권한)
+Relationship connections:
+- N:1 relationship: family (family that owns the device)
+- 1:N relationship: tags (tags registered to device)
+- 1:N relationship: master_tags (master tags per device)
+- 1:N relationship: user_devices (user device access permissions)
 """
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
@@ -36,26 +36,26 @@ from backend.common.db import Base
 
 class Device(Base):
     """
-    RFID 디바이스 모델
+    RFID device model
 
-    UHF RFID 리더기 디바이스의 정보를 저장하고 관리합니다.
+    Stores and manages information for UHF RFID reader devices.
     """
     __tablename__ = "devices"
 
-    # 기본 식별자
-    id = Column(Integer, primary_key=True, index=True)  # 내부 디바이스 ID
+    # Basic identifier
+    id = Column(Integer, primary_key=True, index=True)  # Internal device ID
 
-    # 디바이스 정보
-    serial_number = Column(String(255), unique=True, nullable=False, index=True)  # RFID 리더기 시리얼 번호 (고유)
+    # Device information
+    serial_number = Column(String(255), unique=True, nullable=False, index=True)  # RFID reader serial number (unique)
 
-    # 연결 정보
-    family_id = Column(Integer, ForeignKey("families.id"), nullable=True, index=True)  # 연결된 가족 ID (선택적)
+    # Connection information
+    family_id = Column(Integer, ForeignKey("families.id"), nullable=True, index=True)  # Connected family ID (optional)
 
-    # 시스템 정보
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)  # 디바이스 등록 일시
+    # System information
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)  # Device registration time
 
-    # 관계 정의
-    family = relationship("Family", back_populates="devices")  # 디바이스가 소속된 가족
-    tags = relationship("Tag", back_populates="device")  # 디바이스에 등록된 태그들
-    user_devices = relationship("UserDevice", back_populates="device")  # 사용자별 디바이스 접근 권한
-    master_tags = relationship("MasterTag", back_populates="device")  # 디바이스별 마스터 태그들
+    # Relationship definitions
+    family = relationship("Family", back_populates="devices")  # Family that owns the device
+    tags = relationship("Tag", back_populates="device")  # Tags registered to device
+    user_devices = relationship("UserDevice", back_populates="device")  # User device access permissions
+    master_tags = relationship("MasterTag", back_populates="device")  # Master tags per device
