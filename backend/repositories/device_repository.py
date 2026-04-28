@@ -1,23 +1,23 @@
 """
-RFID 디바이스 데이터 접근 계층
+RFID device data access layer
 
-UHF RFID 리더기 디바이스의 데이터베이스 작업을 담당하는 레포지토리입니다.
-라즈베리파이에 연결된 RFID 리더기의 등록, 조회, 관리 기능을 제공합니다.
+Repository responsible for database operations on UHF RFID reader devices.
+Provides registration, lookup, and management functions for RFID readers connected to Raspberry Pi.
 
-데이터 관리:
-- 디바이스 등록 및 시리얼 번호 관리
-- 가족 단위 디바이스 연결 상태 추적
-- 디바이스 메타데이터 (등록일, 상태 등) 저장
+Data management:
+- Device registration and serial number management
+- Family-unit device connection status tracking
+- Device metadata storage (registration date, status, etc.)
 
-비즈니스 규칙:
-- 시리얼 번호는 전체 시스템에서 고유해야 함
-- 한 가족당 하나의 주 디바이스 등록 권장
-- 디바이스 삭제 시 연관된 태그와 아이템 상태 확인 필수
+Business rules:
+- Serial numbers must be unique throughout entire system
+- One main device registration per family recommended
+- Must check associated tag and item status when deleting devices
 
-주요 쿼리 패턴:
-- 시리얼 번호로 디바이스 조회 (디바이스 인증 시 사용)
-- 가족 ID와 디바이스 ID 조합 조회 (권한 검증용)
-- 가족이 소유한 모든 디바이스 목록 조회
+Main query patterns:
+- Device lookup by serial number (used for device authentication)
+- Family ID and device ID combination lookup (for permission verification)
+- List all devices owned by family
 """
 
 from typing import Optional
@@ -29,12 +29,12 @@ from backend.models.device import Device
 
 class DeviceRepository:
     """
-    RFID 디바이스 데이터 접근 클래스
+    RFID device data access class
 
-    디바이스 테이블에 대한 CRUD 작업과 비즈니스 로직 쿼리를 제공합니다.
+    Provides CRUD operations and business logic queries for device table.
     """
     def __init__(self, db: Session):
-        """데이터베이스 세션 주입"""
+        """Inject database session"""
         self.db = db
 
     def find_by_serial_number(self, serial_number: str) -> Optional[Device]:
