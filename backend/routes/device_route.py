@@ -1,15 +1,15 @@
 """
-디바이스 관리 API 라우터
+Device management API router
 
-UHF RFID 리더 디바이스의 등록과 관리를 위한 API 엔드포인트를 제공합니다.
-라즈베리파이에 연결된 RFID 리더기를 시스템에 등록하고 사용자와 연결합니다.
+Provides API endpoints for UHF RFID reader device registration and management.
+Registers RFID readers connected to Raspberry Pi to the system and connects them to users.
 
-주요 엔드포인트:
-- POST /register: 디바이스 시리얼 번호로 새 디바이스 등록
-- GET /my-devices: 현재 사용자가 등록한 디바이스 목록 조회
-- DELETE /{device_id}: 디바이스 등록 해제
+Main endpoints:
+- POST /register: Register new device with device serial number
+- GET /my-devices: Retrieve device list registered by current user
+- DELETE /{device_id}: Unregister device
 
-보안: JWT 인증이 필요하며, 사용자는 본인의 디바이스만 관리 가능
+Security: JWT authentication required, users can only manage their own devices
 """
 
 from fastapi import APIRouter, Depends
