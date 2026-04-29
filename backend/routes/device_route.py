@@ -38,22 +38,22 @@ async def register_device(
     device_service: DeviceService = Depends(get_device_service)
 ):
     """
-    RFID 디바이스 등록
+    Register RFID device
 
-    새로운 UHF RFID 리더기를 시스템에 등록하고 현재 사용자와 연결합니다.
-    라즈베리파이에 연결된 RFID 리더기의 시리얼 번호를 통해 등록 처리됩니다.
+    Register new UHF RFID reader to system and connect with current user.
+    Registration is processed through serial number of RFID reader connected to Raspberry Pi.
 
     Args:
-        request: 디바이스 시리얼 번호가 포함된 등록 요청 데이터
-        current_user: 현재 인증된 사용자 정보 (JWT 토큰에서 추출)
+        request: Registration request data containing device serial number
+        current_user: Current authenticated user information (extracted from JWT token)
 
     Returns:
-        등록된 디바이스 정보와 사용자 연결 정보
+        Registered device information and user connection information
 
     Raises:
-        ValidationError: 시리얼 번호가 없거나 형식이 잘못된 경우
-        ConflictError: 이미 등록된 시리얼 번호인 경우
-        AuthenticationError: 인증되지 않은 사용자인 경우
+        ValidationError: When serial number is missing or invalid format
+        ConflictError: When serial number is already registered
+        AuthenticationError: When user is not authenticated
     """
     validate_required_string("serial_number", request.serial_number)
 
