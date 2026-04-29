@@ -1,16 +1,16 @@
 """
-가족 초대 데이터베이스 모델
+Family invitation database model
 
-SmartScan 시스템에서 가족 그룹 초대를 관리하는 데이터베이스 모델입니다.
-가족 소유자가 이메일로 다른 사용자를 초대하면 토큰 기반 수락/거절 플로우를 제공합니다.
+Database model for managing family group invitations in SmartScan system.
+When family owners invite other users by email, provides token-based accept/decline flow.
 
-비즈니스 모델:
-- 가족 소유자만 초대 발송 가능
-- 초대는 7일 후 자동 만료 (lazy expire 방식: by-token 조회 시 처리)
-- 수락 시 기존 family_member 레코드를 교체하여 새 가족으로 이동
-- 한 (family, email) 쌍당 하나의 pending 초대만 허용
+Business model:
+- Only family owners can send invitations
+- Invitations auto-expire after 7 days (lazy expire: handled during by-token lookup)
+- When accepted, replaces existing family_member record to move to new family
+- Only one pending invitation allowed per (family, email) pair
 
-status 값: pending / accepted / declined / cancelled / expired
+status values: pending / accepted / declined / cancelled / expired
 """
 
 import uuid
@@ -25,9 +25,9 @@ from backend.common.db import Base
 
 class FamilyInvitation(Base):
     """
-    가족 초대 모델
+    Family invitation model
 
-    이메일 기반 초대 토큰을 발행하여 수신자가 앱에서 가족에 합류하도록 안내합니다.
+    Issues email-based invitation tokens to guide recipients to join families in the app.
     """
     __tablename__ = "family_invitations"
     __table_args__ = (
