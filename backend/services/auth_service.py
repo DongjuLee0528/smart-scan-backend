@@ -105,17 +105,17 @@ class AuthService:
 
     def verify_email(self, email: str, code: str) -> VerifyEmailResponse:
         """
-        이메일 인증 코드 검증
+        Verify email authentication code
 
-        사용자가 입력한 6자리 코드를 검증하여 이메일 소유권을 확인한다.
-        인증 성공 시 회원가입이 가능한 상태가 된다.
+        Verify 6-digit code entered by user to confirm email ownership.
+        Upon successful verification, registration becomes possible.
         """
         validate_email(email)
         validate_verification_code(code)
         normalized_email = email.strip()
         normalized_code = code.strip()
 
-        # 인증 코드 조회 및 유효성 검사
+        # Find verification code and validate
         now = datetime.now(timezone.utc)
         verification = self.email_verification_repository.find_latest_by_email_and_code(
             normalized_email,
@@ -131,7 +131,7 @@ class AuthService:
             raise BadRequestException("Verification code has expired")
 
         try:
-            # 인증 완료 처리 (중복 인증 시도도 성공으로 처리)
+            # Complete verification process (handle duplicate verification attempts as success)
             if verification.verified_at is None:
                 self.email_verification_repository.mark_verified(verification, now)
                 self.db.commit()
@@ -156,11 +156,11 @@ class AuthService:
         family_name: str | None = None
     ) -> RegisterResponse:
         """
-        회원가입 처리
+        Process user registration
 
-        이메일 인증이 완료된 사용자만 가입할 수 있다.
-        카카오 ID와 이메일 연동을 지원하며, 가입과 동시에 가족을 생성한다.
-        기존 부분 가입 사용자(카카오만 또는 이메일만)의 정보 통합도 처리한다.
+        Only users who have completed email verification can register.
+        Supports KakaoTalk ID and email integration, creating family upon registration.
+        Also handles information integration of existing partial users (KakaoTalk-only or email-only).
         """
         validate_kakao_user_id(kakao_user_id)
         validate_non_empty_string(name, "name")
@@ -174,13 +174,13 @@ class AuthService:
         normalized_kakao_user_id = kakao_user_id.strip()
         normalized_name = name.strip()
         normalized_email = email.strip()
-        normalized_password = password  # 비밀번호는 공백 포함 원본 그대로 사용
+        normalized_password = password  # Use password as-is including whitespace
         normalized_phone = phone.strip() if phone else None
-        # 가족명 기본값 설정 (미입력시 "사용자명 가족"으로 자동 생성)
-        normalized_family_name = family_name.strip() if family_name else f"{normalized_name} 가족"
+        # Set default family name (auto-generate as "Username Family" if not entered)
+        normalized_family_name = family_name.strip() if family_name else f"{normalized_name} Family"
         validate_non_empty_string(normalized_family_name, "family_name")
 
-        # 이메일 인증 완료 확인 (회원가입 전 필수 조건)
+        # Verify email authentication completion (mandatory before registration)
         now = datetime.now(timezone.utc)
         verification = self.email_verification_repository.find_latest_verified_unused_by_email(
             normalized_email,
@@ -189,7 +189,7 @@ class AuthService:
         if not verification:
             raise BadRequestException("Email verification must be completed before registration")
 
-        # 중복 가입 방지 및 부분 가입 사용자 통합 로직
+        # Prevent duplicate registration and integrate partial users
         existing_email_user = self.user_repository.find_by_email(normalized_email)
         if existing_email_user and existing_email_user.kakao_user_id != normalized_kakao_user_id:
             raise ConflictException("Email is already registered")
@@ -198,11 +198,11 @@ class AuthService:
         if existing_user and existing_user.email and existing_user.email != normalized_email:
             raise ConflictException("kakao_user_id is already linked to another email")
 
-        # 기존 사용자 정보 통합 (카카오만 있거나 이메일만 있는 경우)
+        # Integrate existing user info (KakaoTalk-only or email-only cases)
         user = existing_user or existing_email_user
 
         try:
-            # 신규 사용자 생성 또는 기존 사용자 정보 업데이트
+            # Create new user or update existing user info
             if user is None:
                 user = self.user_repository.create(
                     kakao_user_id=normalized_kakao_user_id,
@@ -213,11 +213,11 @@ class AuthService:
                     age=age
                 )
             else:
-                # 이미 완전 가입된 사용자인지 확인
+                # Check if user is already fully registered
                 if self.family_member_repository.exists_by_user_id(user.id):
                     raise ConflictException("User is already registered")
 
-                # 부분 가입 사용자의 정보 완성
+                # Complete partial user information
                 self.user_repository.update_profile(
                     user=user,
                     name=normalized_name,
@@ -227,10 +227,10 @@ class AuthService:
                     age=age
                 )
 
-            # 가족 생성 및 소유자 권한 부여 (Smart Scan은 가족 단위 서비스)
+            # Create family and grant owner privileges (Smart Scan is family-based service)
             family = self.family_repository.create(normalized_family_name, user.id)
             family_member = self.family_member_repository.create(family.id, user.id, "owner")
-            # 사용한 이메일 인증 코드 표시
+            # Mark used email verification code
             self.email_verification_repository.mark_used(verification, now)
             self.db.commit()
             self.db.refresh(user)
@@ -250,7 +250,7 @@ class AuthService:
             )
         except IntegrityError as e:
             self.db.rollback()
-            # DB 제약조건 위반으로 인한 중복 가입 시도 (동시성 문제 대응)
+            # Handle duplicate registration due to DB constraint violations (concurrency handling)
             if "email" in str(e.orig).lower() or "kakao_user_id" in str(e.orig).lower():
                 raise ConflictException("User already exists")
             raise
@@ -260,21 +260,21 @@ class AuthService:
 
     def login(self, email: str, password: str) -> AuthTokenResponse:
         """
-        사용자 로그인
+        User login
 
-        이메일과 비밀번호로 인증하여 JWT 토큰 쌍을 발급한다.
-        기존 refresh token을 모두 무효화하여 보안을 강화한다.
+        Authenticate with email and password to issue JWT token pair.
+        Enhance security by invalidating all existing refresh tokens.
         """
         validate_email(email)
         validate_password(password)
 
-        # 사용자 인증 (이메일 또는 비밀번호 오류 시 동일한 답안으로 보안 강화)
+        # User authentication (enhance security with same response for email or password errors)
         user = self.user_repository.find_by_email(email.strip())
         if not user or not verify_password(password, user.password_hash):
             raise UnauthorizedException("Invalid email or password")
 
         try:
-            # 토큰 쌍 발급 (기존 refresh token 모두 무효화)
+            # Issue token pair (invalidate all existing refresh tokens)
             issued_tokens = self._issue_token_pair(user)
             self.db.commit()
             return issued_tokens
@@ -284,24 +284,24 @@ class AuthService:
 
     def refresh(self, refresh_token: str) -> AuthTokenResponse:
         """
-        Access token 갱신
+        Refresh access token
 
-        유효한 refresh token을 사용하여 새로운 JWT 토큰 쌍을 발급한다.
-        Refresh token rotation을 사용하여 기존 token은 무효화하고 새 token을 발급한다.
+        Use valid refresh token to issue new JWT token pair.
+        Use refresh token rotation to invalidate existing token and issue new token.
         """
-        # JWT 토큰 디코딩 및 페이로드 검증
+        # Decode JWT token and validate payload
         payload = decode_token(refresh_token.strip(), expected_type="refresh")
         token_id = payload.get("jti")
         user_id = payload.get("sub")
         if not token_id or not user_id:
             raise UnauthorizedException("Invalid refresh token payload")
 
-        # DB에서 refresh token 조회 및 유효성 검사
+        # Query refresh token from DB and validate
         refresh_token_row = self.refresh_token_repository.find_by_token_id(token_id)
         if not refresh_token_row or refresh_token_row.is_revoked:
             raise UnauthorizedException("Refresh token is revoked")
 
-        # 만료 시간 및 소유자 검증
+        # Validate expiration time and owner
         now = datetime.now(timezone.utc)
         expires_at = normalize_datetime_required(refresh_token_row.expires_at)
         if expires_at <= now:
@@ -312,7 +312,7 @@ class AuthService:
             raise UnauthorizedException("Refresh token is invalid")
 
         try:
-            # 기존 refresh token 무효화 후 새 token pair 발급 (rotation)
+            # Invalidate existing refresh token then issue new token pair (rotation)
             self.refresh_token_repository.revoke(refresh_token_row, now)
             issued_tokens = self._issue_token_pair(user, revoke_existing=False)
             self.db.commit()
@@ -323,19 +323,19 @@ class AuthService:
 
     def logout(self, user_id: int, refresh_token: str) -> LogoutResponse:
         """
-        사용자 로그아웃
+        User logout
 
-        제공된 refresh token을 무효화하여 로그아웃을 처리한다.
-        토큰 검증을 통해 정당한 사용자의 요청인지 확인한다.
+        Process logout by invalidating provided refresh token.
+        Verify legitimate user request through token validation.
         """
-        # JWT 토큰 디코딩 및 요청자 검증
+        # Decode JWT token and verify requester
         payload = decode_token(refresh_token.strip(), expected_type="refresh")
         token_id = payload.get("jti")
         token_user_id = payload.get("sub")
         if not token_id or not token_user_id or int(token_user_id) != user_id:
             raise UnauthorizedException("Refresh token is invalid")
 
-        # DB에서 refresh token 조회 및 소유자 검증
+        # Query refresh token from DB and verify owner
         refresh_token_row = self.refresh_token_repository.find_by_token_id(token_id)
         if not refresh_token_row:
             raise NotFoundException("Refresh token not found")
@@ -344,7 +344,7 @@ class AuthService:
             raise UnauthorizedException("Refresh token is invalid")
 
         try:
-            # 미처리 상태의 refresh token만 무효화 (중복 로그아웃 방지)
+            # Only invalidate unprocessed refresh tokens (prevent duplicate logout)
             if not refresh_token_row.is_revoked:
                 self.refresh_token_repository.revoke(refresh_token_row, datetime.now(timezone.utc))
             self.db.commit()
@@ -355,33 +355,33 @@ class AuthService:
 
     def link_kakao(self, user_id: int, token: str) -> LinkKakaoResponse:
         """
-        카카오 계정 연동 (magic link)
+        Link KakaoTalk account (magic link)
 
-        챗봇 Lambda가 발급한 단기 JWT(토큰)를 검증하여 현재 로그인 사용자의
-        kakao_user_id 를 실제 카카오 UID로 업데이트한다.
+        Verify short-term JWT (token) issued by chatbot Lambda to update
+        current logged-in user's kakao_user_id to actual KakaoTalk UID.
 
-        동작 규칙:
-        - 토큰이 유효하지 않거나 만료된 경우 UnauthorizedException
-        - 이미 동일한 kakao_user_id로 연동되어 있으면 멱등 성공 처리
-        - 다른 사용자가 같은 kakao_user_id로 이미 연동되어 있으면 ConflictException
-        - 현재 사용자의 kakao_user_id 가 실제 UID(= pending_xxx 가 아님)로 이미
-          설정되어 있으면 덮어쓰지 않고 ConflictException. placeholder(pending_xxx)
-          상태일 때만 덮어쓰기 허용
+        Behavior rules:
+        - UnauthorizedException if token is invalid or expired
+        - Idempotent success if already linked with same kakao_user_id
+        - ConflictException if another user is already linked with same kakao_user_id
+        - If current user's kakao_user_id is already set to actual UID (not pending_xxx),
+          don't overwrite and throw ConflictException. Only allow overwrite when in
+          placeholder (pending_xxx) state
         """
         validate_non_empty_string(token, "token")
 
-        # 토큰 검증 및 kakao_user_id 추출
+        # Validate token and extract kakao_user_id
         payload = decode_kakao_link_token(token.strip())
         new_kakao_user_id = payload["kakao_user_id"].strip()
         if not new_kakao_user_id:
             raise UnauthorizedException("Invalid kakao link token payload")
 
-        # 현재 사용자 조회
+        # Query current user
         user = self.user_repository.find_by_id(user_id)
         if not user:
             raise NotFoundException("User not found")
 
-        # 멱등 처리: 이미 동일한 값이면 그대로 성공
+        # Idempotent handling: success as-is if already same value
         if user.kakao_user_id == new_kakao_user_id:
             return LinkKakaoResponse(
                 user_id=user.id,
@@ -389,13 +389,13 @@ class AuthService:
                 linked=True,
             )
 
-        # 다른 사용자가 이미 이 kakao_user_id 를 점유하고 있는지 확인
+        # Check if another user already occupies this kakao_user_id
         conflicting_user = self.user_repository.find_by_kakao_user_id(new_kakao_user_id)
         if conflicting_user and conflicting_user.id != user.id:
             raise ConflictException("kakao_user_id is already linked to another user")
 
-        # 실제 UID 가 이미 설정된 계정이라면 덮어쓰기 금지
-        # (placeholder "pending_xxx" 상태에서만 실제 UID 로 교체 허용)
+        # Prohibit overwrite if actual UID is already set
+        # (only allow replacement from placeholder "pending_xxx" state to actual UID)
         if user.kakao_user_id and not user.kakao_user_id.startswith("pending_"):
             raise ConflictException("User is already linked to a kakao account")
 
@@ -410,7 +410,7 @@ class AuthService:
             )
         except IntegrityError as e:
             self.db.rollback()
-            # 동시성으로 인한 UNIQUE 제약 위반 대응
+            # Handle UNIQUE constraint violations due to concurrency
             if "kakao_user_id" in str(e.orig).lower():
                 raise ConflictException("kakao_user_id is already linked to another user")
             raise
@@ -420,23 +420,23 @@ class AuthService:
 
     @staticmethod
     def _generate_verification_code() -> str:
-        """안전한 6자리 숫자 인증 코드 생성 (100000~999999)"""
+        """Generate secure 6-digit numeric verification code (100000~999999)"""
         return str(secrets.randbelow(900000) + 100000)
 
 
     def _issue_token_pair(self, user, revoke_existing: bool = True) -> AuthTokenResponse:
         """
-        JWT 토큰 쌍 (access + refresh) 발급
+        Issue JWT token pair (access + refresh)
 
-        기본적으로 기존 refresh token들을 모두 무효화하는 single session 정책을 사용.
-        refresh 시에만 revoke_existing=False로 사용하여 단일 토큰만 교체.
+        Uses single session policy that invalidates all existing refresh tokens by default.
+        Only during refresh, use revoke_existing=False to replace single token only.
         """
-        # 기존 활성 refresh token 무효화 (single session 정책)
+        # Invalidate existing active refresh tokens (single session policy)
         issued_at = datetime.now(timezone.utc)
         if revoke_existing:
             self.refresh_token_repository.revoke_all_active_by_user_id(user.id, issued_at)
 
-        # 새 JWT 토큰 쌍 생성 및 DB에 refresh token 정보 저장
+        # Generate new JWT token pair and store refresh token info in DB
         refresh_token_id = generate_token_id()
         access_token, access_token_expires_at = create_access_token(user.id)
         refresh_token, refresh_token_expires_at = create_refresh_token(user.id, refresh_token_id)
