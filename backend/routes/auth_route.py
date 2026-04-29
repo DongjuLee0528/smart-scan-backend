@@ -51,21 +51,21 @@ async def send_verification_email(
     auth_service: AuthService = Depends(get_auth_service)
 ):
     """
-    이메일 인증 코드 발송
+    Send email verification code
 
-    회원가입 시 이메일 주소 확인을 위한 6자리 인증 코드를 발송합니다.
-    Rate limiting이 적용되어 스팸 방지를 위해 요청 제한이 있습니다.
+    Send 6-digit verification code for email address verification during registration.
+    Rate limiting is applied to prevent spam with request limits.
 
     Args:
-        request: slowapi가 rate limit 키(IP)를 뽑기 위한 starlette Request
-        payload: 이메일 주소가 포함된 요청 본문
+        request: starlette Request for slowapi to extract rate limit key (IP)
+        payload: Request body containing email address
 
     Returns:
-        성공 시 인증 코드 발송 완료 메시지
+        Success message for verification code sending completion
 
     Raises:
-        ValidationError: 이메일 형식이 잘못된 경우
-        RateLimitExceeded: 요청 제한 초과 시
+        ValidationError: When email format is invalid
+        RateLimitExceeded: When request limit is exceeded
     """
     result = auth_service.send_verification_email(payload.email)
     return success_response(
@@ -83,21 +83,21 @@ async def verify_email(
     auth_service: AuthService = Depends(get_auth_service)
 ):
     """
-    이메일 인증 코드 검증
+    Verify email verification code
 
-    발송된 6자리 인증 코드를 검증하여 이메일 주소 소유권을 확인합니다.
-    인증 완료 시 회원가입 절차를 계속 진행할 수 있습니다.
+    Verify sent 6-digit verification code to confirm email address ownership.
+    Registration process can continue after verification completion.
 
     Args:
-        request: slowapi가 rate limit 키(IP)를 뽑기 위한 starlette Request
-        payload: 이메일 주소와 인증 코드가 포함된 요청 본문
+        request: starlette Request for slowapi to extract rate limit key (IP)
+        payload: Request body containing email address and verification code
 
     Returns:
-        성공 시 이메일 인증 완료 메시지
+        Success message for email verification completion
 
     Raises:
-        ValidationError: 인증 코드가 잘못되었거나 만료된 경우
-        RateLimitExceeded: 요청 제한 초과 시
+        ValidationError: When verification code is invalid or expired
+        RateLimitExceeded: When request limit is exceeded
     """
     result = auth_service.verify_email(payload.email, payload.code)
     return success_response(
@@ -115,22 +115,22 @@ async def register(
     auth_service: AuthService = Depends(get_auth_service)
 ):
     """
-    회원가입
+    User registration
 
-    이메일 인증을 완료한 후 카카오 연동 회원가입을 진행합니다.
-    회원가입과 동시에 개인 가족을 생성하고 소유자로 등록됩니다.
+    Proceed with KakaoTalk-linked registration after completing email verification.
+    Create personal family and register as owner simultaneously with registration.
 
     Args:
-        request: slowapi가 rate limit 키(IP)를 뽑기 위한 starlette Request
-        payload: 회원가입 정보 (카카오 ID, 이름, 이메일, 비밀번호 등)
+        request: starlette Request for slowapi to extract rate limit key (IP)
+        payload: Registration information (KakaoTalk ID, name, email, password, etc.)
 
     Returns:
-        성공 시 생성된 사용자 및 가족 정보
+        Created user and family information on success
 
     Raises:
-        ValidationError: 필수 정보 누락 또는 형식 오류
-        ConflictError: 이미 등록된 이메일 또는 카카오 ID
-        RateLimitExceeded: 요청 제한 초과 시
+        ValidationError: Required information missing or format error
+        ConflictError: Already registered email or KakaoTalk ID
+        RateLimitExceeded: When request limit is exceeded
     """
     result = auth_service.register(
         kakao_user_id=payload.kakao_user_id,
@@ -201,10 +201,10 @@ async def link_kakao(
     auth_service: AuthService = Depends(get_auth_service)
 ):
     """
-    카카오 계정 연동 (magic link)
+    Link KakaoTalk account (magic link)
 
-    챗봇 Lambda가 발급한 단기 JWT를 검증하여 현재 로그인 사용자의
-    kakao_user_id를 실제 카카오 UID로 교체한다.
+    Verify short-term JWT issued by chatbot Lambda to replace
+    current logged-in user's kakao_user_id with actual KakaoTalk UID.
     """
     result = auth_service.link_kakao(current_user.id, payload.token)
     return success_response(

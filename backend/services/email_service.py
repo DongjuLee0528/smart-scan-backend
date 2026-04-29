@@ -29,19 +29,19 @@ class EmailService:
 
     def send_verification_code(self, to_email: str, code: str, expires_at: datetime) -> None:
         """
-        이메일 인증 코드 발송
+        Send email verification code
 
-        지정된 이메일 주소로 6자리 인증 코드를 발송한다.
-        SSL 또는 TLS를 사용한 보안 연결을 통해 메일을 전송한다.
+        Send 6-digit verification code to specified email address.
+        Send email through secure connection using SSL or TLS.
 
         Args:
-            to_email: 인증 코드를 받을 이메일 주소
-            code: 발송할 6자리 인증 코드
-            expires_at: 인증 코드 만료 시간
+            to_email: Email address to receive verification code
+            code: 6-digit verification code to send
+            expires_at: Verification code expiration time
 
         Raises:
-            CustomException: SMTP 설정이 누락된 경우
-            smtplib.SMTPException: 메일 발송 실패 시
+            CustomException: When SMTP settings are missing
+            smtplib.SMTPException: When email sending fails
         """
         if not all([self.smtp_host, self.smtp_username, self.smtp_password, self.from_email]):
             raise CustomException(500, "SMTP settings are not configured")
@@ -80,21 +80,21 @@ class EmailService:
         title: str,
         message: str,
     ) -> None:
-        """수동 알림 이메일 발송 (원격 알림 기능용)"""
+        """Send manual alert email (for remote alert feature)"""
         if not all([self.smtp_host, self.smtp_username, self.smtp_password, self.from_email]):
             raise CustomException(500, "SMTP settings are not configured")
 
         plain_text = "\n".join([
-            f"{sender_name}님으로부터 SmartScan Hub 알림이 도착했습니다.",
+            f"SmartScan Hub alert from {sender_name} has arrived.",
             "",
-            f"제목: {title}",
-            f"내용: {message}",
+            f"Subject: {title}",
+            f"Message: {message}",
         ])
         html_body = f"""
         <html>
           <body style="font-family:Arial,sans-serif;color:#333;">
-            <h2 style="color:#034EA2;">SmartScan Hub 알림</h2>
-            <p><strong>{sender_name}</strong>님으로부터 알림이 도착했습니다.</p>
+            <h2 style="color:#034EA2;">SmartScan Hub Alert</h2>
+            <p>Alert from <strong>{sender_name}</strong> has arrived.</p>
             <div style="background:#f8fafc;border-left:4px solid #034EA2;
                         padding:12px 16px;margin:16px 0;border-radius:4px;">
               <p style="font-weight:600;margin:0 0 8px;">{title}</p>
@@ -132,50 +132,50 @@ class EmailService:
         expires_at: datetime,
     ) -> None:
         """
-        가족 초대 이메일 발송
+        Send family invitation email
 
-        초대 링크와 만료 시각을 포함한 plain text + HTML 이메일을 발송한다.
+        Send plain text + HTML email including invitation link and expiration time.
 
         Args:
-            to_email: 초대 대상 이메일 주소
-            inviter_name: 초대를 발송한 사용자 이름
-            family_name: 초대된 가족 그룹 이름
-            token: 초대 UUID 문자열
-            expires_at: 초대 만료 시각 (UTC)
+            to_email: Target email address for invitation
+            inviter_name: Name of user who sent invitation
+            family_name: Name of invited family group
+            token: Invitation UUID string
+            expires_at: Invitation expiration time (UTC)
 
         Raises:
-            CustomException: SMTP 설정이 누락된 경우
-            smtplib.SMTPException: 메일 발송 실패 시
+            CustomException: When SMTP settings are missing
+            smtplib.SMTPException: When email sending fails
         """
         if not all([self.smtp_host, self.smtp_username, self.smtp_password, self.from_email]):
             raise CustomException(500, "SMTP settings are not configured")
 
         invite_url = f"https://smartscan-hub.com/invite-accept.html?token={token}"
-        subject = f"[Smart Scan] {inviter_name}님이 가족 초대를 보냈습니다"
+        subject = f"[Smart Scan] {inviter_name} sent you a family invitation"
 
         plain_text = "\n".join([
-            f"{inviter_name}님이 '{family_name}' 가족 그룹에 초대하셨습니다.",
+            f"{inviter_name} has invited you to '{family_name}' family group.",
             "",
-            "아래 링크에서 초대를 확인하세요 (7일 후 만료):",
+            "Please check the invitation at the link below (expires after 7 days):",
             invite_url,
             "",
-            f"만료일: {expires_at.isoformat()}",
+            f"Expires: {expires_at.isoformat()}",
         ])
 
         html_body = f"""
         <html>
           <body style="font-family: Arial, sans-serif; color: #333;">
-            <h2 style="color: #4A90E2;">Smart Scan 가족 초대</h2>
-            <p><strong>{inviter_name}</strong>님이 <strong>'{family_name}'</strong> 가족 그룹에 초대하셨습니다.</p>
-            <p>아래 버튼을 클릭하여 초대를 확인하세요 (7일 후 만료).</p>
+            <h2 style="color: #4A90E2;">Smart Scan Family Invitation</h2>
+            <p><strong>{inviter_name}</strong> has invited you to <strong>'{family_name}'</strong> family group.</p>
+            <p>Please click the button below to check the invitation (expires after 7 days).</p>
             <a href="{invite_url}"
                style="display:inline-block;padding:12px 24px;background-color:#4A90E2;
                       color:#fff;text-decoration:none;border-radius:4px;margin:16px 0;">
-              초대 수락하기
+              Accept Invitation
             </a>
-            <p style="font-size:12px;color:#999;">만료일: {expires_at.isoformat()}</p>
+            <p style="font-size:12px;color:#999;">Expires: {expires_at.isoformat()}</p>
             <p style="font-size:12px;color:#999;">
-              링크가 열리지 않으면 아래 URL을 브라우저에 붙여넣기 하세요:<br>
+              If the link doesn't open, please copy and paste the URL below into your browser:<br>
               {invite_url}
             </p>
           </body>

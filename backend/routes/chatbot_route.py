@@ -1,18 +1,18 @@
 """
-Chatbot (Kakao OpenBuilder) 전용 서비스-투-서비스 API
+Chatbot (Kakao OpenBuilder) dedicated service-to-service API
 
-smartscan-chatbot Lambda가 카카오 웹훅 처리 중 SmartScan 백엔드에 호출하는
-내부 API를 정의한다. kakao_user_id 기반으로 사용자를 식별하며, 인증은
-JWT가 아니라 X-Chatbot-Key 공유 비밀키 헤더로 수행된다.
+Defines internal API that smartscan-chatbot Lambda calls to SmartScan backend during
+Kakao webhook processing. Identifies users based on kakao_user_id, and authentication
+is performed with X-Chatbot-Key shared secret header rather than JWT.
 
-엔드포인트:
-- GET  /api/chatbot/items?kakao_user_id=...     : 활성 아이템 목록 (pending 포함)
-- POST /api/chatbot/items                        : 이름만으로 pending 아이템 추가
-- POST /api/chatbot/items/delete-by-name         : 이름으로 아이템 소프트 삭제
-- POST /api/chatbot/device/unlink                : 모든 활성 아이템 일괄 삭제 (기기 해제)
-- POST /api/chatbot/users/resolve                : kakao_user_id → user 기본 정보 (옵션)
+Endpoints:
+- GET  /api/chatbot/items?kakao_user_id=...     : Active item list (includes pending)
+- POST /api/chatbot/items                        : Add pending item by name only
+- POST /api/chatbot/items/delete-by-name         : Soft delete item by name
+- POST /api/chatbot/device/unlink                : Batch delete all active items (device unlink)
+- POST /api/chatbot/users/resolve                : kakao_user_id → user basic info (optional)
 
-A-full (2026-04-18): pending 아이템 지원을 위해 도입.
+A-full (2026-04-18): Introduced to support pending items.
 """
 
 from fastapi import APIRouter, Depends, Query

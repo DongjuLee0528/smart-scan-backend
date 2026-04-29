@@ -39,36 +39,36 @@ class DeviceRepository:
 
     def find_by_serial_number(self, serial_number: str) -> Optional[Device]:
         """
-        시리얼 번호로 디바이스 조회
+        Query device by serial number
 
-        RFID 리더기가 스캔 데이터를 전송할 때 시리얼 번호를 통해 디바이스를 식별합니다.
+        Identify device through serial number when RFID reader sends scan data.
         """
         return self.db.query(Device).filter(Device.serial_number == serial_number).first()
 
     def find_by_id(self, device_id: int) -> Optional[Device]:
         """
-        디바이스 ID로 조회
+        Query by device ID
 
         Args:
-            device_id: 조회할 디바이스의 고유 ID
+            device_id: Unique ID of device to query
 
         Returns:
-            Optional[Device]: 일치하는 디바이스 또는 None
+            Optional[Device]: Matching device or None
         """
         return self.db.query(Device).filter(Device.id == device_id).first()
 
     def find_by_id_and_family_id(self, device_id: int, family_id: int) -> Optional[Device]:
         """
-        디바이스 ID와 가족 ID로 디바이스 조회 (권한 검증용)
+        Query device by device ID and family ID (for permission verification)
 
-        특정 가족이 해당 디바이스에 접근할 권한이 있는지 확인할 때 사용합니다.
+        Used to verify if specific family has permission to access the device.
 
         Args:
-            device_id: 조회할 디바이스의 고유 ID
-            family_id: 권한을 확인할 가족의 고유 ID
+            device_id: Unique ID of device to query
+            family_id: Unique ID of family to verify permission
 
         Returns:
-            Optional[Device]: 가족이 소유한 디바이스 또는 None
+            Optional[Device]: Device owned by family or None
         """
         return self.db.query(Device).filter(
             Device.id == device_id,
@@ -77,28 +77,28 @@ class DeviceRepository:
 
     def find_by_family_id(self, family_id: int) -> Optional[Device]:
         """
-        가족 ID로 등록된 디바이스 조회
+        Query device registered by family ID
 
-        현재는 가족당 하나의 주 디바이스를 등록하는 구조입니다.
+        Currently structured to register one main device per family.
 
         Args:
-            family_id: 조회할 가족의 고유 ID
+            family_id: Unique ID of family to query
 
         Returns:
-            Optional[Device]: 가족에 등록된 디바이스 또는 None
+            Optional[Device]: Device registered to family or None
         """
         return self.db.query(Device).filter(Device.family_id == family_id).first()
 
     def assign_family(self, device: Device, family_id: int) -> Device:
         """
-        디바이스를 가족에 할당
+        Assign device to family
 
         Args:
-            device: 할당할 디바이스 엔티티
-            family_id: 할당받을 가족의 고유 ID
+            device: Device entity to assign
+            family_id: Unique ID of family to receive assignment
 
         Returns:
-            Device: 업데이트된 디바이스 엔티티
+            Device: Updated device entity
         """
         device.family_id = family_id
         self.db.flush()
@@ -106,13 +106,13 @@ class DeviceRepository:
 
     def clear_family(self, device: Device) -> Device:
         """
-        디바이스 가족 할당 해제
+        Clear device family assignment
 
         Args:
-            device: 할당 해제할 디바이스 엔티티
+            device: Device entity to clear assignment
 
         Returns:
-            Device: 업데이트된 디바이스 엔티티
+            Device: Updated device entity
         """
         device.family_id = None
         self.db.flush()
@@ -120,13 +120,13 @@ class DeviceRepository:
 
     def create(self, serial_number: str) -> Device:
         """
-        새 디바이스 생성
+        Create new device
 
         Args:
-            serial_number: RFID 리더기의 시리얼 번호
+            serial_number: Serial number of RFID reader
 
         Returns:
-            Device: 생성된 디바이스 엔티티
+            Device: Created device entity
         """
         device = Device(serial_number=serial_number)
         self.db.add(device)
