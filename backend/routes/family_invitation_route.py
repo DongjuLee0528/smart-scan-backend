@@ -1,15 +1,15 @@
 """
-가족 초대 API 라우터
+Family invitation API router
 
-/api/family-invitations 프리픽스 하에 초대 생성, 조회, 수락, 거절, 취소 엔드포인트를 제공합니다.
+Provides invitation creation, lookup, acceptance, decline, and cancellation endpoints under /api/family-invitations prefix.
 
-엔드포인트:
-- POST   /                 : 초대 생성 (owner 전용)
-- GET    /                 : pending 초대 목록 조회 (owner 전용)
-- DELETE /{invitation_id}  : 초대 취소 (owner 전용)
-- GET    /by-token/{token} : 초대 정보 조회 (공개)
-- POST   /{token}/accept   : 초대 수락 (인증 필요)
-- POST   /{token}/decline  : 초대 거절 (인증 필요)
+Endpoints:
+- POST   /                 : Create invitation (owner only)
+- GET    /                 : Pending invitation list lookup (owner only)
+- DELETE /{invitation_id}  : Cancel invitation (owner only)
+- GET    /by-token/{token} : Invitation info lookup (public)
+- POST   /{token}/accept   : Accept invitation (authentication required)
+- POST   /{token}/decline  : Decline invitation (authentication required)
 """
 
 from fastapi import APIRouter, Depends
