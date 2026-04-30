@@ -1,15 +1,15 @@
 """
-가족 구성원 관리 API 라우터
+Family member management API router
 
-SmartScan 시스템에서 가족 그룹 내 구성원을 관리하는 API 엔드포인트를 제공합니다.
-가족 구성원을 추가하고 삭제하며, 각 구성원의 소지품을 개별적으로 추적할 수 있습니다.
+Provides API endpoints for managing members within family groups in SmartScan system.
+Allows adding and removing family members, and individually tracking each member's belongings.
 
-주요 엔드포인트:
-- POST /: 새로운 가족 구성원 추가
-- GET /: 현재 가족의 모든 구성원 목록 조회
-- DELETE /{member_id}: 가족 구성원 제거
+Main endpoints:
+- POST /: Add new family member
+- GET /: Query all member list of current family
+- DELETE /{member_id}: Remove family member
 
-권한: 가족 소유자만 구성원 추가/삭제 가능
+Permissions: Only family owners can add/remove members
 """
 
 from fastapi import APIRouter, Depends
