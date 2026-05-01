@@ -136,16 +136,16 @@ def validate_password(password: str) -> None:
 
     normalized_password = password.strip()
     if len(normalized_password) < 8:
-        raise BadRequestException("비밀번호는 8자 이상이며 영문, 숫자, 특수문자를 포함해야 합니다")
+        raise BadRequestException("Password must be at least 8 characters and contain letters, numbers, and special characters")
 
     # Check for alphabetic characters
     if not re.search(r'[a-zA-Z]', normalized_password):
-        raise BadRequestException("비밀번호는 8자 이상이며 영문, 숫자, 특수문자를 포함해야 합니다")
+        raise BadRequestException("Password must be at least 8 characters and contain letters, numbers, and special characters")
 
     # Check for numeric characters
     if not re.search(r'[0-9]', normalized_password):
-        raise BadRequestException("비밀번호는 8자 이상이며 영문, 숫자, 특수문자를 포함해야 합니다")
+        raise BadRequestException("Password must be at least 8 characters and contain letters, numbers, and special characters")
 
     # Check for special characters
     if not re.search(r'[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]', normalized_password):
-        raise BadRequestException("비밀번호는 8자 이상이며 영문, 숫자, 특수문자를 포함해야 합니다")
+        raise BadRequestException("Password must be at least 8 characters and contain letters, numbers, and special characters")
