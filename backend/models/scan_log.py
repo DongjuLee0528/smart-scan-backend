@@ -1,23 +1,23 @@
 """
-RFID 스캔 로그 데이터베이스 모델
+RFID scan log database model
 
-RFID 리더기에서 발생한 모든 스캔 이벤트를 기록하는 데이터베이스 모델입니다.
-각 스캔 이벤트는 FOUND(발견) 또는 LOST(손실) 상태로 기록됩니다.
+Database model for recording all scan events from RFID readers.
+Each scan event is recorded as FOUND or LOST status.
 
-데이터 구조:
-- 스캔 이벤트: RFID 리더기가 태그를 감지한 순간의 기록
-- 상태 추적: FOUND/LOST 상태로 소지품의 현재 위치 추적
-- 시간 순 데이터: 대문 통과 타이밍과 순서 기록
+Data structure:
+- Scan events: Records of moments when RFID reader detects tags
+- Status tracking: Track current location of items with FOUND/LOST status
+- Time-ordered data: Record door passage timing and sequence
 
-비즈니스 로직:
-- 대문 통과 감지: 사용자가 대문을 통과할 때마다 자동 스캔
-- 소지품 추적: 마지막 FOUND 상태 이후 LOST 상태를 비교하여 누락 감지
-- 알림 트리거: 누락된 소지품 발견 시 자동 알림 발송
-- 데이터 분석: 시간대별 사용 패턴 및 통계 제공
+Business logic:
+- Door passage detection: Automatic scan whenever user passes through door
+- Item tracking: Detect missing items by comparing LOST status after last FOUND status
+- Notification trigger: Automatic notification when missing items are found
+- Data analysis: Provide usage patterns and statistics by time period
 
-관계 연결:
-- N:1 관계: user_device, item
-- 인덱스: scanned_at (시간순 조회용)
+Relationship connections:
+- N:1 relationships: user_device, item
+- Index: scanned_at (for time-ordered queries)
 """
 
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
@@ -28,9 +28,9 @@ from backend.common.db import Base
 
 class ScanLog(Base):
     """
-    RFID 스캔 로그 모델
+    RFID scan log model
 
-    RFID 리더기에서 발생한 스캔 이벤트를 기록하는 로그 데이터를 나타냅니다.
+    Represents log data recording scan events from RFID readers.
     """
     __tablename__ = "scan_logs"
 
