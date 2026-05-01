@@ -14,16 +14,16 @@ from backend.schemas.tag_schema import TagListResponse, TagResponse
 
 class TagService:
     """
-    스마트 태그 관리 서비스
+    Smart tag management service
 
-    사용자가 소유하는 가상 태그의 생성, 수정, 삭제를 관리한다.
-    실제 물리적 태그와 연결되기 전 단계의 가상 태그로, 나중에 아이템과 연결되어 위치 추적이 가능해진다.
+    Manages creation, modification, and deletion of virtual tags owned by users.
+    These are virtual tags before being connected to actual physical tags, later connected to items to enable location tracking.
 
-    설계 의도:
-    - 사용자별 태그 소유권: 각 사용자가 자신의 태그만 관리 가능
-    - 가족 단위 조회: 가족 구성원들의 태그 목록 통합 조회
-    - 고유 식별자: tag_uid를 통한 물리적 태그와의 연결 준비
-    - 활성 상태 관리: 소프트 삭제를 통한 데이터 보존
+    Design principles:
+    - User-specific tag ownership: Each user can only manage their own tags
+    - Family-unit lookup: Integrated lookup of family members' tag lists
+    - Unique identifier: Preparation for connection to physical tags through tag_uid
+    - Active status management: Data preservation through soft deletion
     """
     def __init__(self, db: Session):
         self.db = db
@@ -41,25 +41,25 @@ class TagService:
         device_id: int
     ) -> TagResponse:
         """
-        새로운 가상 태그 생성 또는 비활성 태그 재활성화
+        Create new virtual tag or reactivate inactive tag
 
-        사용자가 새로운 태그를 등록하거나 기존 비활성 태그를 재활성화한다.
-        태그 UID가 이미 존재하는 경우 소유권과 가족 소속을 확인하여 처리한다.
+        User registers new tag or reactivates existing inactive tag.
+        When tag UID already exists, check ownership and family membership for processing.
 
         Args:
-            user_id: 요청 사용자 ID
-            tag_uid: 물리적 태그의 고유 식별자
-            name: 태그 이름
-            owner_user_id: 태그 소유자 사용자 ID
-            device_id: 연결할 디바이스 ID
+            user_id: Requester user ID
+            tag_uid: Unique identifier of physical tag
+            name: Tag name
+            owner_user_id: Tag owner user ID
+            device_id: Device ID to connect
 
         Returns:
-            TagResponse: 생성된 태그 정보
+            TagResponse: Created tag information
 
         Raises:
-            ConflictException: 태그가 다른 가족에 이미 등록되었거나 활성 상태인 경우
-            NotFoundException: 사용자, 소유자, 또는 디바이스를 찾을 수 없는 경우
-            BadRequestException: 가족 소속 검증 실패
+            ConflictException: When tag is already registered to another family or is active
+            NotFoundException: When user, owner, or device cannot be found
+            BadRequestException: When family membership verification fails
         """
         validate_positive_int(user_id, "user_id")
         validate_non_empty_string(tag_uid, "tag_uid")
@@ -107,20 +107,20 @@ class TagService:
 
     def get_tags(self, user_id: int) -> TagListResponse:
         """
-        가족 태그 목록 조회
+        Query family tag list
 
-        사용자가 속한 가족의 모든 활성 태그를 조회한다.
-        가족 구성원들의 태그를 모두 볼 수 있어 위치 추적에 활용할 수 있다.
+        Query all active tags of the family that user belongs to.
+        Can view all family members' tags for use in location tracking.
 
         Args:
-            user_id: 요청 사용자 ID
+            user_id: Request user ID
 
         Returns:
-            TagListResponse: 가족 태그 목록과 총 개수
+            TagListResponse: Family tag list and total count
 
         Raises:
-            NotFoundException: 사용자를 찾을 수 없는 경우
-            BadRequestException: 가족 소속 검증 실패
+            NotFoundException: When user cannot be found
+            BadRequestException: Family membership verification failure
         """
         validate_positive_int(user_id, "user_id")
 
@@ -141,25 +141,25 @@ class TagService:
         device_id: int | None = None
     ) -> TagResponse:
         """
-        기존 태그 정보 수정
+        Modify existing tag information
 
-        태그의 이름, 소유자, 연결 디바이스를 변경한다.
-        가족 내에서만 소유권 변경이 가능하며, 디바이스도 가족 소유여야 한다.
+        Change tag name, owner, and connected device.
+        Ownership change is only possible within family, and device must also be family-owned.
 
         Args:
-            tag_id: 수정할 태그 ID
-            user_id: 요청 사용자 ID
-            name: 새로운 태그 이름 (선택사항)
-            owner_user_id: 새로운 소유자 사용자 ID (선택사항)
-            device_id: 새로운 디바이스 ID (선택사항)
+            tag_id: Tag ID to modify
+            user_id: Request user ID
+            name: New tag name (optional)
+            owner_user_id: New owner user ID (optional)
+            device_id: New device ID (optional)
 
         Returns:
-            TagResponse: 수정된 태그 정보
+            TagResponse: Modified tag information
 
         Raises:
-            NotFoundException: 태그, 사용자, 소유자, 또는 디바이스를 찾을 수 없는 경우
-            ForbiddenException: 가족 소속 태그가 아닌 경우
-            BadRequestException: 가족 소속 검증 실패
+            NotFoundException: When tag, user, owner, or device cannot be found
+            ForbiddenException: When tag is not family-owned
+            BadRequestException: Family membership verification failure
         """
         validate_positive_int(tag_id, "tag_id")
         validate_positive_int(user_id, "user_id")
@@ -201,22 +201,22 @@ class TagService:
 
     def delete_tag(self, tag_id: int, user_id: int) -> bool:
         """
-        태그 소프트 삭제
+        Tag soft deletion
 
-        태그를 비활성화하여 숨김 처리한다.
-        물리적 삭제가 아닌 소프트 삭제로 데이터를 보존한다.
+        Deactivate tag for hidden processing.
+        Preserve data through soft deletion rather than physical deletion.
 
         Args:
-            tag_id: 삭제할 태그 ID
-            user_id: 요청 사용자 ID
+            tag_id: Tag ID to delete
+            user_id: Request user ID
 
         Returns:
-            bool: 삭제 성공 여부
+            bool: Deletion success status
 
         Raises:
-            NotFoundException: 태그 또는 사용자를 찾을 수 없는 경우
-            ForbiddenException: 가족 소속 태그가 아닌 경우
-            BadRequestException: 가족 소속 검증 실패
+            NotFoundException: When tag or user cannot be found
+            ForbiddenException: When tag is not family-owned
+            BadRequestException: Family membership verification failure
         """
         validate_positive_int(tag_id, "tag_id")
         validate_positive_int(user_id, "user_id")
@@ -234,19 +234,19 @@ class TagService:
 
     def _get_actor_and_family_member(self, user_id: int):
         """
-        요청 사용자와 가족 구성원 정보 조회
+        Query request user and family member information
 
-        사용자 존재 여부와 가족 소속을 검증한다.
+        Verify user existence and family membership.
 
         Args:
-            user_id: 사용자 ID
+            user_id: User ID
 
         Returns:
-            tuple: (사용자 객체, 가족구성원 객체)
+            tuple: (user object, family member object)
 
         Raises:
-            NotFoundException: 사용자를 찾을 수 없는 경우
-            BadRequestException: 가족에 소속되지 않은 경우
+            NotFoundException: When user cannot be found
+            BadRequestException: When user does not belong to family
         """
         actor = self.user_repository.find_by_id(user_id)
         if not actor:
@@ -260,20 +260,20 @@ class TagService:
 
     def _get_family_owner(self, owner_user_id: int, family_id: int):
         """
-        가족 내 소유자 검증
+        Verify owner within family
 
-        지정된 소유자가 동일한 가족에 속해 있는지 확인한다.
+        Verify that specified owner belongs to the same family.
 
         Args:
-            owner_user_id: 소유자 사용자 ID
-            family_id: 가족 ID
+            owner_user_id: Owner user ID
+            family_id: Family ID
 
         Returns:
-            User: 검증된 소유자 객체
+            User: Verified owner object
 
         Raises:
-            NotFoundException: 소유자를 찾을 수 없는 경우
-            BadRequestException: 다른 가족에 속한 사용자인 경우
+            NotFoundException: When owner cannot be found
+            BadRequestException: When user belongs to different family
         """
         owner = self.user_repository.find_by_id(owner_user_id)
         if not owner:
@@ -287,20 +287,20 @@ class TagService:
 
     def _get_family_device(self, device_id: int, family_id: int):
         """
-        가족 소유 디바이스 검증
+        Verify family-owned device
 
-        지정된 디바이스가 해당 가족에 속해 있는지 확인한다.
+        Verify that specified device belongs to the family.
 
         Args:
-            device_id: 디바이스 ID
-            family_id: 가족 ID
+            device_id: Device ID
+            family_id: Family ID
 
         Returns:
-            Device: 검증된 디바이스 객체
+            Device: Verified device object
 
         Raises:
-            NotFoundException: 디바이스를 찾을 수 없는 경우
-            BadRequestException: 가족 소유가 아닌 디바이스인 경우
+            NotFoundException: When device cannot be found
+            BadRequestException: When device is not family-owned
         """
         device = self.device_repository.find_by_id(device_id)
         if not device:
@@ -314,20 +314,20 @@ class TagService:
 
     def _get_accessible_tag(self, tag_id: int, family_id: int):
         """
-        접근 가능한 활성 태그 검증
+        Verify accessible active tag
 
-        태그가 존재하고 활성 상태이며 가족 소속인지 확인한다.
+        Verify that tag exists, is active, and belongs to family.
 
         Args:
-            tag_id: 태그 ID
-            family_id: 가족 ID
+            tag_id: Tag ID
+            family_id: Family ID
 
         Returns:
-            Tag: 검증된 태그 객체
+            Tag: Verified tag object
 
         Raises:
-            NotFoundException: 태그를 찾을 수 없거나 비활성 상태인 경우
-            ForbiddenException: 가족 소속 태그가 아닌 경우
+            NotFoundException: When tag cannot be found or is inactive
+            ForbiddenException: When tag is not family-owned
         """
         tag = self.tag_repository.find_by_id(tag_id)
         if not tag or not tag.is_active:
