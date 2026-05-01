@@ -5,69 +5,69 @@ from typing import Optional
 
 class UserRepository:
     """
-    사용자 데이터 접근 계층
+    User data access layer
 
-    사용자(User) 모델에 대한 CRUD 연산을 담당하는 리포지토리.
-    카카오 ID와 이메일 기반 사용자 조회, 생성, 프로필 업데이트 등의 기본 데이터 액세스 기능을 제공한다.
+    Repository responsible for CRUD operations on User model.
+    Provides basic data access functions including Kakao ID and email-based user lookup, creation, and profile updates.
 
-    주요 책임:
-    - 사용자 엔티티의 데이터베이스 연산
-    - 카카오 ID 및 이메일 기반 조회
-    - 회원가입 시 사용자 생성 및 프로필 업데이트
+    Main responsibilities:
+    - Database operations on user entities
+    - Kakao ID and email-based lookup
+    - User creation and profile updates during registration
     """
     def __init__(self, db: Session):
-        """데이터베이스 세션 주입"""
+        """Inject database session"""
         self.db = db
 
     def find_by_kakao_user_id(self, kakao_user_id: str) -> Optional[User]:
         """
-        카카오 사용자 ID로 사용자 조회
+        Find user by Kakao user ID
 
-        카카오 로그인 시 사용자 식별과 챗봇 서비스 연동에 사용됩니다.
+        Used for user identification during Kakao login and chatbot service integration.
 
         Args:
-            kakao_user_id: 카카오 고유 사용자 식별자
+            kakao_user_id: Kakao unique user identifier
 
         Returns:
-            Optional[User]: 일치하는 사용자 또는 None
+            Optional[User]: Matching user or None
         """
         return self.db.query(User).filter(User.kakao_user_id == kakao_user_id).first()
 
     def find_by_id(self, user_id: int) -> Optional[User]:
         """
-        사용자 ID로 사용자 조회
+        Query user by user ID
 
         Args:
-            user_id: 조회할 사용자의 고유 ID
+            user_id: Unique ID of user to query
 
         Returns:
-            Optional[User]: 일치하는 사용자 또는 None
+            Optional[User]: Matching user or None
         """
         return self.db.query(User).filter(User.id == user_id).first()
 
     def find_by_email(self, email: str) -> Optional[User]:
         """
-        이메일 주소로 사용자 조회
+        Query user by email address
 
-        로그인 시 이메일 기반 사용자 인증에 사용됩니다.
+        Used for email-based user authentication during login.
 
         Args:
-            email: 조회할 사용자의 이메일 주소
+            email: Email address of user to query
 
         Returns:
-            Optional[User]: 일치하는 사용자 또는 None
+            Optional[User]: Matching user or None
         """
         return self.db.query(User).filter(User.email == email).first()
 
     def find_by_phone(self, phone: str) -> Optional[User]:
         """
-        전화번호로 사용자 조회
+        Query user by phone number
 
         Args:
-            phone: 조회할 사용자의 전화번호
+            phone: Phone number of user to query
 
         Returns:
-            Optional[User]: 일치하는 사용자 또는 None
+            Optional[User]: Matching user or None
         """
         return self.db.query(User).filter(User.phone == phone).first()
 
@@ -81,18 +81,18 @@ class UserRepository:
         age: int | None = None
     ) -> User:
         """
-        새 사용자 생성 (카카오 ID 필수, 나머지 선택사항)
+        Create new user (KakaoTalk ID required, others optional)
 
         Args:
-            kakao_user_id: 카카오 고유 사용자 식별자 (필수)
-            name: 사용자 이름 (선택사항)
-            email: 이메일 주소 (선택사항)
-            password_hash: 해시된 비밀번호 (선택사항)
-            phone: 전화번호 (선택사항)
-            age: 나이 (선택사항)
+            kakao_user_id: Kakao unique user identifier (required)
+            name: User name (optional)
+            email: Email address (optional)
+            password_hash: Hashed password (optional)
+            phone: Phone number (optional)
+            age: Age (optional)
 
         Returns:
-            User: 생성된 사용자 엔티티
+            User: Created user entity
         """
         user = User(
             kakao_user_id=kakao_user_id,
@@ -116,18 +116,18 @@ class UserRepository:
         age: int | None = None
     ) -> User:
         """
-        사용자 프로필 정보 업데이트 (회원가입 완성 시 사용)
+        Update user profile information (used when completing registration)
 
         Args:
-            user: 업데이트할 사용자 엔티티
-            name: 새로운 사용자 이름
-            email: 새로운 이메일 주소
-            password_hash: 새로운 해시된 비밀번호 (선택사항)
-            phone: 새로운 전화번호 (선택사항)
-            age: 새로운 나이 (선택사항)
+            user: User entity to update
+            name: New user name
+            email: New email address
+            password_hash: New hashed password (optional)
+            phone: New phone number (optional)
+            age: New age (optional)
 
         Returns:
-            User: 업데이트된 사용자 엔티티
+            User: Updated user entity
         """
         user.name = name
         user.email = email
@@ -140,13 +140,13 @@ class UserRepository:
 
     def get_or_create(self, kakao_user_id: str) -> User:
         """
-        카카오 사용자 조회 또는 신규 생성 (소셜 로그인 시 사용)
+        Query or create new KakaoTalk user (used for social login)
 
         Args:
-            kakao_user_id: 카카오 고유 사용자 식별자
+            kakao_user_id: Kakao unique user identifier
 
         Returns:
-            User: 기존 사용자 또는 새로 생성된 사용자
+            User: Existing user or newly created user
         """
         user = self.find_by_kakao_user_id(kakao_user_id)
         if not user:
@@ -155,11 +155,11 @@ class UserRepository:
 
     def update_kakao_user_id(self, user: User, kakao_user_id: str) -> User:
         """
-        사용자의 kakao_user_id 업데이트
+        Update user's kakao_user_id
 
-        카카오 계정 연동(magic link) 과정에서 기존 placeholder 값(pending_xxx)을
-        실제 카카오 UID 로 교체하기 위해 사용한다.
-        UNIQUE 제약은 DB 수준에서 처리되며, 호출 측에서 사전에 중복을 확인해야 한다.
+        Used to replace existing placeholder value (pending_xxx) with actual Kakao UID
+        during KakaoTalk account linking (magic link) process.
+        UNIQUE constraint is handled at DB level, caller must check for duplicates beforehand.
         """
         user.kakao_user_id = kakao_user_id
         self.db.flush()
