@@ -1,31 +1,31 @@
 """
-모니터링 및 대시보드 서비스
+Monitoring and dashboard service
 
-SmartScan 시스템의 실시간 모니터링과 통계 정보를 제공하는 서비스입니다.
-가족 구성원별 소지품 현황, 스캔 이력, 누락 통계 등을 대시보드 형태로 제공합니다.
+Service that provides real-time monitoring and statistics information for SmartScan system.
+Provides dashboard for family member belongings status, scan history, and missing statistics.
 
-주요 기능:
-- 실시간 대시보드 데이터 (총 아이템 수, 최근 스캔 등)
-- 가족 구성원별 소지품 현황 요약
-- 구성원별 태그 상태 모니터링 (FOUND/LOST)
-- 최근 스캔 활동 및 누락 아이템 알림
-- 시간대별 스캔 패턴 분석
+Main features:
+- Real-time dashboard data (total items, recent scans, etc.)
+- Family member belongings status summary
+- Member-specific tag status monitoring (FOUND/LOST)
+- Recent scan activity and missing item alerts
+- Time-based scan pattern analysis
 
-대시보드 구성:
-- 전체 요약: 총 아이템, 활성 태그, 최근 스캔 수
-- 구성원별 상태: 각 가족 구성원의 소지품 현황
-- 실시간 알림: 누락된 아이템 및 주의 사항
-- 활동 로그: 최근 스캔 이벤트 히스토리
+Dashboard structure:
+- Overall summary: Total items, active tags, recent scan count
+- Member status: Each family member's belongings status
+- Real-time alerts: Missing items and warnings
+- Activity log: Recent scan event history
 
-데이터 소스:
-- scan_logs: 실시간 스캔 이벤트
-- items: 등록된 소지품 정보
-- family_members: 가족 구성원 정보
-- user_devices: 디바이스 연결 상태
+Data sources:
+- scan_logs: Real-time scan events
+- items: Registered belongings information
+- family_members: Family member information
+- user_devices: Device connection status
 
-성능 고려사항:
-- 대시보드 데이터는 실시간 집계로 제공
-- 대량의 스캔 로그에 대한 효율적인 쿼리 최적화
+Performance considerations:
+- Dashboard data provided through real-time aggregation
+- Efficient query optimization for large scan log volumes
 """
 
 from datetime import datetime, timezone
@@ -271,5 +271,5 @@ class MonitoringService(ServiceBase):
 
     @staticmethod
     def _count_tags_by_status(tags: list[TagStatusResponse], status: TagCurrentStatus) -> int:
-        """특정 상태의 태그 개수 집계"""
+        """Count tags with specific status"""
         return sum(1 for tag in tags if tag.status == status)
