@@ -1,34 +1,34 @@
 """
-알림 관리 서비스
+Notification management service
 
-SmartScan 시스템의 알림 기능을 관리하는 서비스입니다.
-RFID 스캔 결과에 따른 누락 아이템 알림, 수동 알림 등을 처리하고 이력을 관리합니다.
+Service that manages notification features in SmartScan system.
+Handles missing item alerts based on RFID scan results, manual notifications, etc., and manages notification history.
 
-주요 기능:
-- 자동 누락 알림: RFID 스캔 결과 기반 누락 아이템 자동 감지 및 알림
-- 수동 알림: 가족 구성원 간 수동 알림 전송
-- 알림 이력 관리: 발송된 모든 알림의 기록과 조회
-- 다채널 알림: 이메일, 카카오톡 등 다양한 채널 지원
+Main features:
+- Automatic missing alerts: Automatic detection and notification of missing items based on RFID scan results
+- Manual notifications: Manual notification transmission between family members
+- Notification history management: Record and retrieval of all sent notifications
+- Multi-channel notifications: Support for various channels like email, KakaoTalk, etc.
 
-알림 유형:
-- MISSING_ITEMS: 누락된 소지품 알림 (자동)
-- MANUAL_ALERT: 가족 구성원 간 수동 알림
-- DEVICE_OFFLINE: 디바이스 연결 해제 알림
-- SYSTEM_NOTICE: 시스템 공지사항
+Notification types:
+- MISSING_ITEMS: Missing belongings alert (automatic)
+- MANUAL_ALERT: Manual alert between family members
+- DEVICE_OFFLINE: Device disconnection alert
+- SYSTEM_NOTICE: System announcements
 
-알림 채널:
-- EMAIL: 이메일 알림 (기본)
-- KAKAO_TALK: 카카오톡 알림 (향후 확장)
-- PUSH: 모바일 푸시 알림 (향후 확장)
+Notification channels:
+- EMAIL: Email notifications (default)
+- KAKAO_TALK: KakaoTalk notifications (future extension)
+- PUSH: Mobile push notifications (future extension)
 
-비즈니스 규칙:
-- 가족 구성원은 서로의 알림 이력 조회 가능
-- 알림 발송 실패 시 재시도 로직 포함
-- 스팸 방지를 위한 알림 빈도 제한
+Business rules:
+- Family members can view each other's notification history
+- Includes retry logic when notification sending fails
+- Notification frequency limits for spam prevention
 
-보안 고려사항:
-- 알림 내용에서 민감한 정보 마스킹
-- 가족 단위 알림 격리 (다른 가족 알림 접근 불가)
+Security considerations:
+- Mask sensitive information in notification content
+- Family-unit notification isolation (no access to other families' notifications)
 """
 
 import logging
@@ -75,10 +75,10 @@ class NotificationService(ServiceBase):
         validate_non_empty_string(title, "title")
         validate_non_empty_string(message, "message")
 
-        # 발신자 가족 컨텍스트 확인 (모든 가족 구성원 허용)
+        # Verify sender family context (allow all family members)
         actor, actor_family_member, family = self._get_actor_context(user_id)
 
-        # 수신자가 발신자와 동일한 가족에 속하는지 확인
+        # Verify recipient belongs to same family as sender
         recipient_member = self._get_family_member_or_raise(family.id, recipient_user_id)
 
         try:
