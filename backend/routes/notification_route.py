@@ -1,31 +1,31 @@
 """
-알림 관리 API 라우터
+Notification management API router
 
-SmartScan 시스템의 알림 기능을 위한 API 엔드포인트를 제공합니다.
-가족 구성원 간 수동 알림 전송과 알림 이력 조회 기능을 지원합니다.
+Provides API endpoints for notification features in SmartScan system.
+Supports manual notification sending between family members and notification history lookup.
 
-주요 엔드포인트:
-- POST /send: 가족 구성원에게 수동 알림 전송
-- GET /: 알림 이력 조회 (가족 단위)
-- GET /{notification_id}: 특정 알림 상세 조회
+Main endpoints:
+- POST /send: Send manual notification to family members
+- GET /: Notification history lookup (family unit)
+- GET /{notification_id}: Specific notification detail lookup
 
-알림 기능:
-- 수동 알림: 가족 구성원에게 커스텀 메시지 전송
-- 자동 알림: RFID 스캔 결과 기반 누락 아이템 알림 (별도 Lambda 처리)
-- 알림 이력: 발송된 모든 알림의 기록과 상태 추적
+Notification features:
+- Manual notifications: Send custom messages to family members
+- Automatic notifications: Missing item alerts based on RFID scan results (handled by separate Lambda)
+- Notification history: Record and status tracking of all sent notifications
 
-지원 채널:
-- 이메일: 기본 알림 채널
-- 카카오톡: 향후 확장 예정
-- 푸시 알림: 향후 확장 예정
+Supported channels:
+- Email: Default notification channel
+- KakaoTalk: Future expansion planned
+- Push notifications: Future expansion planned
 
-비즈니스 규칙:
-- 가족 구성원만 서로에게 알림 전송 가능
-- Rate limiting으로 스팸 방지
-- 알림 내용 길이 제한 (보안 및 성능)
-- 발송 실패 시 재시도 로직
+Business rules:
+- Only family members can send notifications to each other
+- Spam prevention through rate limiting
+- Notification content length restrictions (security and performance)
+- Retry logic when sending fails
 
-보안: JWT 인증 필요, 가족 단위 권한 격리
+Security: JWT authentication required, family-unit permission isolation
 """
 
 from fastapi import APIRouter, Depends, Request
