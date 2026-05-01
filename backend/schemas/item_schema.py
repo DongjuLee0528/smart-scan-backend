@@ -1,14 +1,14 @@
 """
-소지품(아이템) 관리 API 스키마
+Personal belongings (item) management API schemas
 
-RFID 태그와 연결되는 실제 소지품의 생성, 수정, 조회를 위한 API 스키마를 정의합니다.
-사용자의 소지품 등록과 관리를 위한 데이터 구조를 제공합니다.
+Defines API schemas for creating, modifying, and retrieving real belongings connected to RFID tags.
+Provides data structures for user belonging registration and management.
 
 A-full (2026-04-18):
-- is_pending 추가 — 챗봇에서 이름만 추가된 "라벨 연결 대기" 아이템
-- label_id는 pending 상태일 때 NULL 허용
-- ItemBindRequest: 라벨 연결 전용 스키마
-- ChatbotItemCreateRequest / ChatbotItemDeleteByNameRequest / ChatbotDeviceUnlinkRequest: 챗봇 전용 스키마
+- Added is_pending — "waiting for label connection" items with name-only added from chatbot
+- label_id allows NULL when in pending state
+- ItemBindRequest: Label connection-specific schema
+- ChatbotItemCreateRequest / ChatbotItemDeleteByNameRequest / ChatbotDeviceUnlinkRequest: Chatbot-specific schemas
 """
 
 from datetime import datetime
@@ -27,7 +27,7 @@ class ItemUpdateRequest(BaseModel):
 
 
 class ItemBindRequest(BaseModel):
-    """Pending 아이템에 라벨을 연결하여 활성 아이템으로 전환."""
+    """Connect label to pending item to convert to active item."""
     label_id: int
 
 
