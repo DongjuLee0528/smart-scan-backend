@@ -6,16 +6,16 @@ from backend.schemas.scan_log_schema import ScanStatus
 
 class ScanLogRepository:
     """
-    스캔 로그 데이터 접근 계층
+    Scan log data access layer
 
-    스캔 이벤트 로그의 데이터베이스 연산을 담당한다.
-    FOUND/LOST 상태의 스캔 기록 저장, 최신 스캔 로그 조회, 아이템별 스캔 히스토리 관리 등을 수행한다.
+    Handles database operations for scan event logs.
+    Performs FOUND/LOST status scan record storage, latest scan log lookup, item-specific scan history management, etc.
 
-    주요 책임:
-    - 스캔 이벤트 로그 저장 및 조회
-    - 아이템별 최신 스캔 상태 추적
-    - 가족 단위 스캔 로그 집계
-    - 모니터링용 최신 상태 정보 제공
+    Main responsibilities:
+    - Scan event log storage and lookup
+    - Latest scan status tracking per item
+    - Family-unit scan log aggregation
+    - Latest status information for monitoring
     """
     def __init__(self, db: Session):
         self.db = db
@@ -38,11 +38,11 @@ class ScanLogRepository:
         if not item_ids:
             return {}
 
-        # DISTINCT ON (item_id)으로 각 item_id별 최신 스캔 로그 1개만 DB에서 직접 조회.
-        # 기존 방식은 해당 item_ids의 모든 scan_logs를 불러온 뒤 Python에서 필터링하여
-        # item_ids 수가 많을수록 불필요한 전체 스캔 + N+1 성능 문제가 발생했음.
-        # PostgreSQL DISTINCT ON은 ORDER BY 기준으로 각 그룹의 첫 번째 행만 반환하므로
-        # 쿼리 1회로 item별 최신 로그를 효율적으로 가져올 수 있음.
+        # Direct query of only 1 latest scan log per item_id using DISTINCT ON (item_id).
+        # Previous approach loaded all scan_logs for given item_ids then filtered in Python,
+        # causing unnecessary full scans + N+1 performance issues as item_ids increased.
+        # PostgreSQL DISTINCT ON returns only first row per group based on ORDER BY,
+        # allowing efficient retrieval of latest log per item with single query.
         stmt = text("""
             SELECT DISTINCT ON (item_id)
                 id, user_device_id, item_id, status, scanned_at

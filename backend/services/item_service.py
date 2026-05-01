@@ -11,19 +11,19 @@ from backend.schemas.item_schema import ItemListResponse, ItemResponse
 
 class ItemService:
     """
-    스마트 태그 연결 아이템 관리 서비스
+    Smart tag connected item management service
 
-    사용자가 태그와 연결할 실제 물건(아이템)의 등록과 관리를 담당한다.
-    아이템은 마스터 태그(물리적 태그)와 연결되며, 라벨을 통해 분류될 수 있다.
+    Manages registration and management of real items that users connect with tags.
+    Items are linked to master tags (physical tags) and can be categorized through labels.
 
-    설계 의도:
-    - 가족 공유 아이템: 가족 구성원이면 누구나 아이템 조회 가능
-    - 태그-아이템 1:1 매칭: 하나의 마스터 태그에는 하나의 활성 아이템만 연결
-    - 라벨 기반 분류: 아이템을 카테고리별로 관리하여 사용자 편의성 제공
-    - 가족 디바이스 종속: 가족에 등록된 디바이스를 통해서만 아이템 관리 가능
+    Design principles:
+    - Family shared items: Any family member can view items
+    - Tag-item 1:1 matching: One master tag can only connect to one active item
+    - Label-based categorization: Manage items by category for user convenience
+    - Family device dependent: Items can only be managed through device registered to family
     """
     def __init__(self, db: Session):
-        """아이템 관리에 필요한 리포지토리 초기화"""
+        """Initialize repositories needed for item management"""
         self.db = db
         self.item_repository = ItemRepository(db)
         self.master_tag_repository = MasterTagRepository(db)
@@ -32,10 +32,10 @@ class ItemService:
 
     def get_items(self, user_id: int) -> ItemListResponse:
         """
-        가족에 등록된 모든 아이템 목록 조회
+        Retrieve all items registered to family
 
-        사용자가 속한 가족의 디바이스에 등록된 모든 활성 아이템을 라벨 정보와 함께 반환한다.
-        다른 가족 구성원이 등록한 아이템도 조회 가능하여 가족 공유 사용을 지원한다.
+        Returns all active items registered to the user's family device with label information.
+        Items registered by other family members are also accessible to support family sharing.
         """
         validate_positive_int(user_id, "user_id")
         user_device = self._get_family_registered_user_device(user_id)
@@ -62,10 +62,10 @@ class ItemService:
 
     def add_item(self, user_id: int, name: str, label_id: int) -> ItemResponse:
         """
-        새로운 아이템 등록
+        Register new item
 
-        사용자가 지정한 라벨에 대응하는 마스터 태그를 사용하여 새로운 아이템을 등록한다.
-        동일한 태그 UID로 다른 아이템이 이미 등록되어 있으면 오류를 발생시킨다.
+        Register new item using master tag corresponding to user-specified label.
+        Throw error if another item is already registered with same tag UID.
         """
         validate_positive_int(user_id, "user_id")
         user_device = self._get_family_registered_user_device(user_id)
@@ -74,7 +74,7 @@ class ItemService:
             label_id, user_device.device_id
         )
         if not master_tag:
-            raise NotFoundException("해당 라벨을 찾을 수 없습니다")
+            raise NotFoundException("Cannot find the specified label")
 
         self._ensure_family_tag_uid_available(
             family_id=user_device.device.family_id,
@@ -109,29 +109,29 @@ class ItemService:
 
     def update_item(self, item_id: int, user_id: int, name: str = None, label_id: int = None) -> ItemResponse:
         """
-        아이템 정보 수정
+        Update item information
 
-        아이템의 이름이나 라벨을 수정한다.
-        라벨 변경 시 다른 마스터 태그로 연결되며, 새로운 태그 UID의 사용 가능 여부를 검사한다.
-        본인이 등록한 아이템만 수정 가능하다.
+        Modify item name or label.
+        When changing label, connect to different master tag and check availability of new tag UID.
+        Only items registered by user can be modified.
         """
         validate_positive_int(user_id, "user_id")
         user_device = self._get_family_registered_user_device(user_id)
 
         item = self.item_repository.get_by_id(item_id)
         if not item or not item.is_active:
-            raise NotFoundException("물품을 찾을 수 없습니다")
+            raise NotFoundException("Cannot find item")
 
         if item.user_device_id != user_device.id:
-            raise ForbiddenException("본인 소유 물품이 아닙니다")
+            raise ForbiddenException("This is not your own item")
 
         if item.is_pending or item.tag_uid is None:
-            raise BadRequestException("라벨 연결 대기 중인 물품은 먼저 라벨을 연결해야 수정할 수 있습니다")
+            raise BadRequestException("Item pending label connection must be connected to label first before modification")
 
         new_tag_uid = None
         current_master_tag = self.master_tag_repository.get_by_tag_uid_and_device_id(item.tag_uid, user_device.device_id)
         if not current_master_tag:
-            raise NotFoundException("연결된 라벨 정보를 찾을 수 없습니다")
+            raise NotFoundException("Cannot find connected label information")
         response_label_id = current_master_tag.label_id
 
         if label_id is not None:
@@ -139,7 +139,7 @@ class ItemService:
                 label_id, user_device.device_id
             )
             if not master_tag:
-                raise NotFoundException("해당 라벨을 찾을 수 없습니다")
+                raise NotFoundException("Cannot find the specified label")
 
             if master_tag.tag_uid != item.tag_uid:
                 self._ensure_family_tag_uid_available(
@@ -181,20 +181,20 @@ class ItemService:
 
     def delete_item(self, item_id: int, user_id: int) -> bool:
         """
-        아이템 삭제 (연삭제)
+        Delete item (soft delete)
 
-        아이템을 비활성 상태로 만들어 논리적으로 삭제한다.
-        본인이 등록한 아이템만 삭제 가능하다.
+        Logically delete item by making it inactive.
+        Only items registered by user can be deleted.
         """
         validate_positive_int(user_id, "user_id")
         user_device = self._get_family_registered_user_device(user_id)
 
         item = self.item_repository.get_by_id(item_id)
         if not item or not item.is_active:
-            raise NotFoundException("물품을 찾을 수 없습니다")
+            raise NotFoundException("Cannot find item")
 
         if item.user_device_id != user_device.id:
-            raise ForbiddenException("본인 소유 물품이 아닙니다")
+            raise ForbiddenException("This is not your own item")
 
         try:
             self.item_repository.soft_delete(item)
@@ -206,26 +206,26 @@ class ItemService:
 
     def bind_item(self, item_id: int, user_id: int, label_id: int) -> ItemResponse:
         """
-        Pending 아이템에 라벨(마스터 태그)을 연결하여 활성 아이템으로 전환
+        Connect label (master tag) to pending item and convert to active item
 
-        챗봇에서 이름만 추가된 is_pending=True 아이템을 웹에서 라벨과 연결한다.
+        Connect item that was added with name only (is_pending=True) from chatbot to label in web interface.
         """
         validate_positive_int(user_id, "user_id")
         user_device = self._get_family_registered_user_device(user_id)
 
         item = self.item_repository.get_by_id(item_id)
         if not item or not item.is_active:
-            raise NotFoundException("물품을 찾을 수 없습니다")
+            raise NotFoundException("Cannot find item")
         if item.user_device_id != user_device.id:
-            raise ForbiddenException("본인 소유 물품이 아닙니다")
+            raise ForbiddenException("This is not your own item")
         if not item.is_pending:
-            raise BadRequestException("이미 라벨이 연결된 물품입니다")
+            raise BadRequestException("Item is already connected to a label")
 
         master_tag = self.master_tag_repository.get_by_label_id_and_device_id(
             label_id, user_device.device_id
         )
         if not master_tag:
-            raise NotFoundException("해당 라벨을 찾을 수 없습니다")
+            raise NotFoundException("Cannot find the specified label")
 
         self._ensure_family_tag_uid_available(
             family_id=user_device.device.family_id,
@@ -255,9 +255,9 @@ class ItemService:
             self.db.rollback()
             raise
 
-    # ---------- Chatbot-facing methods (kakao_user_id 기반) ----------
+    # ---------- Chatbot-facing methods (based on kakao_user_id) ----------
     def chatbot_list_items(self, kakao_user_id: str) -> ItemListResponse:
-        """챗봇: 활성 아이템 목록 (pending 포함, label_id 미할당일 수 있음)."""
+        """Chatbot: Active item list (includes pending, label_id may be unassigned)."""
         user_device = self._get_kakao_user_device(kakao_user_id)
         items_with_labels = self.item_repository.get_active_items_with_label_by_user_device_id(user_device.id)
         responses = [
@@ -275,7 +275,7 @@ class ItemService:
         return ItemListResponse(items=responses, total_count=len(responses))
 
     def chatbot_add_pending_item(self, kakao_user_id: str, name: str) -> ItemResponse:
-        """챗봇: 이름만으로 pending 아이템 추가."""
+        """Chatbot: Add pending item with name only."""
         user_device = self._get_kakao_user_device(kakao_user_id)
         try:
             item = self.item_repository.create_pending(
@@ -298,7 +298,7 @@ class ItemService:
             raise
 
     def chatbot_delete_by_name(self, kakao_user_id: str, name: str) -> int:
-        """챗봇: 이름으로 아이템을 찾아 soft-delete. 반환: 삭제된 수 (0 or 1)."""
+        """Chatbot: Find item by name and soft-delete. Return: number deleted (0 or 1)."""
         user_device = self._get_kakao_user_device(kakao_user_id)
         item = self.item_repository.get_active_by_user_device_and_name(user_device.id, name)
         if not item:
@@ -312,7 +312,7 @@ class ItemService:
             raise
 
     def chatbot_unlink_device(self, kakao_user_id: str) -> int:
-        """챗봇: 해당 유저의 모든 활성 아이템을 일괄 soft-delete. 반환: 삭제 수."""
+        """Chatbot: Bulk soft-delete all active items for the user. Return: number deleted."""
         user_device = self._get_kakao_user_device(kakao_user_id)
         items = self.item_repository.get_all_active_by_user_device_id(user_device.id)
         count = 0
@@ -327,27 +327,27 @@ class ItemService:
             raise
 
     def _get_kakao_user_device(self, kakao_user_id: str):
-        """카카오 사용자 ID로 가족 등록 디바이스 조회 (챗봇 엔드포인트 전용)."""
+        """Query family registered device by KakaoTalk user ID (chatbot endpoint exclusive)."""
         if not kakao_user_id or not kakao_user_id.strip():
-            raise BadRequestException("kakao_user_id가 비어 있습니다")
+            raise BadRequestException("kakao_user_id is empty")
         user_device = self.user_device_repository.get_by_kakao_user_id(kakao_user_id.strip())
         if not user_device:
-            raise NotFoundException("연결된 기기를 찾을 수 없습니다")
+            raise NotFoundException("Cannot find connected device")
         if not user_device.device or user_device.device.family_id is None:
-            raise BadRequestException("사용자 기기가 가족에 등록되어 있지 않습니다")
+            raise BadRequestException("User device is not registered to family")
         return user_device
 
     def _get_family_registered_user_device(self, user_id: int):
-        """사용자의 가족 등록 디바이스 조회 (아이템 관리 전 필수 확인)"""
+        """Query user's family registered device (required verification before item management)"""
         user_device = self.user_device_repository.find_by_user_id(user_id)
         if not user_device:
-            raise NotFoundException("사용자 기기를 찾을 수 없습니다")
+            raise NotFoundException("Cannot find user device")
         if not user_device.device or user_device.device.family_id is None:
-            raise BadRequestException("사용자 기기가 가족에 등록되어 있지 않습니다")
+            raise BadRequestException("User device is not registered to family")
         return user_device
 
     def _upsert_tag_for_item(self, tag_uid: str, name: str, user_device) -> None:
-        """item에 tag_uid가 세팅될 때 tags 레코드를 생성하거나 갱신한다."""
+        """Create or update tags record when tag_uid is set on item."""
         existing = self.tag_repository.find_by_tag_uid(tag_uid)
         if existing:
             self.tag_repository.update(
@@ -373,10 +373,10 @@ class ItemService:
         exclude_item_id: int | None = None
     ) -> None:
         """
-        가족 내 태그 UID 중복 사용 방지 검증
+        Validation to prevent duplicate tag UID usage within family
 
-        동일한 가족에서 같은 태그 UID를 사용하는 다른 아이템이 있는지 확인한다.
-        exclude_item_id를 사용하여 수정 시 자기 자신은 제외할 수 있다.
+        Check if there are other items using the same tag UID in the same family.
+        Use exclude_item_id to exclude self when modifying.
         """
         existing_item = self.item_repository.get_by_family_id_and_tag_uid(
             family_id=family_id,
@@ -384,4 +384,4 @@ class ItemService:
             exclude_item_id=exclude_item_id
         )
         if existing_item:
-            raise BadRequestException("이미 가족 내에서 사용 중인 라벨입니다")
+            raise BadRequestException("Label is already in use within the family")

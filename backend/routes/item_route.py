@@ -1,14 +1,14 @@
 """
-아이템 관리 API 라우터
+Item management API router
 
-스마트 태그와 연결된 물품(아이템) 관리 REST API를 제공한다.
-사용자가 태그에 연결할 실제 물건을 등록, 수정, 삭제하고 조회할 수 있는 엔드포인트들을 포함한다.
+Provides REST API for managing items connected to smart tags.
+Includes endpoints for users to register, modify, delete, and retrieve real objects connected to tags.
 
-주요 엔드포인트:
-- GET /items: 가족의 모든 아이템 목록 조회
-- POST /items: 새로운 아이템 등록
-- PUT /items/{item_id}: 아이템 정보 수정
-- DELETE /items/{item_id}: 아이템 삭제 (연삭제)
+Main endpoints:
+- GET /items: Retrieve all family item list
+- POST /items: Register new item
+- PUT /items/{item_id}: Modify item information
+- DELETE /items/{item_id}: Delete item (cascade delete)
 """
 
 from fastapi import APIRouter, Depends
@@ -32,17 +32,17 @@ def get_items(
     db: Session = Depends(get_db)
 ):
     """
-    아이템 목록 조회
+    Retrieve item list
 
-    로그인한 사용자가 속한 가족의 모든 아이템을 조회합니다.
-    pending 상태와 일반 아이템을 모두 포함하여 반환합니다.
+    Retrieve all items from the family that the logged-in user belongs to.
+    Returns both pending status and regular items.
 
     Returns:
-        가족의 모든 아이템 목록과 총 개수
+        All item list and total count for the family
 
     Raises:
-        AuthenticationError: 인증 토큰이 유효하지 않은 경우
-        ForbiddenError: 가족에 속하지 않은 경우
+        AuthenticationError: When authentication token is invalid
+        ForbiddenError: When user doesn't belong to a family
     """
     item_service = ItemService(db)
     result = item_service.get_items(current_user.id)
@@ -73,7 +73,7 @@ def bind_item(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """챗봇에서 이름만 추가된 pending 아이템에 라벨(마스터 태그) 연결."""
+    """Connect label (master tag) to pending item that was added with name only from chatbot."""
     item_service = ItemService(db)
     result = item_service.bind_item(
         item_id=item_id,

@@ -1,16 +1,16 @@
 """
-RFID 태그 관리 API 라우터
+RFID tag management API router
 
-RFID 태그와 아이템 간의 연결을 관리하는 API 엔드포인트를 제공합니다.
-물리적 RFID 태그를 시스템에 등록하고 소지품과 연결하여 추적을 가능하게 합니다.
+Provides API endpoints for managing connections between RFID tags and items.
+Enables tracking by registering physical RFID tags to the system and connecting them with belongings.
 
-주요 엔드포인트:
-- POST /: 새로운 RFID 태그 등록 및 아이템 연결
-- GET /: 현재 사용자의 모든 등록된 태그 목록 조회
-- PUT /{tag_id}: 태그 정보 수정 (연결된 아이템 변경)
-- DELETE /{tag_id}: 태그 등록 해제
+Main endpoints:
+- POST /: Register new RFID tag and connect to item
+- GET /: Query all registered tag list of current user
+- PUT /{tag_id}: Modify tag information (change connected item)
+- DELETE /{tag_id}: Unregister tag
 
-보안: 사용자는 본인이 등록한 태그만 관리 가능
+Security: Users can only manage tags they registered themselves
 """
 
 from fastapi import APIRouter, Depends

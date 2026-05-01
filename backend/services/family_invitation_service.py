@@ -1,18 +1,18 @@
 """
-가족 초대 서비스
+Family invitation service
 
-가족 초대 생성, 조회, 수락, 거절, 취소 등 전체 초대 플로우를 담당합니다.
+Handles entire invitation flow including family invitation creation, lookup, acceptance, rejection, and cancellation.
 
-주요 기능:
-- 초대 생성 및 이메일 발송 (원자적 처리, 이메일 실패 시 rollback)
-- 토큰 기반 공개 초대 정보 조회 (lazy expire 처리 포함)
-- 초대 수락: 기존 family_member 탈퇴 + 신규 family 합류 + device 연결
-- 초대 거절/취소: 상태 전환만 수행
+Main features:
+- Invitation creation and email sending (atomic processing, rollback on email failure)
+- Token-based public invitation information lookup (includes lazy expire processing)
+- Invitation acceptance: Leave existing family_member + join new family + device connection
+- Invitation rejection/cancellation: Status transition only
 
-비즈니스 규칙:
-- 가족 소유자만 초대 발송/취소 가능
-- 초대 수락 시 현재 family가 본인만 있는 경우 family 자체도 삭제
-- 다른 family의 owner이면서 본인 외 멤버가 있으면 수락 불가
+Business rules:
+- Only family owners can send/cancel invitations
+- When accepting invitation, delete family itself if current family has only the user
+- Cannot accept if owner of another family with members other than self
 """
 
 from datetime import datetime, timedelta, timezone

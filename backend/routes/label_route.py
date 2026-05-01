@@ -1,18 +1,18 @@
 """
-라벨(태그) 조회 API 라우터
+Label (tag) lookup API router
 
-사용자가 새로운 아이템을 등록할 때 연결 가능한 RFID 태그 목록을 조회하는 API를 제공합니다.
-물리적 RFID 태그(마스터 태그) 중에서 아직 아이템과 연결되지 않은 사용 가능한 태그들을 반환합니다.
+Provides API for querying available RFID tag list that can be connected when user registers new items.
+Returns available tags among physical RFID tags (master tags) that are not yet connected to items.
 
-주요 엔드포인트:
-- GET /available: 사용 가능한 태그 목록 조회
+Main endpoints:
+- GET /available: Query available tag list
 
-비즈니스 로직:
-- 사용자가 등록한 디바이스의 태그만 조회 가능
-- 이미 활성 아이템과 연결된 태그는 제외
-- 태그 UID와 등록 시간 정보 제공
+Business logic:
+- Only tags from user's registered device can be queried
+- Exclude tags already connected to active items
+- Provide tag UID and registration time information
 
-보안: JWT 인증 필요, 사용자는 본인 디바이스의 태그만 조회 가능
+Security: JWT authentication required, users can only query tags from their own devices
 """
 
 from fastapi import APIRouter, Depends

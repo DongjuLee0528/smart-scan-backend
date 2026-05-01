@@ -1,12 +1,12 @@
 """
-가족 초대 Pydantic 스키마
+Family invitation Pydantic schemas
 
-요청/응답 직렬화 및 입력 검증을 위한 스키마를 정의합니다.
+Defines schemas for request/response serialization and input validation.
 
-제공 스키마:
-- CreateInvitationRequest: 초대 생성 요청 본문
-- InvitationResponse: 단일 초대 응답 (민감정보 최소화)
-- InvitationListResponse: 초대 목록 응답
+Provided schemas:
+- CreateInvitationRequest: Invitation creation request body
+- InvitationResponse: Single invitation response (minimized sensitive information)
+- InvitationListResponse: Invitation list response
 """
 
 from datetime import datetime
@@ -18,11 +18,11 @@ from pydantic import BaseModel, field_validator
 
 class CreateInvitationRequest(BaseModel):
     """
-    초대 생성 요청 본문
+    Invitation creation request body
 
-    가족 소유자가 이메일로 새 구성원을 초대할 때 사용한다.
-    name, phone_number는 초대 메일 본문에 표시되는 참고용 정보이며
-    실제 가입 정보는 수락 시 current_user 기준으로 처리된다.
+    Used when family owner invites new member via email.
+    name, phone_number are reference information displayed in invitation email body
+    and actual registration info is processed based on current_user upon acceptance.
     """
     name: str
     email: str
@@ -34,7 +34,7 @@ class CreateInvitationRequest(BaseModel):
     def validate_name(cls, v: str) -> str:
         v = v.strip()
         if not v:
-            raise ValueError("name은 필수입니다")
+            raise ValueError("Name is required")
         return v
 
     @field_validator("email")
@@ -42,7 +42,7 @@ class CreateInvitationRequest(BaseModel):
     def validate_email_format(cls, v: str) -> str:
         v = v.strip()
         if not v or "@" not in v:
-            raise ValueError("email 형식이 올바르지 않습니다")
+            raise ValueError("Email format is invalid")
         return v
 
     @field_validator("phone_number")
@@ -50,23 +50,23 @@ class CreateInvitationRequest(BaseModel):
     def validate_phone_number(cls, v: str) -> str:
         v = v.strip()
         if not v:
-            raise ValueError("phone_number는 필수입니다")
+            raise ValueError("Phone number is required")
         return v
 
     @field_validator("age")
     @classmethod
     def validate_age(cls, v: Optional[int]) -> Optional[int]:
         if v is not None and (v < 0 or v > 150):
-            raise ValueError("age는 0~150 사이여야 합니다")
+            raise ValueError("Age must be between 0-150")
         return v
 
 
 class InvitationResponse(BaseModel):
     """
-    단일 초대 응답
+    Single invitation response
 
-    by-token 공개 조회와 오너 목록 조회 모두에서 동일 형식을 사용한다.
-    수신자 이메일과 상태, 가족/초대자 이름만 노출하여 민감정보를 최소화한다.
+    Uses same format for both by-token public query and owner list query.
+    Minimizes sensitive information by exposing only recipient email and status, family/inviter names.
     """
     id: int
     family_id: int
@@ -82,7 +82,7 @@ class InvitationResponse(BaseModel):
 
 class InvitationListResponse(BaseModel):
     """
-    가족 pending 초대 목록 응답
+    Family pending invitation list response
     """
     invitations: list[InvitationResponse]
     total_count: int
@@ -90,7 +90,7 @@ class InvitationListResponse(BaseModel):
 
 class AcceptInvitationResponse(BaseModel):
     """
-    초대 수락 성공 응답 — 이동한 가족 정보 반환
+    Invitation acceptance success response - return moved family info
     """
     family_id: int
     family_name: str
@@ -99,6 +99,6 @@ class AcceptInvitationResponse(BaseModel):
 
 class DeclineInvitationResponse(BaseModel):
     """
-    초대 거절 성공 응답
+    Invitation decline success response
     """
     status: str

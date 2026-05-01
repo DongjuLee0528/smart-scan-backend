@@ -1,8 +1,8 @@
 """
-사용자 모델
+User model
 
-SmartScan 시스템의 사용자 정보를 저장하는 데이터베이스 모델입니다.
-카카오톡 봇 연동과 웹 서비스 사용자 모두를 지원합니다.
+Database model for storing user information in SmartScan system.
+Supports both KakaoTalk bot integration and web service users.
 """
 
 from sqlalchemy import Column, DateTime, Integer, String
@@ -15,21 +15,21 @@ from backend.common.db import Base
 class User(Base):
     __tablename__ = "users"
 
-    # 기본 식별자
-    id = Column(Integer, primary_key=True, index=True)  # 내부 사용자 ID
+    # Basic identifier
+    id = Column(Integer, primary_key=True, index=True)  # Internal user ID
 
-    # 카카오톡 연동 정보
-    kakao_user_id = Column(String(255), unique=True, nullable=False, index=True)  # 카카오 사용자 고유 ID
+    # KakaoTalk integration info
+    kakao_user_id = Column(String(255), unique=True, nullable=False, index=True)  # Kakao user unique ID
 
-    # 사용자 기본 정보
-    name = Column(String(255), nullable=True)  # 사용자 이름
-    email = Column(String(255), unique=True, nullable=True, index=True)  # 이메일 주소 (웹 로그인용)
-    password_hash = Column(String(255), nullable=True)  # 암호화된 비밀번호 (웹 로그인용)
-    phone = Column(String(50), nullable=True)  # 휴대폰 번호
-    age = Column(Integer, nullable=True)  # 나이
+    # User basic information
+    name = Column(String(255), nullable=True)  # User name
+    email = Column(String(255), unique=True, nullable=True, index=True)  # Email address (for web login)
+    password_hash = Column(String(255), nullable=True)  # Encrypted password (for web login)
+    phone = Column(String(50), nullable=True)  # Phone number
+    age = Column(Integer, nullable=True)  # Age
 
-    # 시스템 정보
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)  # 계정 생성 일시
+    # System information
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)  # Account creation time
 
     # relationships
     owned_families = relationship(

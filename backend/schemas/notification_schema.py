@@ -1,33 +1,33 @@
 """
-알림 시스템 API 스키마
+Notification system API schemas
 
-Smart Scan 시스템의 알림 기능을 위한 API 스키마를 정의합니다.
-누락된 아이템 자동 알림과 가족 간 수동 알림을 체계적으로 관리합니다.
+Defines API schemas for notification functionality in Smart Scan system.
+Systematically manages automatic missing item alerts and manual alerts between family members.
 
-주요 스키마:
-- NotificationType: 알림 유형 (누락 알림, 수동 알림)
-- NotificationChannel: 알림 채널 (카카오톡, SMS)
-- SendNotificationRequest: 알림 발송 요청
-- NotificationResponse: 알림 상세 정보 응답
-- NotificationListResponse: 알림 목록 응답
+Main schemas:
+- NotificationType: Notification type (missing alert, manual alert)
+- NotificationChannel: Notification channel (KakaoTalk, SMS)
+- SendNotificationRequest: Notification sending request
+- NotificationResponse: Notification detail information response
+- NotificationListResponse: Notification list response
 
-데이터 구조:
-- 알림 유형: 자동 감지된 누락 알림 vs 사용자 수동 알림
-- 발송 채널: 카카오톡, SMS 등 다양한 전송 방식
-- 발송자/수신자: 가족 구성원 간 알림 관계
-- 읽음 상태: 수신자의 알림 확인 여부
+Data structure:
+- Notification type: Automatically detected missing alert vs user manual alert
+- Sending channel: Various transmission methods like KakaoTalk, SMS, etc.
+- Sender/recipient: Notification relationship between family members
+- Read status: Whether recipient has confirmed notification
 
-비즈니스 규칙:
-- 가족 구성원 간에만 알림 발송 가능
-- 알림 내용은 공백 제거 후 필수 검증
-- 읽음 상태는 수신자만 변경 가능
-- 알림 이력은 가족 내에서만 공유
+Business rules:
+- Notifications can only be sent between family members
+- Notification content is validated as required after removing whitespace
+- Read status can only be changed by recipient
+- Notification history is shared only within family
 
-사용 시나리오:
-- 누락된 아이템 자동 감지 시 알림 발송
-- 가족 구성원 간 수동 메시지 전송
-- 알림 목록 조회 및 읽음 처리
-- 알림 발송 이력 관리 및 추적
+Usage scenarios:
+- Send notifications when missing items are automatically detected
+- Manual message transmission between family members
+- Query notification list and process read status
+- Manage and track notification sending history
 """
 
 from datetime import datetime
@@ -38,40 +38,40 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 class NotificationType(str, Enum):
     """
-    알림 유형 열거형
+    Notification type enumeration
 
-    알림의 발생 원인과 처리 방식을 구분합니다.
+    Distinguishes notification cause and processing method.
     """
-    MISSING_ALERT = "missing_alert"  # 누락 아이템 자동 감지 알림
-    MANUAL_ALERT = "manual_alert"  # 사용자 수동 발송 알림
+    MISSING_ALERT = "missing_alert"  # Missing item automatic detection alert
+    MANUAL_ALERT = "manual_alert"  # User manual sending alert
 
 
 class NotificationChannel(str, Enum):
     """
-    알림 채널 열거형
+    Notification channel enumeration
 
-    알림을 전송할 수 있는 다양한 채널을 정의합니다.
+    Defines various channels through which notifications can be sent.
     """
-    KAKAO = "kakao"  # 카카오톡 알림
-    SMS = "sms"  # SMS 문자 메시지
-    EMAIL = "email"  # 이메일 알림
+    KAKAO = "kakao"  # KakaoTalk notification
+    SMS = "sms"  # SMS text message
+    EMAIL = "email"  # Email notification
 
 
 def _validate_required_text(value: str, field_name: str) -> str:
     """
-    필수 텍스트 필드 검증
+    Required text field validation
 
-    공백 제거 후 빈 값 체크를 수행합니다.
+    Performs empty value check after removing whitespace.
 
     Args:
-        value: 검증할 텍스트 값
-        field_name: 필드명 (오류 메시지용)
+        value: Text value to validate
+        field_name: Field name (for error message)
 
     Returns:
-        str: 정규화된 텍스트
+        str: Normalized text
 
     Raises:
-        ValueError: 빈 값일 경우
+        ValueError: When value is empty
     """
     normalized_value = value.strip()
     if not normalized_value:
@@ -81,46 +81,46 @@ def _validate_required_text(value: str, field_name: str) -> str:
 
 class SendNotificationRequest(BaseModel):
     """
-    알림 발송 요청 스키마
+    Notification sending request schema
 
-    가족 구성원이 다른 구성원에게 알림을 발송할 때 사용됩니다.
+    Used when family member sends notification to other member.
     """
-    channel: NotificationChannel  # 알림 발송 채널
-    title: str  # 알림 제목
-    message: str  # 알림 내용
+    channel: NotificationChannel  # Notification sending channel
+    title: str  # Notification title
+    message: str  # Notification content
 
     @field_validator("title", "message")
     @classmethod
     def validate_required_text(cls, v: str, info) -> str:
-        """제목과 메시지 필수 검증"""
+        """Required validation for title and message"""
         return _validate_required_text(v, info.field_name)
 
 
 class NotificationResponse(BaseModel):
     """
-    알림 상세 정보 응답 스키마
+    Notification detail information response schema
 
-    개별 알림의 모든 정보를 클라이언트에 전달합니다.
+    Delivers all information of individual notification to client.
     """
-    id: int  # 알림 고유 ID
-    family_id: int  # 가족 ID
-    sender_user_id: int  # 발송자 사용자 ID
-    recipient_user_id: int  # 수신자 사용자 ID
-    type: NotificationType  # 알림 유형
-    channel: NotificationChannel  # 발송 채널
-    title: str  # 알림 제목
-    message: str  # 알림 내용
-    is_read: bool  # 읽음 여부
-    created_at: datetime  # 생성 시간
+    id: int  # Notification unique ID
+    family_id: int  # Family ID
+    sender_user_id: int  # Sender user ID
+    recipient_user_id: int  # Recipient user ID
+    type: NotificationType  # Notification type
+    channel: NotificationChannel  # Sending channel
+    title: str  # Notification title
+    message: str  # Notification content
+    is_read: bool  # Read status
+    created_at: datetime  # Creation time
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class NotificationListResponse(BaseModel):
     """
-    알림 목록 응답 스키마
+    Notification list response schema
 
-    사용자의 알림 목록과 총 개수 정보를 함께 제공합니다.
+    Provides user's notification list together with total count information.
     """
-    notifications: list[NotificationResponse]  # 알림 목록
-    total_count: int  # 총 알림 개수
+    notifications: list[NotificationResponse]  # Notification list
+    total_count: int  # Total notification count

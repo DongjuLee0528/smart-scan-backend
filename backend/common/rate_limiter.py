@@ -13,7 +13,7 @@ def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> Res
     """Return user-friendly error message when rate limit is exceeded"""
     response = JSONResponse(
         status_code=429,
-        content={"detail": "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."}
+        content={"detail": "Too many requests. Please try again later."}
     )
     response = _rate_limit_exceeded_handler(request, exc)
     return response

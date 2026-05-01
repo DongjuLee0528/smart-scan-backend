@@ -1,23 +1,23 @@
 """
-라벨(태그) 조회 서비스
+Label (tag) lookup service
 
-RFID 시스템에서 사용 가능한 물리적 태그(마스터 태그) 정보를 조회하는 서비스입니다.
-사용자가 새로운 아이템을 등록할 때 연결 가능한 태그 목록을 제공합니다.
+Service that queries physical tag (master tag) information available in RFID system.
+Provides list of linkable tags when user registers new items.
 
-주요 기능:
-- 사용자 디바이스에 등록된 사용 가능한 마스터 태그 목록 조회
-- 이미 아이템과 연결된 태그 필터링 (사용 중인 태그 제외)
-- 태그 UID와 등록 시간 정보 제공
+Main features:
+- Query available master tag list registered to user device
+- Filter already connected tags (exclude tags in use)
+- Provide tag UID and registration time information
 
-비즈니스 규칙:
-- 사용자는 본인이 등록한 디바이스의 태그만 조회 가능
-- 활성 아이템과 연결되지 않은 태그만 사용 가능으로 표시
-- 태그는 마스터 태그 테이블에서 관리되는 물리적 RFID 태그
+Business rules:
+- Users can only query tags from their own registered devices
+- Only tags not connected to active items are shown as available
+- Tags are physical RFID tags managed in master tag table
 
-사용 시나리오:
-1. 사용자가 새 아이템 등록 시 사용 가능한 태그 목록 요청
-2. 시스템이 해당 사용자의 디바이스에 등록된 미사용 태그 반환
-3. 사용자가 원하는 태그를 선택하여 아이템과 연결
+Usage scenarios:
+1. User requests available tag list when registering new item
+2. System returns unused tags registered to user's device
+3. User selects desired tag to connect with item
 """
 
 from sqlalchemy.orm import Session
@@ -32,10 +32,10 @@ from backend.schemas.label_schema import AvailableLabelResponse
 
 class LabelService:
     """
-    라벨(마스터 태그) 조회 서비스 클래스
+    Label (master tag) lookup service class
 
-    사용자가 아이템 등록 시 사용할 수 있는 물리적 RFID 태그 목록을 제공합니다.
-    디바이스 소유권과 태그 사용 상태를 검증하여 적절한 태그만 반환합니다.
+    Provides list of physical RFID tags that users can use when registering items.
+    Validates device ownership and tag usage status to return only appropriate tags.
     """
     def __init__(self, db: Session):
         self.db = db

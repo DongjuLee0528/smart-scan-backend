@@ -11,19 +11,19 @@ from backend.schemas.scan_log_schema import ScanLogResponse, ScanStatus
 
 class ScanLogService:
     """
-    스캔 로그 관리 서비스
+    Scan log management service
 
-    사용자 디바이스에서 발생한 스캔 이벤트의 기록과 조회를 담당한다.
-    FOUND/LOST 상태의 스캔 로그를 처리하여 태그 위치 추적 기반 데이터를 제공한다.
+    Handles recording and retrieval of scan events from user devices.
+    Processes FOUND/LOST status scan logs to provide tag location tracking data.
 
-    설계 의도:
-    - 위치 추적 로그: 모든 스캔 이벤트를 시간순 기록으로 저장
-    - 상태 기반 분류: FOUND(발견), LOST(분실) 상태로 구분
-    - 가족 단위 조회: 가족 구성원들의 스캔 기록 통합 조회
-    - 실시간 데이터: 모니터링 서비스에서 최신 상태 판단에 활용
+    Design principles:
+    - Location tracking logs: Store all scan events as time-ordered records
+    - Status-based classification: Classify as FOUND or LOST states
+    - Family-unit lookup: Integrated lookup of family members' scan records
+    - Real-time data: Used by monitoring service for latest status determination
     """
     def __init__(self, db: Session):
-        """스캔 로그 관리에 필요한 리포지토리 초기화"""
+        """Initialize repositories needed for scan log management"""
         self.db = db
         self.scan_log_repository = ScanLogRepository(db)
         self.item_repository = ItemRepository(db)
@@ -35,23 +35,23 @@ class ScanLogService:
 
         user_device = self.user_device_repository.find_by_user_id(user_id)
         if not user_device:
-            raise NotFoundException("사용자 기기를 찾을 수 없습니다")
+            raise NotFoundException("Cannot find user device")
 
         item = self.item_repository.get_by_id(item_id)
         if not item or not item.is_active:
-            raise NotFoundException("물품을 찾을 수 없습니다")
+            raise NotFoundException("Cannot find item")
 
         if item.user_device_id != user_device.id:
-            raise ForbiddenException("본인 소유 물품이 아닙니다")
+            raise ForbiddenException("Not your own item")
 
-        # 추가 권한 체크: family_id 비교
+        # Additional permission check: family_id comparison
         current_user_family = self.family_member_repository.find_by_user_id(user_id)
         if not current_user_family:
-            raise ForbiddenException("가족 구성원이 아닙니다")
+            raise ForbiddenException("Not a family member")
 
         item_owner_family = self.family_member_repository.find_by_user_id(item.user_device.user_id)
         if not item_owner_family or current_user_family.family_id != item_owner_family.family_id:
-            raise ForbiddenException("다른 가족의 물품에 대한 접근 권한이 없습니다")
+            raise ForbiddenException("No access permission to other family's items")
 
         try:
             scan_log = self.scan_log_repository.create(
