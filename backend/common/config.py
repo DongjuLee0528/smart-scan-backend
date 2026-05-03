@@ -1,18 +1,18 @@
 """
-애플리케이션 설정 관리
+Application configuration management
 
-SmartScan 백엔드 애플리케이션의 환경변수 및 설정을 관리하는 모듈입니다.
-보안이 중요한 설정들은 환경변수에서 로드하며, 기본값을 제공하지 않아 안전성을 보장합니다.
+Module that manages environment variables and settings for the SmartScan backend application.
+Security-critical settings are loaded from environment variables without providing defaults to ensure safety.
 
-주요 설정:
-- DATABASE_URL: Supabase PostgreSQL 연결 문자열
-- JWT_SECRET_KEY: JWT 토큰 서명용 비밀키 (32자 이상 필수)
-- ALLOWED_ORIGIN: CORS 허용 도메인
-- ENV: 개발/운영 환경 구분
+Main settings:
+- DATABASE_URL: Supabase PostgreSQL connection string
+- JWT_SECRET_KEY: Secret key for JWT token signing (minimum 32 characters required)
+- ALLOWED_ORIGIN: CORS allowed domain
+- ENV: Development/production environment distinction
 
-보안 정책:
-- 중요한 환경변수는 최소 길이 검증 적용
-- .env 파일 자동 로드 지원 (로컬 개발용)
+Security policy:
+- Critical environment variables have minimum length validation
+- Automatic .env file loading support (for local development)
 """
 
 import os
@@ -21,13 +21,13 @@ from pydantic import BaseModel, ConfigDict, model_validator
 
 
 def _require_env_var(var_name: str) -> str:
-    """환경변수가 필수일 때 없으면 서버 시작을 중단"""
+    """Stop server startup if required environment variable is missing"""
     value = os.getenv(var_name)
     if not value or not value.strip():
-        raise ValueError(f"환경변수 {var_name}이 설정되지 않았습니다. 보안상 기본값을 제공하지 않습니다.")
+        raise ValueError(f"Environment variable {var_name} is not set. No default value provided for security reasons.")
     stripped_value = value.strip()
     if len(stripped_value) < 32:
-        raise ValueError(f"환경변수 {var_name}의 값이 너무 짧습니다. 최소 32자 이상이어야 합니다.")
+        raise ValueError(f"Environment variable {var_name} value is too short. Must be at least 32 characters.")
     return stripped_value
 
 
@@ -78,7 +78,7 @@ class Settings(BaseModel):
         os.getenv("MONITORING_FOUND_WINDOW_MINUTES", "10")
     )
 
-    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "smart-scan-dev-secret")  # 프로덕션에서 반드시 환경변수로 교체
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "smart-scan-dev-secret")  # Must be replaced with environment variable in production
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(
         os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15")
@@ -91,8 +91,8 @@ class Settings(BaseModel):
     )
 
     # Kakao account link (magic link)
-    # 외부(챗봇 Lambda)와 공유되는 별도 비밀키. JWT_SECRET_KEY와 격리하여
-    # 한쪽이 유출되어도 다른 쪽 토큰이 위험해지지 않도록 분리.
+    # Separate secret key shared with external services (chatbot Lambda). Isolated from JWT_SECRET_KEY
+    # so that if one side is compromised, the other side's tokens are not at risk.
     KAKAO_LINK_JWT_SECRET: str = os.getenv(
         "KAKAO_LINK_JWT_SECRET",
         "smart-scan-dev-kakao-link-secret"
@@ -101,8 +101,8 @@ class Settings(BaseModel):
         os.getenv("KAKAO_LINK_TOKEN_EXPIRE_MINUTES", "5")
     )
 
-    # Chatbot 서비스 간 공유 시크릿. 챗봇 Lambda가 /api/chatbot/* 엔드포인트 호출 시
-    # X-Chatbot-Key 헤더로 이 값을 전달해야 한다. JWT_SECRET_KEY / KAKAO_LINK_JWT_SECRET 과 격리.
+    # Shared secret between chatbot services. When chatbot Lambda calls /api/chatbot/* endpoints,
+    # this value must be passed in X-Chatbot-Key header. Isolated from JWT_SECRET_KEY / KAKAO_LINK_JWT_SECRET.
     CHATBOT_SHARED_KEY: str = os.getenv(
         "CHATBOT_SHARED_KEY",
         "smart-scan-dev-chatbot-key"

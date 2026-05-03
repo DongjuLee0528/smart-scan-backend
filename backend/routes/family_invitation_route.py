@@ -37,10 +37,10 @@ def create_invitation(
     service: FamilyInvitationService = Depends(get_invitation_service),
 ):
     """
-    초대 생성 (family owner 전용)
+    Create invitation (family owner only)
 
-    본문에 이름, 이메일, 전화번호, 나이(선택)를 포함한다.
-    초대 이메일이 발송되며, 발송 실패 시 초대 레코드도 rollback된다.
+    Includes name, email, phone number, and age (optional) in the request body.
+    Invitation email is sent, and invitation record is rolled back if sending fails.
     """
     result = service.create_invitation(
         actor_user_id=current_user.id,
@@ -62,9 +62,9 @@ def list_invitations(
     service: FamilyInvitationService = Depends(get_invitation_service),
 ):
     """
-    pending 초대 목록 조회 (family owner 전용)
+    Retrieve pending invitation list (family owner only)
 
-    만료된 초대는 목록에 포함되지 않는다.
+    Expired invitations are not included in the list.
     """
     result = service.list_invitations(current_user.id)
     return success_response("Pending invitations retrieved successfully", result.model_dump())
@@ -78,9 +78,9 @@ def cancel_invitation(
     service: FamilyInvitationService = Depends(get_invitation_service),
 ):
     """
-    초대 취소 (family owner 전용)
+    Cancel invitation (family owner only)
 
-    pending 상태의 초대만 취소 가능하다.
+    Only invitations in pending status can be cancelled.
     """
     service.cancel_invitation(current_user.id, invitation_id)
     return success_response("Invitation cancelled successfully", {"cancelled": True})
@@ -93,9 +93,9 @@ def get_invitation_by_token(
     service: FamilyInvitationService = Depends(get_invitation_service),
 ):
     """
-    토큰으로 초대 정보 조회 (공개, 인증 불필요)
+    Retrieve invitation information by token (public, no authentication required)
 
-    pending이지만 만료된 경우 lazy expire 처리 후 status='expired'로 반환한다.
+    If pending but expired, performs lazy expire processing and returns with status='expired'.
     """
     result = service.get_invitation_by_token(token)
     return success_response("Invitation retrieved successfully", result.model_dump())
@@ -109,10 +109,10 @@ def accept_invitation(
     service: FamilyInvitationService = Depends(get_invitation_service),
 ):
     """
-    초대 수락 (인증 필요)
+    Accept invitation (authentication required)
 
-    수락 시 현재 family를 탈퇴하고 초대된 family에 합류한다.
-    현재 family에 본인만 있는 경우 family 자체도 삭제된다.
+    When accepted, leaves current family and joins the invited family.
+    If current family has only the user, the family itself is also deleted.
     """
     result = service.accept_invitation(current_user.id, token)
     return success_response("Invitation accepted successfully", result.model_dump())
@@ -126,9 +126,9 @@ def decline_invitation(
     service: FamilyInvitationService = Depends(get_invitation_service),
 ):
     """
-    초대 거절 (인증 필요)
+    Decline invitation (authentication required)
 
-    이메일이 일치하는 인증된 사용자만 거절 가능하다.
+    Only authenticated users with matching email can decline.
     """
     result = service.decline_invitation(current_user.id, token)
     return success_response("Invitation declined", result.model_dump())

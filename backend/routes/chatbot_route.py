@@ -84,7 +84,7 @@ def chatbot_resolve_user(
     request: ChatbotUserResolveRequest,
     db: Session = Depends(get_db),
 ):
-    """kakao_user_id → user_device 존재 여부 확인. 챗봇이 기기 연결 여부를 간단히 판별."""
+    """Check kakao_user_id → user_device existence. Simple device connection status check for chatbot."""
     service = ItemService(db)
     user_device = service._get_kakao_user_device(request.kakao_user_id)
     return success_response(data={

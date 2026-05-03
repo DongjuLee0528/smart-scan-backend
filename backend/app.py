@@ -1,16 +1,16 @@
 """
 SmartScan Backend Application Entry Point
 
-이 모듈은 SmartScan 시스템의 FastAPI 백엔드 애플리케이션을 구성하고 초기화합니다.
-UHF RFID 기반 소지품 체크 시스템의 웹 API 서버 역할을 담당합니다.
+This module configures and initializes the FastAPI backend application for the SmartScan system.
+It serves as the web API server for a UHF RFID-based belongings check system.
 
-주요 기능:
-- CORS 미들웨어 설정으로 프론트엔드와의 통신 허용
-- Rate limiting으로 API 보안 강화
-- 전역 예외 처리기 설정
-- 모든 라우터 등록 및 API 엔드포인트 구성
+Main features:
+- CORS middleware setup to allow communication with frontend
+- API security enhancement through rate limiting
+- Global exception handler configuration
+- Registration of all routers and API endpoint configuration
 
-배포: Render 클라우드 플랫폼에 배포되며, 환경변수를 통해 설정 관리
+Deployment: Deployed on Render cloud platform with configuration management via environment variables
 """
 
 from fastapi import FastAPI, HTTPException
@@ -36,7 +36,7 @@ def create_app() -> FastAPI:
         redoc_url="/redoc" if settings.ENV == "development" else None
     )
 
-    # CORS 설정
+    # CORS configuration
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[settings.ALLOWED_ORIGIN],
@@ -45,11 +45,11 @@ def create_app() -> FastAPI:
         allow_headers=["Authorization", "Content-Type", "Accept"],
     )
 
-    # Rate limiter 설정
+    # Rate limiter configuration
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
-    # 예외 핸들러 등록
+    # Register exception handlers
     app.add_exception_handler(CustomException, custom_exception_handler)
     app.add_exception_handler(HTTPException, http_exception_handler)
     app.add_exception_handler(Exception, general_exception_handler)

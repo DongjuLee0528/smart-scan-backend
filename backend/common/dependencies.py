@@ -1,11 +1,11 @@
 """
-FastAPI 의존성 주입 모듈
+FastAPI dependency injection module
 
-API 엔드포인트에서 공통적으로 사용되는 의존성들을 정의한다.
-주로 JWT 토큰 기반 사용자 인증과 인가 처리를 담당한다.
+Defines dependencies commonly used in API endpoints.
+Primarily handles JWT token-based user authentication and authorization.
 
-주요 의존성:
-- get_current_user: JWT 토큰으로부터 현재 로그인된 사용자 정보 추출
+Main dependencies:
+- get_current_user: Extract current logged-in user information from JWT token
 """
 
 from fastapi import Depends
@@ -26,20 +26,20 @@ def get_current_user(
     db: Session = Depends(get_db)
 ):
     """
-    JWT 토큰으로부터 현재 인증된 사용자 정보 추출
+    Extract current authenticated user information from JWT token
 
-    Authorization 헤더의 Bearer 토큰을 검증하여 현재 로그인한 사용자를 반환한다.
-    API 엔드포인트에서 인증이 필요한 경우 이 의존성을 사용한다.
+    Validates the Bearer token in the Authorization header and returns the currently logged-in user.
+    Use this dependency when authentication is required in API endpoints.
 
     Args:
-        credentials: HTTP Authorization 헤더에서 추출된 Bearer 토큰
-        db: 데이터베이스 세션
+        credentials: Bearer token extracted from HTTP Authorization header
+        db: Database session
 
     Returns:
-        User: 인증된 사용자 객체
+        User: Authenticated user object
 
     Raises:
-        UnauthorizedException: 토큰이 없거나 유효하지 않은 경우
+        UnauthorizedException: When token is missing or invalid
     """
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise UnauthorizedException("Authorization header is required")

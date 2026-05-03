@@ -1,18 +1,18 @@
 """
-데이터베이스 연결 및 세션 관리 모듈
+Database connection and session management module
 
-SmartScan 시스템의 PostgreSQL 데이터베이스 연결을 관리하는 모듈입니다.
-SQLAlchemy를 이용한 ORM 연결과 세션 생명주기를 담당합니다.
+Module that manages PostgreSQL database connections for the SmartScan system.
+Handles ORM connections and session lifecycle using SQLAlchemy.
 
-데이터베이스 지원:
-- Supabase PostgreSQL (기본)
-- 로컬 MySQL (개발 환경)
-- 연결 URL 자동 정규화
-- Connection pooling 및 세션 관리
+Database support:
+- Supabase PostgreSQL (default)
+- Local MySQL (development environment)
+- Automatic connection URL normalization
+- Connection pooling and session management
 
-사용 예:
-- get_db(): FastAPI 종속성 주입용 세션 제공
-- Base: SQLAlchemy 모델 기본 클래스
+Usage examples:
+- get_db(): Provide session for FastAPI dependency injection
+- Base: SQLAlchemy model base class
 """
 
 from sqlalchemy import create_engine

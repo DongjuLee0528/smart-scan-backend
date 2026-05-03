@@ -43,9 +43,9 @@ _INVITATION_EXPIRE_DAYS = 7
 
 class FamilyInvitationService(ServiceBase):
     """
-    가족 초대 서비스 클래스
+    Family invitation service class
 
-    ServiceBase를 상속하여 actor context 조회, 공통 레포지토리를 활용한다.
+    Inherits from ServiceBase to utilize actor context lookup and common repositories.
     """
 
     def __init__(self, db: Session):
@@ -56,7 +56,7 @@ class FamilyInvitationService(ServiceBase):
         self.email_service = EmailService()
 
     # ------------------------------------------------------------------
-    # 1. 초대 생성
+    # 1. Create invitation
     # ------------------------------------------------------------------
 
     def create_invitation(
@@ -68,42 +68,42 @@ class FamilyInvitationService(ServiceBase):
         age: int | None,
     ) -> InvitationResponse:
         """
-        가족 초대 생성 및 이메일 발송
+        Create family invitation and send email
 
-        이메일 발송 실패 시 rollback하여 데이터 정합성을 보장한다.
+        Rolls back if email sending fails to ensure data consistency.
 
         Args:
-            actor_user_id: 초대를 발송하는 유저 ID (family owner여야 함)
-            name: 초대 대상 이름 (참고용)
-            email: 초대 대상 이메일
-            phone_number: 초대 대상 전화번호 (참고용)
-            age: 초대 대상 나이 (참고용, nullable)
+            actor_user_id: User ID sending the invitation (must be family owner)
+            name: Invitee name (for reference)
+            email: Invitee email
+            phone_number: Invitee phone number (for reference)
+            age: Invitee age (for reference, nullable)
 
         Returns:
-            InvitationResponse: 생성된 초대 정보
+            InvitationResponse: Created invitation information
 
         Raises:
-            ForbiddenException: actor가 family owner가 아닌 경우
-            BadRequestException: 자기 자신을 초대하려는 경우
-            ConflictException: 동일 (family, email) pending 초대 이미 존재 또는 이미 멤버인 경우
+            ForbiddenException: If actor is not family owner
+            BadRequestException: If trying to invite oneself
+            ConflictException: If duplicate (family, email) pending invitation exists or already a member
         """
         actor, actor_family_member, family = self._get_actor_context(actor_user_id)
         _ensure_owner(actor.id, actor_family_member.role, family.owner_user_id)
 
         normalized_email = email.strip().lower()
 
-        # 자기 자신 초대 방지
+        # Prevent self-invitation
         if actor.email and actor.email.strip().lower() == normalized_email:
             raise BadRequestException("Cannot invite yourself")
 
-        # pending 초대 중복 확인
+        # Check for duplicate pending invitation
         existing_invitation = self.invitation_repository.find_pending_by_family_and_email(
             family.id, normalized_email
         )
         if existing_invitation:
             raise ConflictException("An active invitation already exists for this email")
 
-        # 이미 해당 family member인 경우 확인
+        # Check if already a member of the family
         target_user = self.user_repository.find_by_email(normalized_email)
         if target_user:
             existing_member = self.family_member_repository.find_by_family_id_and_user_id(
@@ -124,7 +124,7 @@ class FamilyInvitationService(ServiceBase):
                 suggested_age=age,
                 expires_at=expires_at,
             )
-            # flush 후 token이 확정된 상태에서 이메일 발송 — 실패 시 예외가 전파되어 rollback
+            # Send email after flush when token is confirmed — exception propagates on failure for rollback
             self.email_service.send_invitation_email(
                 to_email=normalized_email,
                 inviter_name=actor.name or actor.email,
@@ -133,7 +133,7 @@ class FamilyInvitationService(ServiceBase):
                 expires_at=expires_at,
             )
             self.db.commit()
-            # commit 이후 relationships 재로드
+            # Reload relationships after commit
             self.db.refresh(invitation)
             return _build_invitation_response(invitation, family.family_name, actor.name or actor.email)
         except Exception:
@@ -141,15 +141,15 @@ class FamilyInvitationService(ServiceBase):
             raise
 
     # ------------------------------------------------------------------
-    # 2. 초대 목록 조회 (owner)
+    # 2. Retrieve invitation list (owner)
     # ------------------------------------------------------------------
 
     def list_invitations(self, actor_user_id: int) -> InvitationListResponse:
         """
-        현재 family의 pending 초대 목록 조회 (만료된 항목 제외)
+        Retrieve pending invitation list for current family (excluding expired items)
 
         Args:
-            actor_user_id: 조회를 요청한 유저 ID (family owner여야 함)
+            actor_user_id: User ID requesting the list (must be family owner)
 
         Returns:
             InvitationListResponse
@@ -169,24 +169,24 @@ class FamilyInvitationService(ServiceBase):
         return InvitationListResponse(invitations=responses, total_count=len(responses))
 
     # ------------------------------------------------------------------
-    # 3. 초대 취소
+    # 3. Cancel invitation
     # ------------------------------------------------------------------
 
     def cancel_invitation(self, actor_user_id: int, invitation_id: int) -> bool:
         """
-        초대 취소 (status: pending → cancelled)
+        Cancel invitation (status: pending → cancelled)
 
         Args:
-            actor_user_id: 취소를 요청한 유저 ID (family owner여야 함)
-            invitation_id: 취소할 초대 ID
+            actor_user_id: User ID requesting cancellation (must be family owner)
+            invitation_id: Invitation ID to cancel
 
         Returns:
             True
 
         Raises:
-            NotFoundException: 초대를 찾을 수 없는 경우
-            ForbiddenException: 해당 family의 초대가 아닌 경우
-            BadRequestException: 이미 pending이 아닌 경우
+            NotFoundException: If invitation not found
+            ForbiddenException: If invitation doesn't belong to the family
+            BadRequestException: If no longer pending
         """
         actor, actor_family_member, family = self._get_actor_context(actor_user_id)
         _ensure_owner(actor.id, actor_family_member.role, family.owner_user_id)
@@ -215,23 +215,23 @@ class FamilyInvitationService(ServiceBase):
             raise
 
     # ------------------------------------------------------------------
-    # 4. 토큰으로 초대 정보 조회 (공개, 인증 불필요)
+    # 4. Retrieve invitation info by token (public, no auth required)
     # ------------------------------------------------------------------
 
     def get_invitation_by_token(self, token: str) -> InvitationResponse:
         """
-        토큰으로 초대 정보 조회 (공개 엔드포인트)
+        Retrieve invitation information by token (public endpoint)
 
-        pending 상태에서 만료된 경우 lazy expire 처리를 수행한다.
+        Performs lazy expire processing if pending but expired.
 
         Args:
-            token: URL에 포함된 UUID 문자열
+            token: UUID string included in URL
 
         Returns:
             InvitationResponse
 
         Raises:
-            NotFoundException: 토큰이 존재하지 않는 경우
+            NotFoundException: If token doesn't exist
         """
         try:
             parsed_token = UUID(token)
@@ -242,7 +242,7 @@ class FamilyInvitationService(ServiceBase):
         if not invitation:
             raise NotFoundException("Invitation not found")
 
-        # lazy expire: pending이고 만료된 경우 상태 업데이트
+        # lazy expire: update status if pending and expired
         if (
             invitation.status == "pending"
             and invitation.expires_at < datetime.now(timezone.utc)
@@ -252,7 +252,7 @@ class FamilyInvitationService(ServiceBase):
                 self.db.commit()
             except Exception:
                 self.db.rollback()
-                # expire 업데이트 실패 시 현재 상태 그대로 반환 (조회 실패로 처리하지 않음)
+                # Return current state as-is if expire update fails (don't treat as lookup failure)
 
         family_name = invitation.family.family_name if invitation.family else ""
         inviter_name = (
@@ -263,28 +263,28 @@ class FamilyInvitationService(ServiceBase):
         return _build_invitation_response(invitation, family_name, inviter_name)
 
     # ------------------------------------------------------------------
-    # 5. 초대 수락
+    # 5. Accept invitation
     # ------------------------------------------------------------------
 
     def accept_invitation(self, actor_user_id: int, token: str) -> AcceptInvitationResponse:
         """
-        초대 수락
+        Accept invitation
 
-        수락 시 현재 family_member를 탈퇴시키고 초대된 family로 이동한다.
-        기존 family가 본인만 있는 경우 family 자체도 삭제한다.
+        When accepted, removes current family_member and moves to invited family.
+        If existing family has only the user, deletes family itself.
 
         Args:
-            actor_user_id: 수락하는 유저 ID
-            token: 초대 토큰 UUID 문자열
+            actor_user_id: User ID accepting the invitation
+            token: Invitation token UUID string
 
         Returns:
-            AcceptInvitationResponse: 이동한 가족 정보
+            AcceptInvitationResponse: Information about the new family
 
         Raises:
-            NotFoundException: 초대를 찾을 수 없는 경우
-            BadRequestException: 초대가 pending + 유효 상태가 아닌 경우
-            ForbiddenException: 이메일이 일치하지 않는 경우
-            ConflictException: 이미 해당 family 멤버이거나, 다른 family owner인 경우
+            NotFoundException: If invitation not found
+            BadRequestException: If invitation is not pending + valid
+            ForbiddenException: If email doesn't match
+            ConflictException: If already a member of the family or owner of another family
         """
         try:
             parsed_token = UUID(token)
@@ -299,7 +299,7 @@ class FamilyInvitationService(ServiceBase):
             raise BadRequestException(f"Invitation is already {invitation.status}")
 
         if invitation.expires_at < datetime.now(timezone.utc):
-            # lazy expire 처리 후 예외
+            # Lazy expire processing then exception
             try:
                 self.invitation_repository.update_status(invitation, status="expired")
                 self.db.commit()
@@ -311,7 +311,7 @@ class FamilyInvitationService(ServiceBase):
         if not actor:
             raise NotFoundException("User not found")
 
-        # 이메일 일치 검증 (대소문자 무시)
+        # Verify email match (case insensitive)
         if actor.email.strip().lower() != invitation.email.strip().lower():
             raise ForbiddenException("This invitation is not for you")
 
@@ -320,27 +320,27 @@ class FamilyInvitationService(ServiceBase):
         if not target_family:
             raise NotFoundException("Target family not found")
 
-        # 이미 해당 family 멤버인 경우
+        # If already a member of the family
         already_member = self.family_member_repository.find_by_family_id_and_user_id(
             target_family_id, actor.id
         )
         if already_member:
             raise ConflictException("You are already a member of this family")
 
-        # 현재 family_member 조회
+        # Lookup current family_member
         current_member = self.family_member_repository.find_by_user_id(actor.id)
         if not current_member:
             raise BadRequestException("User is not assigned to a family")
 
         current_family = self.family_repository.find_by_id(current_member.family_id)
 
-        # 현재 family의 멤버 수 확인
+        # Check member count of current family
         current_family_members = self.family_member_repository.find_all_by_family_id(
             current_member.family_id
         )
         current_member_count = len(current_family_members)
 
-        # 다른 family의 owner이면서 본인 외 멤버가 있으면 수락 불가
+        # Cannot accept if owner of another family with members other than self
         if (
             current_family
             and current_family.owner_user_id == actor.id
@@ -353,7 +353,7 @@ class FamilyInvitationService(ServiceBase):
             )
 
         try:
-            # 1. 현재 user_device 연결 해제
+            # 1. Disconnect current user_device
             current_device = self.device_repository.find_by_family_id(current_member.family_id)
             if current_device:
                 current_user_device = self.user_device_repository.find_by_user_and_device(
@@ -362,14 +362,14 @@ class FamilyInvitationService(ServiceBase):
                 if current_user_device:
                     self.user_device_repository.delete(current_user_device)
 
-            # 2. 현재 family_member 삭제
+            # 2. Delete current family_member
             self.family_member_repository.delete(current_member)
 
-            # 3. 현재 family가 본인만 있고 owner였으면 device 연결만 해제
-            #    (families 하위 items/tags/master_tags 등에 ON DELETE CASCADE 미설정 FK가
-            #     있어 family 자체를 삭제하면 IntegrityError로 500 발생함.
-            #     빈 family는 멤버가 없어 아무도 조회 불가하므로 남겨둬도 무해하며,
-            #     정리는 별도 배치/관리 엔드포인트로 분리한다.)
+            # 3. If current family only has self and was owner, only disconnect device
+            #    (FK constraints without ON DELETE CASCADE under families for items/tags/master_tags
+            #     would cause IntegrityError 500 if family itself is deleted.
+            #     Empty families are harmless as no one can access them without members,
+            #     cleanup is separated to batch/admin endpoints.)
             if (
                 current_family
                 and current_family.owner_user_id == actor.id
@@ -379,14 +379,14 @@ class FamilyInvitationService(ServiceBase):
                 if orphan_device:
                     self.device_repository.clear_family(orphan_device)
 
-            # 4. 새 family_member 생성
+            # 4. Create new family_member
             new_member = self.family_member_repository.create(
                 family_id=target_family_id,
                 user_id=actor.id,
                 role="member",
             )
 
-            # 5. 새 family의 device에 user_device 생성
+            # 5. Create user_device for new family's device
             target_device = self.device_repository.find_by_family_id(target_family_id)
             if target_device:
                 existing_ud = self.user_device_repository.find_by_user_and_device(
@@ -395,7 +395,7 @@ class FamilyInvitationService(ServiceBase):
                 if not existing_ud:
                     self.user_device_repository.create(actor.id, target_device.id)
 
-            # 6. 초대 상태 업데이트
+            # 6. Update invitation status
             self.invitation_repository.update_status(
                 invitation,
                 status="accepted",
@@ -415,26 +415,26 @@ class FamilyInvitationService(ServiceBase):
             raise
 
     # ------------------------------------------------------------------
-    # 6. 초대 거절
+    # 6. Decline invitation
     # ------------------------------------------------------------------
 
     def decline_invitation(self, actor_user_id: int, token: str) -> DeclineInvitationResponse:
         """
-        초대 거절
+        Decline invitation
 
-        인증된 사용자만 거절 가능하며, 이메일이 일치해야 한다.
+        Only authenticated users can decline, and email must match.
 
         Args:
-            actor_user_id: 거절하는 유저 ID
-            token: 초대 토큰 UUID 문자열
+            actor_user_id: User ID declining the invitation
+            token: Invitation token UUID string
 
         Returns:
             DeclineInvitationResponse
 
         Raises:
-            NotFoundException: 초대를 찾을 수 없는 경우
-            BadRequestException: 초대가 pending이 아닌 경우
-            ForbiddenException: 이메일이 일치하지 않는 경우
+            NotFoundException: If invitation not found
+            BadRequestException: If invitation is not pending
+            ForbiddenException: If email doesn't match
         """
         try:
             parsed_token = UUID(token)
@@ -470,11 +470,11 @@ class FamilyInvitationService(ServiceBase):
 
 
 # ------------------------------------------------------------------
-# 내부 헬퍼 함수
+# Internal helper functions
 # ------------------------------------------------------------------
 
 def _ensure_owner(actor_user_id: int, role: str, owner_user_id: int) -> None:
-    """actor가 family owner인지 검증"""
+    """Verify if actor is family owner"""
     if role != "owner" or actor_user_id != owner_user_id:
         raise ForbiddenException("Only family owner can manage invitations")
 
@@ -484,7 +484,7 @@ def _build_invitation_response(
     family_name: str,
     inviter_name: str,
 ) -> InvitationResponse:
-    """FamilyInvitation 엔티티 → InvitationResponse 변환"""
+    """Convert FamilyInvitation entity → InvitationResponse"""
     return InvitationResponse(
         id=invitation.id,
         family_id=invitation.family_id,
