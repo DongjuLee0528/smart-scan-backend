@@ -1,32 +1,32 @@
 """
-JWT 리프레시 토큰 데이터 접근 계층
+JWT refresh token data access layer
 
-Smart Scan 시스템의 JWT 인증에서 리프레시 토큰의 안전한 관리를 위한 데이터베이스 접근 계층입니다.
-토큰 로테이션, 세션 관리, 보안 강화를 통해 안전한 인증 시스템을 구현합니다.
+Database access layer for secure management of refresh tokens in Smart Scan system JWT authentication.
+Implements secure authentication system through token rotation, session management, and security enhancement.
 
-주요 기능:
-- 리프레시 토큰 생성 및 조회
-- 토큰 무효화 및 로테이션 관리
-- 사용자별 전체 세션 무효화 (로그아웃)
-- 만료된 토큰 정리 및 보안 관리
+Main features:
+- Refresh token generation and lookup
+- Token invalidation and rotation management
+- User-specific total session invalidation (logout)
+- Expired token cleanup and security management
 
-비즈니스 규칙:
-- 토큰 사용 시 즉시 무효화하고 새 토큰 발급 (로테이션)
-- 로그아웃 시 해당 사용자의 모든 활성 토큰 무효화
-- 만료된 토큰은 자동으로 무효화되어 재사용 방지
-- 토큰 탈취 감지 시 전체 세션 무효화 가능
+Business rules:
+- Immediately invalidate token when used and issue new token (rotation)
+- Invalidate all active tokens for user on logout
+- Expired tokens automatically invalidated to prevent reuse
+- Total session invalidation possible when token theft detected
 
-보안 강화:
-- UUID 기반 고유 토큰 ID로 예측 불가능성 확보
-- 시간 기반 만료로 토큰 생명주기 제한
-- 무효화 플래그를 통한 즉시 토큰 차단
-- 사용자별 토큰 추적으로 비정상 접근 감지
+Security enhancement:
+- UUID-based unique token ID ensures unpredictability
+- Time-based expiration limits token lifecycle
+- Immediate token blocking through invalidation flag
+- User-specific token tracking for abnormal access detection
 
-데이터 흐름:
-1. 로그인 성공 → 새 리프레시 토큰 생성
-2. 액세스 토큰 만료 → 리프레시 토큰으로 재발급
-3. 토큰 사용 → 기존 토큰 무효화 및 새 토큰 발급
-4. 로그아웃 → 모든 활성 토큰 무효화
+Data flow:
+1. Login success → Generate new refresh token
+2. Access token expiry → Reissue with refresh token
+3. Token usage → Invalidate existing token and issue new token
+4. Logout → Invalidate all active tokens
 """
 
 from datetime import datetime
@@ -39,42 +39,42 @@ from backend.models.refresh_token import RefreshToken
 
 class RefreshTokenRepository:
     """
-    리프레시 토큰 데이터 접근 클래스
+    Refresh token data access class
 
-    리프레시 토큰의 CRUD 작업과 보안 관련 비즈니스 로직을 제공합니다.
+    Provides CRUD operations and security-related business logic for refresh tokens.
     """
     def __init__(self, db: Session):
-        """데이터베이스 세션 주입"""
+        """Inject database session"""
         self.db = db
 
     def find_by_token_id(self, token_id: str) -> Optional[RefreshToken]:
         """
-        토큰 ID로 리프레시 토큰 조회
+        Lookup refresh token by token ID
 
-        액세스 토큰 재발급 요청 시 제출된 리프레시 토큰을 검증하기 위해 사용합니다.
+        Used to verify refresh token submitted for access token reissue request.
 
         Args:
-            token_id: 조회할 토큰의 고유 식별자 (UUID)
+            token_id: Unique identifier of token to lookup (UUID)
 
         Returns:
-            Optional[RefreshToken]: 일치하는 리프레시 토큰 또는 None
+            Optional[RefreshToken]: Matching refresh token or None
         """
         return self.db.query(RefreshToken).filter(RefreshToken.token_id == token_id).first()
 
     def revoke_all_active_by_user_id(self, user_id: int, revoked_at: datetime) -> None:
         """
-        사용자의 모든 활성 리프레시 토큰 무효화
+        Invalidate all active refresh tokens for user
 
-        로그아웃 또는 보안 사고 시 해당 사용자의 모든 활성 세션을 즉시 종료합니다.
+        Immediately terminates all active sessions for the user on logout or security incident.
 
         Args:
-            user_id: 토큰을 무효화할 사용자 ID
-            revoked_at: 토큰 무효화 시간 (UTC)
+            user_id: User ID to invalidate tokens for
+            revoked_at: Token invalidation time (UTC)
 
-        비즈니스 로직:
-            - is_revoked가 False인 모든 토큰을 대상으로 함
-            - 일괄 업데이트로 성능 최적화
-            - 무효화 시간 기록으로 보안 감사 지원
+        Business logic:
+            - Targets all tokens where is_revoked is False
+            - Performance optimization through batch update
+            - Security audit support by recording invalidation time
         """
         self.db.query(RefreshToken).filter(
             RefreshToken.user_id == user_id,
@@ -95,30 +95,30 @@ class RefreshTokenRepository:
         expires_at: datetime
     ) -> RefreshToken:
         """
-        새 리프레시 토큰 생성
+        Create new refresh token
 
-        로그인 성공 또는 토큰 로테이션 시 새로운 리프레시 토큰을 생성합니다.
+        Generates new refresh token for successful login or token rotation.
 
         Args:
-            user_id: 토큰 소유자 사용자 ID
-            token_id: 고유 토큰 식별자 (UUID)
-            created_at: 토큰 생성 시간 (UTC)
-            expires_at: 토큰 만료 시간 (UTC)
+            user_id: Token owner user ID
+            token_id: Unique token identifier (UUID)
+            created_at: Token creation time (UTC)
+            expires_at: Token expiration time (UTC)
 
         Returns:
-            RefreshToken: 생성된 리프레시 토큰 엔티티
+            RefreshToken: Created refresh token entity
 
-        보안 고려사항:
-            - token_id는 UUID로 예측 불가능하게 생성
-            - 적절한 만료 시간 설정으로 보안 위험 최소화
-            - 생성 시점부터 활성 상태로 설정
+        Security considerations:
+            - token_id generated as UUID for unpredictability
+            - Minimize security risk with appropriate expiration time
+            - Set as active state from creation time
         """
         refresh_token = RefreshToken(
             user_id=user_id,
             token_id=token_id,
             created_at=created_at,
             expires_at=expires_at,
-            is_revoked=False  # 새 토큰은 활성 상태로 생성
+            is_revoked=False  # New tokens created in active state
         )
         self.db.add(refresh_token)
         self.db.flush()
@@ -126,21 +126,21 @@ class RefreshTokenRepository:
 
     def revoke(self, refresh_token: RefreshToken, revoked_at: datetime) -> RefreshToken:
         """
-        특정 리프레시 토큰 무효화
+        Invalidate specific refresh token
 
-        토큰 로테이션이나 개별 세션 종료 시 특정 토큰을 무효화합니다.
+        Invalidates specific token for token rotation or individual session termination.
 
         Args:
-            refresh_token: 무효화할 리프레시 토큰 엔티티
-            revoked_at: 토큰 무효화 시간 (UTC)
+            refresh_token: Refresh token entity to invalidate
+            revoked_at: Token invalidation time (UTC)
 
         Returns:
-            RefreshToken: 업데이트된 리프레시 토큰 엔티티
+            RefreshToken: Updated refresh token entity
 
-        사용 시나리오:
-            - 토큰 로테이션 시 기존 토큰 무효화
-            - 의심스러운 활동 감지 시 해당 토큰 차단
-            - 사용자 요청에 의한 개별 세션 종료
+        Usage scenarios:
+            - Invalidate existing token during token rotation
+            - Block specific token when suspicious activity detected
+            - Individual session termination by user request
         """
         refresh_token.is_revoked = True
         refresh_token.revoked_at = revoked_at
