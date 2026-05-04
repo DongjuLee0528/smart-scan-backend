@@ -128,12 +128,15 @@ class ItemService:
         if item.is_pending or item.tag_uid is None:
             raise BadRequestException("Item pending label connection must be connected to label first before modification")
 
+        # Initialize variables for tag UID change tracking
         new_tag_uid = None
+        # Get current master tag to determine existing label
         current_master_tag = self.master_tag_repository.get_by_tag_uid_and_device_id(item.tag_uid, user_device.device_id)
         if not current_master_tag:
             raise NotFoundException("Cannot find connected label information")
         response_label_id = current_master_tag.label_id
 
+        # Handle label change if new label is specified
         if label_id is not None:
             master_tag = self.master_tag_repository.get_by_label_id_and_device_id(
                 label_id, user_device.device_id
@@ -141,7 +144,9 @@ class ItemService:
             if not master_tag:
                 raise NotFoundException("Cannot find the specified label")
 
+            # Check if tag UID needs to change (different label = different tag)
             if master_tag.tag_uid != item.tag_uid:
+                # Ensure new tag UID is not already in use by another item
                 self._ensure_family_tag_uid_available(
                     family_id=user_device.device.family_id,
                     tag_uid=master_tag.tag_uid,
@@ -152,12 +157,15 @@ class ItemService:
                 response_label_id = label_id
 
         try:
+            # Update item with new name and/or tag UID
             updated_item = self.item_repository.update(
                 item=item,
                 name=name,
                 tag_uid=new_tag_uid
             )
+            # Determine which tag UID to sync with tags table
             tag_uid_to_sync = new_tag_uid if new_tag_uid else item.tag_uid
+            # Synchronize tag record with updated item information
             if tag_uid_to_sync:
                 self._upsert_tag_for_item(
                     tag_uid=tag_uid_to_sync,

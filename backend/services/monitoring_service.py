@@ -64,9 +64,12 @@ class MonitoringService(ServiceBase):
         self.scan_log_repository = ScanLogRepository(db)
 
     def get_dashboard(self, user_id: int) -> MonitoringDashboardResponse:
+        # Retrieve family context and validate user access
         actor, requester_member, family = self._get_actor_context(user_id)
+        # Gather all family tag monitoring data including scan logs
         family_members, tag_statuses = self._get_family_tag_monitoring_data(family.id)
 
+        # Build aggregated summaries for dashboard display
         member_summaries = self._build_member_summaries(family_members, tag_statuses)
         dashboard_summary = self._build_dashboard_summary(family_members, tag_statuses)
 
@@ -162,10 +165,13 @@ class MonitoringService(ServiceBase):
         return [tag for tag in tag_statuses if tag.owner_user_id == owner_user_id]
 
     def _build_family_tag_statuses(self, family_id: int, family_members) -> list[TagStatusResponse]:
+        # Get all active tags for the family
         tags = self.tag_repository.find_active_by_family_id(family_id)
 
+        # Pre-build lookup maps for efficient tag status calculation
         member_by_user_id, user_device_map, item_lookup, latest_scan_logs = self._prepare_tag_status_lookup_data(family_id, family_members)
 
+        # Process each tag and calculate its current status
         tag_statuses = []
         for tag in tags:
             tag_status = self._create_tag_status_response(tag, member_by_user_id, user_device_map, item_lookup, latest_scan_logs)
@@ -210,13 +216,16 @@ class MonitoringService(ServiceBase):
         ]
 
     def _build_item_lookup_by_owner_and_tag_uid(self, user_device_by_id: dict[int, object]) -> dict[tuple[int, str], object]:
+        # Get all active items for family user devices
         items = self.item_repository.get_active_items_by_user_device_ids(list(user_device_by_id.keys()))
 
+        # Build lookup map: (user_id, tag_uid) -> item for fast tag-to-item mapping
         item_lookup = {}
         for item in items:
             owner_user_device = user_device_by_id.get(item.user_device_id)
             if owner_user_device:
                 lookup_key = (owner_user_device.user_id, item.tag_uid)
+                # Prevent duplicate entries - first item wins
                 if lookup_key not in item_lookup:
                     item_lookup[lookup_key] = item
 
@@ -261,12 +270,16 @@ class MonitoringService(ServiceBase):
         has_linked_item: bool,
         latest_scan_status: str | None
     ) -> TagCurrentStatus:
+        # Tag status logic: REGISTERED -> FOUND -> LOST based on scan history
+        # If tag not linked to item or no scan logs, it's just registered
         if not has_linked_item or latest_scan_status is None:
             return TagCurrentStatus.REGISTERED
+        # Use latest scan status to determine current state
         if latest_scan_status == ScanStatus.FOUND.value:
             return TagCurrentStatus.FOUND
         if latest_scan_status == ScanStatus.LOST.value:
             return TagCurrentStatus.LOST
+        # Fallback to registered for any other status
         return TagCurrentStatus.REGISTERED
 
     @staticmethod
