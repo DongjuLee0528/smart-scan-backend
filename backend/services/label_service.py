@@ -48,7 +48,7 @@ class LabelService:
 
         user_device = self.user_device_repository.find_by_user_id(user_id)
         if not user_device:
-            raise NotFoundException("사용자 기기를 찾을 수 없습니다")
+            raise NotFoundException("User device not found")
 
         all_master_tags = self.master_tag_repository.get_all_by_device_id(user_device.device_id)
         used_tag_uids = self.item_repository.get_used_tag_uids_by_user_device_id(user_device.id)
