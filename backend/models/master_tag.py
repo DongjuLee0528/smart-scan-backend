@@ -33,11 +33,16 @@ class MasterTag(Base):
     """
     __tablename__ = "master_tags"
 
-    id = Column(Integer, primary_key=True, index=True)
-    tag_uid = Column(String(255), unique=True, nullable=False, index=True)
-    label_id = Column(Integer, nullable=False, index=True)
-    device_id = Column(Integer, ForeignKey("devices.id"), nullable=False)
+    # Primary identifier
+    id = Column(Integer, primary_key=True, index=True)  # Internal master tag ID
 
-    # relationships
-    device = relationship("Device", back_populates="master_tags")
-    items = relationship("Item", back_populates="master_tag")
+    # Tag information
+    tag_uid = Column(String(255), unique=True, nullable=False, index=True)  # Unique RFID tag identifier
+    label_id = Column(Integer, nullable=False, index=True)  # Label number for categorization (e.g., 1, 2, 3...)
+
+    # Device connection
+    device_id = Column(Integer, ForeignKey("devices.id"), nullable=False)  # RFID device this tag is registered to
+
+    # ORM relationships
+    device = relationship("Device", back_populates="master_tags")  # RFID device this tag belongs to
+    items = relationship("Item", back_populates="master_tag")  # Items connected to this master tag
