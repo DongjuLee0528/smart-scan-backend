@@ -1,30 +1,30 @@
 """
-가족 구성원 관리 API 스키마
+Family Member Management API Schema
 
-Smart Scan 시스템의 가족 구성원 추가, 조회, 관리를 위한 API 스키마를 정의합니다.
-가족 소유자가 새로운 구성원을 초대하고 관리할 수 있는 기능을 지원합니다.
+Defines API schemas for adding, retrieving, and managing family members in the Smart Scan system.
+Supports functionality for family owners to invite and manage new members.
 
-주요 스키마:
-- AddFamilyMemberRequest: 새로운 가족 구성원 초대 요청
-- FamilyMemberResponse: 가족 구성원 상세 정보 응답
-- FamilyMemberListResponse: 가족 구성원 목록 및 가족 정보 응답
+Main Schemas:
+- AddFamilyMemberRequest: Request to invite new family member
+- FamilyMemberResponse: Family member detailed information response
+- FamilyMemberListResponse: Family member list and family information response
 
-데이터 구조:
-- 기본 정보: 이름, 이메일, 전화번호, 나이 (선택)
-- 가족 내 역할: owner(소유자), member(일반 구성원)
-- 연결 정보: 사용자 계정과의 매핑
+Data Structure:
+- Basic information: name, email, phone number, age (optional)
+- Family role: owner, member
+- Connection information: user account mapping
 
-비즈니스 규칙:
-- 가족 소유자만 새 구성원 초대 가능
-- 초대된 구성원은 별도 계정 생성 후 연결
-- 구성원 정보는 가족 내에서만 공유
-- 개인정보 보호를 위한 선택적 정보 제공
+Business Rules:
+- Only family owners can invite new members
+- Invited members must create separate accounts and connect
+- Member information is shared only within the family
+- Optional information provision for privacy protection
 
-사용 시나리오:
-- 가족 소유자가 배우자나 자녀를 시스템에 초대
-- 가족 구성원 목록 조회 및 연락처 관리
-- 구성원별 역할 및 권한 관리
-- 가족 단위 소지품 공유 설정
+Usage Scenarios:
+- Family owners invite spouses or children to the system
+- View family member list and manage contacts
+- Manage member roles and permissions
+- Set up family-wide item sharing
 """
 
 from datetime import datetime
