@@ -183,13 +183,13 @@ class NotificationService(ServiceBase):
 
     @staticmethod
     def _build_missing_alert_title(tag_name: str) -> str:
-        return f"누락 감지 알림: {tag_name}"
+        return f"Missing item alert: {tag_name}"
 
     @staticmethod
     def _build_missing_alert_message(tag_name: str, last_seen_at) -> str:
         if last_seen_at is None:
-            return f"{tag_name} 태그가 누락 상태로 감지되었습니다."
-        return f"{tag_name} 태그가 누락 상태로 감지되었습니다. 마지막 감지 시각: {last_seen_at.isoformat()}"
+            return f"{tag_name} tag has been detected in missing status."
+        return f"{tag_name} tag has been detected in missing status. Last seen at: {last_seen_at.isoformat()}"
 
     @staticmethod
     def _build_notification_response(notification) -> NotificationResponse:
@@ -220,6 +220,6 @@ class NotificationService(ServiceBase):
                         message=notification.message,
                     )
             except Exception as e:
-                logger.warning("이메일 알림 발송 실패 notification_id=%s: %s", notification.id, e)
+                logger.warning("Failed to send email notification notification_id=%s: %s", notification.id, e)
         else:
             logger.info("_dispatch_notification: channel=%s not yet implemented (notification_id=%s)", channel, notification.id)
