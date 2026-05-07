@@ -91,6 +91,16 @@ def status():
     })
 
 
+@app.route("/generate_204")
+@app.route("/hotspot-detect.html")
+@app.route("/library/test/success.html")
+@app.route("/ncsi.txt")
+@app.route("/connecttest.txt")
+def captive_check():
+    """iOS/Android 캡티브 포털 자동 감지 URL — 302로 설정 페이지 이동."""
+    return redirect("/", code=302)
+
+
 @app.route("/reset", methods=["POST"])
 def reset():
     """공장 초기화: config.env 삭제 → AP 모드 재시작."""

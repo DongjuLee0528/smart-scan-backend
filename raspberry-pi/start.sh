@@ -108,7 +108,13 @@ verify)
   fi
   check_docker
   log "FI-805F에 Inventory 커맨드 전송 중..."
-  docker run --rm --device=/dev/ttyUSB0 python:3.11-slim python3 - <<'PYEOF'
+  # 실행 중인 rfid-scanner 컨테이너가 포트를 점유하고 있으면 일시 중지
+  docker stop smartscan-scanner 2>/dev/null || true
+
+  docker run --rm --privileged \
+    -v /dev:/dev \
+    python:3.11-slim \
+    sh -c "pip install -q pyserial && python3 -" <<'PYEOF'
 import serial, time, sys
 
 BAUD_RATES = [57600, 115200, 9600, 38400]
@@ -139,7 +145,10 @@ print("\n모든 baud rate에서 응답 없음.")
 print("케이블 연결 및 컨버터 드라이버를 확인하세요.")
 sys.exit(1)
 PYEOF
+  # verify 후 scanner 재시작
+  cd "$SCRIPT_DIR" && docker start smartscan-scanner 2>/dev/null || true
   ;;
+
 
 # ────────────────────────────── reset ─────────────────────────────────────
 reset)

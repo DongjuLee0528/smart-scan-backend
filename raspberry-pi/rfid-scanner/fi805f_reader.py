@@ -119,22 +119,25 @@ class FI805FReader:
 
     def collect_tags(self, window_sec: float = 3.0) -> list[str]:
         """
-        window_sec 동안 inventory 명령을 0.5초마다 보내며 태그 수집.
-        중복 제거 후 리스트 반환.
+        window_sec 동안 inventory 명령을 반복 전송하며 태그 수집.
+        FI-805F는 inventory 1회에 여러 태그 응답을 연속 전송하므로
+        각 명령 후 응답이 None이 될 때까지 모두 드레인.
         """
         tags: set[str] = set()
         deadline = time.time() + window_sec
-        poll_interval = 0.5
 
         while time.time() < deadline:
             self._send_inventory()
-            frame = self._read_frame()
-            if frame:
+            # 이번 inventory 라운드의 모든 응답 프레임 수집 (드레인)
+            drain_until = time.time() + 0.3
+            while time.time() < drain_until:
+                frame = self._read_frame()
+                if frame is None:
+                    break
                 epc = self._parse_epc(frame)
                 if epc:
                     tags.add(epc)
-            remaining = deadline - time.time()
-            time.sleep(min(poll_interval, max(remaining, 0)))
+            time.sleep(0.1)
 
         return list(tags)
 
