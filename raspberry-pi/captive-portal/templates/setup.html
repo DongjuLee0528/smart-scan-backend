@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SmartScan Hub 초기 설정</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f0f4f8; }
+    .card { max-width: 480px; margin: 60px auto; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,.1); }
+    .card-header { background: #1a56db; color: #fff; border-radius: 16px 16px 0 0; padding: 24px; }
+    .card-header h1 { font-size: 1.4rem; margin: 0; }
+    .card-header p  { font-size: .85rem; margin: 4px 0 0; opacity: .85; }
+    .step-badge { display:inline-block; background:#fff; color:#1a56db; border-radius:50%; width:28px; height:28px; line-height:28px; text-align:center; font-weight:700; margin-right:8px; font-size:.85rem; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <h1>SmartScan Hub</h1>
+    <p>현관 소지품 체크 시스템 초기 설정</p>
+  </div>
+  <div class="card-body p-4">
+
+    {% if errors %}
+    <div class="alert alert-danger">
+      <ul class="mb-0">
+        {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <p class="text-muted small mb-3">
+      <span class="step-badge">1</span>아래 정보를 입력하고 <strong>연결하기</strong>를 누르세요.<br>
+      <span class="step-badge">2</span>기기가 Wi-Fi에 연결되면 이 화면이 닫힙니다.
+    </p>
+
+    <form method="POST" action="/setup" id="setupForm">
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Wi-Fi 이름 (SSID)</label>
+        <input type="text" name="ssid" class="form-control"
+               placeholder="홈 Wi-Fi 이름 입력"
+               value="{{ ssid or '' }}" required autocomplete="off">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Wi-Fi 비밀번호</label>
+        <div class="input-group">
+          <input type="password" name="password" id="pwInput" class="form-control"
+                 placeholder="Wi-Fi 비밀번호" autocomplete="off">
+          <button type="button" class="btn btn-outline-secondary" onclick="togglePw()">보기</button>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label fw-semibold">기기 시리얼 번호</label>
+        <input type="text" name="device_serial" class="form-control"
+               placeholder="예: test1234"
+               value="{{ device_serial or '' }}"
+               pattern="[a-zA-Z0-9_\-]+" required autocomplete="off">
+        <div class="form-text">SmartScan 웹사이트 → 기기 등록 시 사용한 번호</div>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100 py-2" id="submitBtn">
+        연결하기
+      </button>
+    </form>
+  </div>
+  <div class="card-footer text-center text-muted small py-3">
+    SmartScan Hub &mdash; 현재 AP: <strong>{{ ap_ip }}</strong>
+  </div>
+</div>
+
+<script>
+function togglePw() {
+  const el = document.getElementById('pwInput');
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+document.getElementById('setupForm').addEventListener('submit', function() {
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '연결 중...';
+});
+</script>
+</body>
+</html>

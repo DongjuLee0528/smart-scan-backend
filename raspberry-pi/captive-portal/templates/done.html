@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>설정 완료 — SmartScan Hub</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f0f4f8; }
+    .card { max-width: 480px; margin: 60px auto; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,.1); }
+    .checkmark { font-size: 3rem; color: #0e9f6e; }
+  </style>
+</head>
+<body>
+<div class="card text-center p-5">
+  <div class="checkmark mb-3">&#10003;</div>
+  <h2 class="fw-bold mb-2">설정 완료!</h2>
+  <p class="text-muted">기기 시리얼: <strong>{{ device_serial }}</strong></p>
+  <p class="text-muted small">
+    Wi-Fi에 연결 중입니다. 잠시 후 기기가 RFID 스캔을 시작합니다.<br>
+    이 화면에서 <strong>홈 네트워크로 돌아가세요.</strong>
+  </p>
+  <hr>
+  <p class="text-muted small">
+    설정을 초기화하려면:
+    <form method="POST" action="/reset" class="d-inline">
+      <button type="submit" class="btn btn-sm btn-outline-danger">초기화</button>
+    </form>
+  </p>
+</div>
+</body>
+</html>
