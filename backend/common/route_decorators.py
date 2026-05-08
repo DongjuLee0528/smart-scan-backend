@@ -28,9 +28,10 @@ from backend.common.config import settings
 def _sanitize_error_message(error_msg: str) -> str:
     """Return error message with sensitive information removed even in development environment"""
     if not error_msg:
-        return "서버 오류가 발생했습니다"
+        return "Server error occurred"
 
     # Remove lines containing passwords, tokens, keys, etc.
+    # Regex patterns to match common sensitive data formats
     sensitive_patterns = [
         r'password[=\s:][^\s]+',
         r'token[=\s:][^\s]+',
@@ -39,45 +40,52 @@ def _sanitize_error_message(error_msg: str) -> str:
         r'auth[=\s:][^\s]+',
         r'/[a-zA-Z0-9/_-]*password[a-zA-Z0-9/_-]*',
         r'/[a-zA-Z0-9/_-]*secret[a-zA-Z0-9/_-]*',
-        r'postgresql://[^/]+',
+        r'postgresql://[^/]+',  # Database connection strings
         r'mysql://[^/]+',
     ]
 
     sanitized = error_msg
+    # Apply each pattern to redact sensitive information
     for pattern in sensitive_patterns:
         sanitized = re.sub(pattern, '[REDACTED]', sanitized, flags=re.IGNORECASE)
 
-    # Keep only first line for long stack traces
+    # Truncate to first line to avoid exposing stack trace details
     lines = sanitized.split('\n')
     if len(lines) > 1:
         sanitized = lines[0]
 
-    return f"서버 오류가 발생했습니다: {sanitized[:200]}"
+    # Limit message length to prevent response bloat
+    return f"Server error occurred: {sanitized[:200]}"
 
 
 def _map_exception(e: Exception) -> HTTPException:
     """Common exception mapping logic. BadRequest/HTTPException should be re-propagated
     as-is using isinstance check in caller."""
+    # Provide different error detail levels based on environment
     if settings.ENV == "development":
+        # Show sanitized error details in development for debugging
         error_detail = _sanitize_error_message(str(e))
     else:
-        error_detail = "서버 오류가 발생했습니다"
+        # Hide all error details in production for security
+        error_detail = "Server error occurred"
     return HTTPException(status_code=500, detail=error_detail)
 
 
 def handle_service_errors(func):
     """Decorator to handle common service errors in routes.
 
-    async def handlers use async wrapper, def handlers use sync wrapper
-    so FastAPI can properly await coroutines.
+    Automatically wraps route functions with exception handling.
+    Chooses async or sync wrapper based on function type for proper FastAPI compatibility.
     """
+    # Check if function is async to choose appropriate wrapper pattern
     if asyncio.iscoroutinefunction(func):
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
             try:
                 return await func(*args, **kwargs)
             except ValidationError as e:
-                raise BadRequestException(f"입력값 검증 실패: {str(e)}")
+                # Convert Pydantic validation errors to user-friendly format
+                raise BadRequestException(f"Input validation failed: {str(e)}")
             except Exception as e:
                 if isinstance(e, (CustomException, HTTPException)):
                     raise
@@ -89,7 +97,7 @@ def handle_service_errors(func):
         try:
             return func(*args, **kwargs)
         except ValidationError as e:
-            raise BadRequestException(f"입력값 검증 실패: {str(e)}")
+            raise BadRequestException(f"Input validation failed: {str(e)}")
         except Exception as e:
             # CustomException (Unauthorized/NotFound/Conflict/Forbidden/Database/BadRequest)
             # and HTTPException are delegated to global exception handler to maintain
@@ -103,10 +111,10 @@ def handle_service_errors(func):
 def validate_positive_id(param_name: str, value: int) -> None:
     """Validate that an ID parameter is positive"""
     if value <= 0:
-        raise BadRequestException(f"{param_name}는 양수여야 합니다")
+        raise BadRequestException(f"{param_name} must be a positive number")
 
 
 def validate_required_string(param_name: str, value: str | None) -> None:
     """Validate that a string parameter is not empty"""
     if not value or not value.strip():
-        raise BadRequestException(f"{param_name}은 필수입니다")
+        raise BadRequestException(f"{param_name} is required")

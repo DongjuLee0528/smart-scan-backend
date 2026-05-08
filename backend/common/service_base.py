@@ -1,15 +1,15 @@
 """
-서비스 기본 클래스
+Service base class
 
-SmartScan 비즈니스 로직의 공통 기능을 제공하는 기본 서비스 클래스입니다.
-모든 서비스 클래스가 상속하여 사용자, 가족, 가족구성원 정보를 쉽게 조회할 수 있습니다.
+Base service class that provides common functionality for SmartScan business logic.
+All service classes inherit from this to easily query user, family, and family member information.
 
-주요 기능:
-- 사용자 ID로부터 액터 컨텍스트 추출
-- 가족 구성원 권한 확인
-- 공통 레포지토리 인스턴스 관리
+Main features:
+- Extract actor context from user ID
+- Verify family member permissions
+- Manage common repository instances
 
-사용 패턴: Template Method Pattern
+Usage pattern: Template Method Pattern
 """
 
 from sqlalchemy.orm import Session

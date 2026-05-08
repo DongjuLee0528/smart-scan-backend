@@ -92,16 +92,48 @@ def validate_status(status: str, allowed_values: list) -> None:
 
 
 def validate_positive_int(value: int, field_name: str) -> None:
+    """
+    Validate that value is a positive integer
+
+    Args:
+        value: Integer value to validate
+        field_name: Name of the field for error messages
+
+    Raises:
+        BadRequestException: When value is not a positive integer
+    """
     if not isinstance(value, int) or value <= 0:
         raise BadRequestException(f"{field_name} must be a positive integer")
 
 
 def validate_non_empty_string(value: str, field_name: str) -> None:
+    """
+    Validate that string is not empty or whitespace-only
+
+    Args:
+        value: String value to validate
+        field_name: Name of the field for error messages
+
+    Raises:
+        BadRequestException: When string is empty, None, or whitespace-only
+    """
     if not value or not isinstance(value, str) or len(value.strip()) == 0:
         raise BadRequestException(f"{field_name} is required and cannot be empty")
 
 
 def validate_email(email: str) -> None:
+    """
+    Validate email address format
+
+    Uses basic regex to check for valid email format (user@domain.tld).
+    Does not verify if email actually exists.
+
+    Args:
+        email: Email address to validate
+
+    Raises:
+        BadRequestException: When email is missing or has invalid format
+    """
     if not email or not isinstance(email, str):
         raise BadRequestException("email is required")
 
@@ -114,6 +146,17 @@ def validate_email(email: str) -> None:
 
 
 def validate_verification_code(code: str) -> None:
+    """
+    Validate 6-digit verification code
+
+    Used for email verification codes and other numeric verification systems.
+
+    Args:
+        code: Verification code to validate
+
+    Raises:
+        BadRequestException: When code is missing or not exactly 6 digits
+    """
     if not code or not isinstance(code, str):
         raise BadRequestException("code is required")
 
@@ -123,6 +166,17 @@ def validate_verification_code(code: str) -> None:
 
 
 def validate_optional_age(age: int | None) -> None:
+    """
+    Validate age value if provided
+
+    Age is optional but if provided must be reasonable (1-150).
+
+    Args:
+        age: Age value to validate (can be None)
+
+    Raises:
+        BadRequestException: When age is invalid range
+    """
     if age is None:
         return
 
@@ -131,6 +185,19 @@ def validate_optional_age(age: int | None) -> None:
 
 
 def validate_password(password: str) -> None:
+    """
+    Validate password complexity
+
+    Enforces strong password policy:
+    - Minimum 8 characters
+    - Must contain letters, numbers, and special characters
+
+    Args:
+        password: Password to validate
+
+    Raises:
+        BadRequestException: When password doesn't meet complexity requirements
+    """
     if not password or not isinstance(password, str):
         raise BadRequestException("password is required")
 

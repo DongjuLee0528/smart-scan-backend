@@ -89,11 +89,14 @@ def add_item(name: str, kakao_user_id: str) -> dict | None:
 
 def deactivate_item(name: str, kakao_user_id: str) -> int:
     """이름으로 활성 아이템을 찾아 soft-delete. 삭제된 개수 반환 (0 or 1)."""
-    data = _request(
-        "POST",
-        "/api/chatbot/items/delete-by-name",
-        body={"kakao_user_id": kakao_user_id, "name": name},
-    )
+    try:
+        data = _request(
+            "POST",
+            "/api/chatbot/items/delete-by-name",
+            body={"kakao_user_id": kakao_user_id, "name": name},
+        )
+    except ChatbotApiError:
+        return 0
     if not data:
         return 0
     return int(data.get("deleted_count", 0))
