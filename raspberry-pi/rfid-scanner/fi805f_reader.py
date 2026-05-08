@@ -133,7 +133,7 @@ class FI805FReader:
             while time.time() < drain_until:
                 frame = self._read_frame()
                 if frame is None:
-                    break
+                    continue
                 epc = self._parse_epc(frame)
                 if epc:
                     tags.add(epc)
