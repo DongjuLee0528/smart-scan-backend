@@ -34,12 +34,17 @@ class ScanLog(Base):
     """
     __tablename__ = "scan_logs"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_device_id = Column(Integer, ForeignKey("user_devices.id"), nullable=False)
-    item_id = Column(Integer, ForeignKey("items.id"), nullable=True)
-    status = Column(String(50), nullable=False)
-    scanned_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    # Primary identifier
+    id = Column(Integer, primary_key=True, index=True)  # Internal scan log ID
 
-    # relationships
-    user_device = relationship("UserDevice", back_populates="scan_logs")
-    item = relationship("Item", back_populates="scan_logs")
+    # Foreign key relationships
+    user_device_id = Column(Integer, ForeignKey("user_devices.id"), nullable=False)  # User-device pair that performed scan
+    item_id = Column(Integer, ForeignKey("items.id"), nullable=True)  # Item that was scanned (null for unregistered tags)
+
+    # Scan information
+    status = Column(String(50), nullable=False)  # Scan status: FOUND or LOST
+    scanned_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)  # When scan occurred
+
+    # ORM relationships
+    user_device = relationship("UserDevice", back_populates="scan_logs")  # User-device that performed scan
+    item = relationship("Item", back_populates="scan_logs")  # Item that was scanned
