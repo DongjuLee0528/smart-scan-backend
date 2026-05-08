@@ -22,7 +22,9 @@ def create_kakao_link_token(kakao_user_id: str) -> str:
         KAKAO_LINK_JWT_SECRET         (필수) - 32자 이상 비밀키
         KAKAO_LINK_TOKEN_EXPIRE_MINUTES (선택, 기본 5)
     """
-    secret = os.environ["KAKAO_LINK_JWT_SECRET"]
+    secret = os.environ.get("KAKAO_LINK_JWT_SECRET")
+    if not secret:
+        raise ValueError("KAKAO_LINK_JWT_SECRET 환경변수가 설정되지 않았습니다")
     expire_minutes = int(os.environ.get("KAKAO_LINK_TOKEN_EXPIRE_MINUTES", "5"))
 
     now = datetime.now(timezone.utc)

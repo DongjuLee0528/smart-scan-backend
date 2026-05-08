@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  captive-portal:
+    build: ./captive-portal
+    container_name: smartscan-portal
+    network_mode: host
+    privileged: true
+    volumes:
+      - smartscan-config:/etc/smartscan
+      - /etc/wpa_supplicant:/etc/wpa_supplicant
+      - /run/dbus:/run/dbus
+      - /sys:/sys
+    environment:
+      - AP_SSID=SmartScan-Setup
+      - AP_IP=192.168.4.1
+      - PORTAL_PORT=80
+      - API_GW_URL=${API_GW_URL:-https://f7o6rm5r6a.execute-api.ap-northeast-2.amazonaws.com/prod}
+    restart: on-failure:3
+
+  rfid-scanner:
+    build: ./rfid-scanner
+    container_name: smartscan-scanner
+    network_mode: host
+    privileged: true
+    volumes:
+      - /dev:/dev
+      - smartscan-config:/etc/smartscan
+    environment:
+      - API_GW_URL=${API_GW_URL:-https://f7o6rm5r6a.execute-api.ap-northeast-2.amazonaws.com/prod}
+      - MOCK_MODE=${MOCK_MODE:-false}
+      - SCAN_WINDOW_SEC=${SCAN_WINDOW_SEC:-3}
+    depends_on:
+      - captive-portal
+    restart: unless-stopped
+
+volumes:
+  smartscan-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /etc/smartscan

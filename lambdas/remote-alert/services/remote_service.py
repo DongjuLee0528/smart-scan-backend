@@ -65,7 +65,7 @@ def send_remote_alert(event) -> dict:
 
         # 2. family_members 테이블에서 이메일 조회
         result = supabase.table('family_members') \
-            .select('family_id, user_id, email, name') \
+            .select('family_id, email, name') \
             .eq('id', member_id) \
             .single() \
             .execute()
