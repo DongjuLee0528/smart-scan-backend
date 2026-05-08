@@ -34,22 +34,31 @@ class Tag(Base):
     """
     __tablename__ = "tags"
 
-    id = Column(Integer, primary_key=True, index=True)
-    tag_uid = Column(String(255), unique=True, nullable=False, index=True)
-    name = Column(String(255), nullable=False)
-    family_id = Column(Integer, ForeignKey("families.id"), nullable=False, index=True)
-    owner_user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    device_id = Column(Integer, ForeignKey("devices.id"), nullable=False, index=True)
-    is_active = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    # Primary identifier
+    id = Column(Integer, primary_key=True, index=True)  # Internal virtual tag ID
+
+    # Tag information
+    tag_uid = Column(String(255), unique=True, nullable=False, index=True)  # Unique tag identifier across system
+    name = Column(String(255), nullable=False)  # User-defined tag name
+
+    # Ownership and connection
+    family_id = Column(Integer, ForeignKey("families.id"), nullable=False, index=True)  # Family this tag belongs to
+    owner_user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)  # User who owns this tag
+    device_id = Column(Integer, ForeignKey("devices.id"), nullable=False, index=True)  # Device this tag is registered to
+
+    # Status information
+    is_active = Column(Boolean, default=True, nullable=False)  # Whether tag is active or deactivated
+
+    # Timestamp tracking
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)  # When tag was created
     updated_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False
-    )
+    )  # Last modification time
 
-    # relationships
-    family = relationship("Family", back_populates="tags")
-    owner = relationship("User", back_populates="owned_tags")
-    device = relationship("Device", back_populates="tags")
+    # ORM relationships
+    family = relationship("Family", back_populates="tags")  # Family this tag belongs to
+    owner = relationship("User", back_populates="owned_tags")  # User who owns this tag
+    device = relationship("Device", back_populates="tags")  # Device this tag is registered to
