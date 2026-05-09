@@ -1,26 +1,26 @@
 /*!
- * SmartScan Hub — 공용 레이아웃 헬퍼
+ * SmartScan Hub — Shared Layout Helper
  *
- * 모든 대시보드 페이지에서 공유하는 사이드바 렌더링 + 로그인 가드 + 현재 사용자 정보 주입.
+ * Sidebar rendering + login guard + current user info injection shared across all dashboard pages.
  *
- * 사용법 (각 페이지 head에서):
+ * Usage (in each page head):
  *   <script src="assets/api.js"></script>
  *   <script src="assets/layout.js"></script>
- * body 안에:
+ * In body:
  *   <aside id="sidebar-mount"></aside>
- *   ... 페이지 콘텐츠 ...
+ *   ... page content ...
  *   <script>smartscanLayout.init({active: 'dashboard'});</script>
  */
 (function () {
   "use strict";
 
   const NAV_ITEMS = [
-    { key: "dashboard", label: "대시보드", href: "dashboard.html", icon: `<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>` },
-    { key: "devices", label: "기기 관리", href: "devices.html", icon: `<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>` },
-    { key: "items", label: "소지품 관리", href: "items.html", icon: `<path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/>` },
-    { key: "members", label: "구성원 관리", href: "members.html", icon: `<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>` },
-    { key: "notifications", label: "알림", href: "notifications.html", icon: `<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>` },
-    { key: "settings", label: "설정", href: "settings.html", icon: `<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>` },
+    { key: "dashboard", label: "Dashboard", href: "dashboard.html", icon: `<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>` },
+    { key: "devices", label: "Device Management", href: "devices.html", icon: `<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>` },
+    { key: "items", label: "Item Management", href: "items.html", icon: `<path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/>` },
+    { key: "members", label: "Member Management", href: "members.html", icon: `<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>` },
+    { key: "notifications", label: "Notifications", href: "notifications.html", icon: `<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>` },
+    { key: "settings", label: "Settings", href: "settings.html", icon: `<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>` },
   ];
 
   function navIcon(path) {
@@ -39,7 +39,7 @@
       return `<a href="${item.href}" class="${cls}">${navIcon(item.icon)}<span class="font-medium text-sm">${item.label}</span>${badge}</a>`;
     }).join("");
 
-    const name = user && user.name ? user.name : "사용자";
+    const name = user && user.name ? user.name : "User";
     const email = user && user.email ? user.email : "";
     const initial = name.charAt(0);
 
@@ -64,7 +64,7 @@
             <p class="text-sm font-semibold text-slate-800 truncate">${name}</p>
             <p class="text-xs text-slate-500 truncate">${email}</p>
           </div>
-          <button id="logout-btn" class="p-1.5 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600" title="로그아웃">
+          <button id="logout-btn" class="p-1.5 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600" title="Logout">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
           </button>
         </div>
@@ -92,14 +92,14 @@
     const user = smartscanApi.getUser();
     const mount = document.getElementById("sidebar-mount");
 
-    // 미리 그린 뒤 알림 뱃지 업데이트
+    // Draw first, then update notification badge
     if (mount) {
       mount.className = "w-64 bg-white border-r border-slate-200 flex-col hidden md:flex shrink-0";
       mount.innerHTML = renderSidebar(opts.active, user, 0);
       bindLogout();
     }
 
-    // 알림 개수 비동기 갱신 (실패해도 무시)
+    // Async notification count update (ignore failures)
     try {
       const res = await smartscanApi.getMyNotifications();
       const list = (res && res.data && res.data.notifications) || [];
@@ -113,7 +113,7 @@
     }
   }
 
-  // 공용 유틸
+  // Common utilities
   function escapeHtml(s) {
     if (s == null) return "";
     return String(s)
@@ -135,8 +135,8 @@
     const isYesterday = d.toDateString() === yesterday.toDateString();
     const hh = String(d.getHours()).padStart(2, "0");
     const mm = String(d.getMinutes()).padStart(2, "0");
-    if (sameDay) return `오늘 ${hh}:${mm}`;
-    if (isYesterday) return `어제 ${hh}:${mm}`;
+    if (sameDay) return `Today ${hh}:${mm}`;
+    if (isYesterday) return `Yesterday ${hh}:${mm}`;
     return `${d.getMonth() + 1}/${d.getDate()} ${hh}:${mm}`;
   }
 
