@@ -1,3 +1,4 @@
+// Initialize page components
 smartscanCommon.initLucideIcons();
 smartscanCommon.initDarkModeToggle();
 
@@ -12,10 +13,12 @@ function clearError() {
   smartscanCommon.clearError('login-error');
 }
 
+// Redirect if already logged in
 if (smartscanApi.isLoggedIn()) {
   location.replace(smartscanCommon.getRedirectTarget());
 }
 
+// Handle login form submission
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   clearError();
@@ -24,20 +27,20 @@ form.addEventListener('submit', async (e) => {
   const password = document.getElementById('password').value;
 
   if (!email || !password) {
-    showError('이메일과 비밀번호를 입력해주세요.');
+    showError('Please enter email and password.');
     return;
   }
 
-  smartscanCommon.setButtonLoading('login-submit', true, '로그인 중...');
+  smartscanCommon.setButtonLoading('login-submit', true, 'Logging in...');
 
   try {
     await smartscanApi.login(email, password);
     location.replace(smartscanCommon.getRedirectTarget());
   } catch (err) {
     const msg =
-      (err && err.status === 401) ? '이메일 또는 비밀번호가 올바르지 않습니다.' :
+      (err && err.status === 401) ? 'Email or password is incorrect.' :
       (err && err.message) ? err.message :
-      '로그인 중 오류가 발생했습니다.';
+      'An error occurred during login.';
     showError(msg);
     smartscanCommon.setButtonLoading('login-submit', false);
   }

@@ -1,9 +1,9 @@
 /**
- * SmartScan Hub 공통 JavaScript 함수들
+ * SmartScan Hub Common JavaScript Functions
  */
 window.smartscanCommon = {
 
-  // 다크모드 토글 함수
+  // Dark mode toggle function
   initDarkModeToggle: function() {
     const toggle = document.getElementById('theme-toggle');
     if (!toggle) return;
@@ -13,7 +13,7 @@ window.smartscanCommon = {
     });
   },
 
-  // 에러 표시 함수
+  // Error display function
   showError: function(elementId, message) {
     const errorBox = document.getElementById(elementId);
     if (!errorBox) return;
@@ -22,7 +22,7 @@ window.smartscanCommon = {
     errorBox.classList.remove('hidden');
   },
 
-  // 에러 숨김 함수
+  // Error hide function
   clearError: function(elementId) {
     const errorBox = document.getElementById(elementId);
     if (!errorBox) return;
@@ -31,7 +31,7 @@ window.smartscanCommon = {
     errorBox.classList.add('hidden');
   },
 
-  // 성공 메시지 표시 함수
+  // Success message display function
   showSuccess: function(elementId, message) {
     const successBox = document.getElementById(elementId);
     if (!successBox) return;
@@ -40,7 +40,7 @@ window.smartscanCommon = {
     successBox.classList.remove('hidden');
   },
 
-  // 성공 메시지 숨김 함수
+  // Success message hide function
   clearSuccess: function(elementId) {
     const successBox = document.getElementById(elementId);
     if (!successBox) return;
@@ -49,7 +49,7 @@ window.smartscanCommon = {
     successBox.classList.add('hidden');
   },
 
-  // 모달 열기 함수
+  // Modal open function
   openModal: function(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
@@ -57,7 +57,7 @@ window.smartscanCommon = {
     modal.classList.remove('hidden');
   },
 
-  // 모달 닫기 함수
+  // Modal close function
   closeModal: function(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
@@ -65,8 +65,8 @@ window.smartscanCommon = {
     modal.classList.add('hidden');
   },
 
-  // 버튼 로딩 상태 설정
-  setButtonLoading: function(buttonId, isLoading, loadingText = '처리 중...') {
+  // Set button loading state
+  setButtonLoading: function(buttonId, isLoading, loadingText = 'Processing...') {
     const button = document.getElementById(buttonId);
     if (!button) return;
 
@@ -83,23 +83,23 @@ window.smartscanCommon = {
     }
   },
 
-  // Lucide 아이콘 초기화
+  // Initialize Lucide icons
   initLucideIcons: function() {
     if (typeof lucide !== 'undefined' && lucide.createIcons) {
       lucide.createIcons();
     }
   },
 
-  // 리디렉션 타겟 안전 확인
+  // Safe redirect target validation
   getRedirectTarget: function(defaultTarget = 'dashboard.html') {
     const params = new URLSearchParams(location.search);
     const redirect = params.get('redirect');
-    // 같은 origin 내부 경로만 허용 (open redirect 방지)
+    // Allow only same-origin internal paths (prevent open redirect)
     if (redirect && redirect.startsWith('/')) return redirect;
     return defaultTarget;
   },
 
-  // 모달 상태 전환: activeId만 flex로 표시, 나머지 hidden
+  // Modal state transition: show only activeId as flex, others hidden
   showModalState: function(activeId, allIds) {
     allIds.forEach(function(id) {
       const el = document.getElementById(id);

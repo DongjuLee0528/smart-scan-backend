@@ -363,7 +363,7 @@
       document.documentElement.classList.toggle('dark');
     });
 
-    // 로그인 상태 확인 및 UI 변경
+    // Check login status and update UI accordingly
     window.addEventListener('DOMContentLoaded', () => {
       const email = localStorage.getItem('userEmail');
       const loginBtn = document.getElementById('navLoginBtn');
@@ -372,34 +372,34 @@
       const ctaStartBtn = document.getElementById('ctaStartBtn');
 
       if (email) {
-        // 1. 네비게이션 로그인 버튼 -> 이메일로 변경
+        // 1. Navigation login button -> change to email display
         if (loginBtn) {
           loginBtn.textContent = email;
-          loginBtn.href = "#"; 
+          loginBtn.href = "#";
         }
         
-        // 2. 네비게이션 시작하기 버튼 -> 로그아웃으로 변경
+        // 2. Navigation signup button -> change to logout
         if (signupBtn) {
-          signupBtn.textContent = "로그아웃";
+          signupBtn.textContent = "Logout";
           signupBtn.href = "#";
           signupBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            if(confirm("로그아웃 하시겠습니까?")) {
+            if(confirm("Are you sure you want to logout?")) {
                 localStorage.removeItem('userEmail');
                 window.location.reload();
             }
           });
         }
 
-        // 3. 메인 히어로 영역의 '시작하기' 버튼 -> 대시보드로 이동
+        // 3. Main hero 'Get Started' button -> redirect to dashboard
         if (mainHeroBtn) {
-          mainHeroBtn.textContent = "대시보드 가기";
-          mainHeroBtn.href = "dashboard.html"; // 새롭게 보내주신 dashboard 파일로 연결
+          mainHeroBtn.textContent = "Go to Dashboard";
+          mainHeroBtn.href = "dashboard.html";
         }
 
-        // 4. 하단 CTA 영역의 '무료로 시작하기' 버튼 -> 대시보드로 이동
+        // 4. Bottom CTA 'Start Free' button -> redirect to dashboard
         if (ctaStartBtn) {
-          ctaStartBtn.textContent = "대시보드 바로가기";
+          ctaStartBtn.textContent = "Go to Dashboard";
           ctaStartBtn.href = "dashboard.html";
         }
       }

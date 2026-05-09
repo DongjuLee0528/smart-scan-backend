@@ -1,3 +1,4 @@
+// Initialize page components
 smartscanCommon.initLucideIcons();
 smartscanCommon.initDarkModeToggle();
 
@@ -19,6 +20,7 @@ function clearBanners() {
   smartscanCommon.clearSuccess('signup-success');
 }
 
+// Handle signup form submission
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   clearBanners();
@@ -32,26 +34,26 @@ form.addEventListener('submit', async (e) => {
   const terms = document.getElementById('terms').checked;
 
   if (!name || !email || !password) {
-    showError('이름, 이메일, 비밀번호는 필수 입력 항목입니다.');
+    showError('Name, email, and password are required fields.');
     return;
   }
   if (password.length < 8) {
-    showError('비밀번호는 8자 이상이어야 합니다.');
+    showError('Password must be at least 8 characters long.');
     return;
   }
   if (password !== passwordConfirm) {
-    showError('비밀번호가 일치하지 않습니다.');
+    showError('Passwords do not match.');
     return;
   }
   if (!terms) {
-    showError('이용약관 및 개인정보처리방침에 동의해주세요.');
+    showError('Please agree to the terms of service and privacy policy.');
     return;
   }
 
   const phone = phoneRaw || null;
   const age = ageRaw ? parseInt(ageRaw, 10) : null;
 
-  smartscanCommon.setButtonLoading('signup-submit', true, '가입 중...');
+  smartscanCommon.setButtonLoading('signup-submit', true, 'Signing up...');
 
   try {
     await smartscanApi.register({
@@ -61,10 +63,10 @@ form.addEventListener('submit', async (e) => {
       phone,
       age,
     });
-    showSuccess('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다...');
+    showSuccess('Registration completed successfully. Redirecting to login page...');
     setTimeout(() => location.replace('login.html'), 1200);
   } catch (err) {
-    const msg = (err && err.message) ? err.message : '회원가입 중 오류가 발생했습니다.';
+    const msg = (err && err.message) ? err.message : 'An error occurred during registration.';
     showError(msg);
     smartscanCommon.setButtonLoading('signup-submit', false);
   }
