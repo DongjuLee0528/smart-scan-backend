@@ -1,21 +1,22 @@
 /*!
- * SmartScan Hub — 공용 API 클라이언트 (vanilla JS)
+ * SmartScan Hub — Shared API Client (vanilla JS)
  *
- * 사용 예:
+ * Usage example:
  *   const res = await smartscanApi.login('user@example.com', 'pw');
  *   smartscanApi.setTokens(res.data);
  *   await smartscanApi.linkKakao(kakaoLinkJwt);
  *
- * 배포 오리진이 API와 다르면 HTML에서 <script>window.SMARTSCAN_API_BASE='https://api.example.com'</script> 선언.
+ * If deployment origin differs from API, declare in HTML: <script>window.SMARTSCAN_API_BASE='https://api.example.com'</script>
  */
 (function () {
   "use strict";
 
+  // Auto-detect API base URL based on environment and configuration
   function detectApiBase() {
     if (typeof window !== "undefined" && window.SMARTSCAN_API_BASE) {
       return window.SMARTSCAN_API_BASE.replace(/\/$/, "");
     }
-    // 로컬 dev: 정적 HTML을 file:// 또는 localhost:* 로 열 때 → uvicorn(:8000)
+    // Local dev: when opening static HTML via file:// or localhost:* → uvicorn(:8000)
     if (typeof location !== "undefined") {
       const host = location.hostname;
       if (!host || host === "localhost" || host === "127.0.0.1") {
@@ -46,6 +47,7 @@
     return raw ? JSON.parse(raw) : null;
   }
 
+  // Store authentication tokens and user info in localStorage
   function setTokens(data) {
     if (!data) return;
     if (data.access_token) localStorage.setItem(STORAGE_KEYS.ACCESS, data.access_token);
@@ -69,6 +71,7 @@
     return !!getAccessToken();
   }
 
+  // Generate UUID v4 with crypto API fallback to Math.random
   function uuidV4() {
     if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
       return crypto.randomUUID();
@@ -80,7 +83,7 @@
     });
   }
 
-  // 동시에 여러 요청이 401 을 받아도 refresh 는 한 번만 돌도록 공유 Promise 로 직렬화.
+  // Serialize with shared Promise to ensure refresh runs only once even when multiple requests receive 401.
   let _refreshInFlight = null;
 
   async function _performRefresh() {
@@ -107,7 +110,7 @@
   function _onAuthFailure() {
     clearTokens();
     if (typeof window !== "undefined" && window.location) {
-      // 이미 로그인/회원가입 페이지에 있으면 루프 방지.
+      // Prevent loop if already on login/signup page.
       const p = window.location.pathname || "";
       const onAuthPage = /\/(index\.html|signup\.html|kakao-link\.html)?$/i.test(p);
       if (!onAuthPage) {
@@ -131,7 +134,7 @@
         body: options.body ? JSON.stringify(options.body) : undefined,
       });
     } catch (networkErr) {
-      const err = new Error("네트워크 오류: 서버에 접속할 수 없습니다.");
+      const err = new Error("Network error: Cannot connect to server.");
       err.cause = networkErr;
       throw err;
     }
@@ -149,14 +152,14 @@
   }
 
   /**
-   * 저수준 fetch 래퍼. 서버 응답 스키마 { success, message, data } 를 언패킹한다.
-   * 실패 시 Error throw (err.status, err.body 속성 포함).
+   * Low-level fetch wrapper. Unpacks server response schema { success, message, data }.
+   * Throws Error on failure (includes err.status, err.body properties).
    *
-   * auth 요청이 401 을 받으면 refresh token 으로 access token 을 자동 재발급한 뒤
-   * 원요청을 1 회 재시도한다. refresh 도 실패하면 로컬 토큰을 비우고 로그인 페이지로 이동.
+   * When auth request receives 401, automatically reissues access token with refresh token
+   * then retries original request once. If refresh also fails, clears local tokens and redirects to login page.
    */
   async function apiFetch(path, options = {}) {
-    // refresh 엔드포인트 자체가 401 받을 때 재귀 호출하지 않도록 플래그 분기.
+    // Flag branching to prevent recursive calls when refresh endpoint itself receives 401.
     const isRefreshCall = path === "/api/auth/refresh";
 
     let token = null;
@@ -171,7 +174,7 @@
 
     let { res, payload } = await _rawFetch(path, options, token);
 
-    // 401 이면서 auth 요청이고 refresh 자체가 아닌 경우 → 토큰 갱신 후 1회 재시도.
+    // If 401 and auth request but not refresh itself → refresh token and retry once.
     if (
       res.status === 401 &&
       options.auth &&
@@ -194,7 +197,7 @@
         payload = retry.payload;
       } catch (refreshErr) {
         _onAuthFailure();
-        const err = new Error("세션이 만료되었습니다. 다시 로그인해 주세요.");
+        const err = new Error("Session has expired. Please log in again.");
         err.status = 401;
         err.cause = refreshErr;
         throw err;
@@ -214,7 +217,7 @@
     return payload;
   }
 
-  // ---------- 고수준 엔드포인트 래퍼 ----------
+  // ---------- High-level endpoint wrappers ----------
 
   async function login(email, password) {
     const res = await apiFetch("/api/auth/login", {
@@ -288,7 +291,7 @@
     });
   }
 
-  /** 페이지 가드: 미로그인 시 login.html로 리다이렉트 (현재 URL을 redirect 파라미터로 보존). */
+  /** Page guard: Redirect to login.html if not logged in (preserves current URL as redirect parameter). */
   function requireLogin() {
     if (!isLoggedIn()) {
       const redirect = encodeURIComponent(location.pathname + location.search);
@@ -317,7 +320,7 @@
   const updateItem = (id, body) =>
     apiFetch(`/api/items/${id}`, { method: "PATCH", auth: true, body });
   const deleteItem = (id) => apiFetch(`/api/items/${id}`, { method: "DELETE", auth: true });
-  // A-full: pending 아이템(챗봇 이름만 추가)에 라벨 연결 → 활성화
+  // A-full: Link label to pending item (chatbot name only added) → activate
   const bindItemLabel = (id, label_id) =>
     apiFetch(`/api/items/${id}/bind`, { method: "PATCH", auth: true, body: { label_id } });
 
@@ -350,14 +353,14 @@
 
   // ---------- Family Invitations ----------
 
-  /** 인증 없이 GET 요청 (초대 토큰 조회 등 public 엔드포인트용). */
+  /** GET request without authentication (for public endpoints like invitation token lookup). */
   async function _getPublic(path) {
     const headers = { "Content-Type": "application/json" };
     let res;
     try {
       res = await fetch(`${API_BASE}${path}`, { method: "GET", headers });
     } catch (networkErr) {
-      const err = new Error("네트워크 오류: 서버에 접속할 수 없습니다.");
+      const err = new Error("Network error: Cannot connect to server.");
       err.cause = networkErr;
       throw err;
     }
