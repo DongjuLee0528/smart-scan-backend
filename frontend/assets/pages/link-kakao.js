@@ -1,3 +1,4 @@
+// Initialize page components
 smartscanCommon.initLucideIcons();
 smartscanCommon.initDarkModeToggle();
 
@@ -6,6 +7,7 @@ const success = document.getElementById('state-success');
 const errorEl = document.getElementById('state-error');
 const errorMsg = document.getElementById('error-message');
 
+// Show specific state element while hiding others
 function show(el) {
   [loading, success, errorEl].forEach(e => e.classList.add('hidden'));
   el.classList.remove('hidden');
@@ -17,15 +19,17 @@ function showError(msg) {
   show(errorEl);
 }
 
+// Main execution function to handle Kakao linking process
 (async function run() {
   const params = new URLSearchParams(location.search);
   const token = params.get('token');
 
   if (!token) {
-    showError('연동 토큰이 없습니다. 카카오톡에서 전달받은 링크로 접속해주세요.');
+    showError('Link token not found. Please access via the link received from KakaoTalk.');
     return;
   }
 
+  // Redirect to login if not authenticated
   if (!smartscanApi.isLoggedIn()) {
     const redirect = encodeURIComponent(location.pathname + location.search);
     location.replace(`login.html?redirect=${redirect}`);
@@ -36,7 +40,7 @@ function showError(msg) {
     await smartscanApi.linkKakao(token);
     show(success);
   } catch (err) {
-    let msg = '링크가 만료되었거나 유효하지 않습니다.';
+    let msg = 'Link has expired or is invalid.';
     if (err) {
       if (err.status === 401) {
         smartscanApi.clearTokens();
