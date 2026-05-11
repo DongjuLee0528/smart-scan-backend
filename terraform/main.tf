@@ -9,43 +9,43 @@ terraform {
 }
 
 # ==========================================
-# variables.tf 내용 (민감 정보 분리)
-# 실제 운영 시 terraform.tfvars 파일에 값 입력
-# .gitignore에 terraform.tfvars 반드시 추가!
+# Variables (sensitive information separated)
+# Enter values in terraform.tfvars file for production
+# Make sure to add terraform.tfvars to .gitignore!
 # ==========================================
 
-# [수정] db_password, kakao_token 제거 → Supabase 변수로 교체
+# [MODIFIED] Removed db_password, kakao_token → Replaced with Supabase variables
 variable "supabase_url" {
-  description = "Supabase 프로젝트 URL"
+  description = "Supabase project URL"
   type        = string
 }
 
 variable "supabase_service_key" {
-  description = "Supabase Service Role Key (서버 전용)"
+  description = "Supabase Service Role Key (server-side only)"
   type        = string
   sensitive   = true
 }
 
 variable "resend_api_key" {
-  description = "Resend 이메일 API Key"
+  description = "Resend email API Key"
   type        = string
   sensitive   = true
 }
 
 variable "acm_cert_arn" {
-  description = "CloudFront용 ACM 인증서 ARN (us-east-1 리전 발급 필수)"
+  description = "ACM certificate ARN for CloudFront (must be issued in us-east-1 region)"
   type        = string
 }
 
-# [수정] github_repo 기본값: smart-scan-backend → smart-scan
+# [MODIFIED] github_repo default value: smart-scan-backend → smart-scan
 variable "github_repo" {
-  description = "GitHub 레포 경로 (owner/repo 형식)"
+  description = "GitHub repository path (owner/repo format)"
   type        = string
   default     = "DongjuLee0528/smart-scan"
 }
 
 # ==========================================
-# 1. Provider 및 기본 VPC 설정
+# 1. Provider and basic VPC setup
 # ==========================================
 data "aws_caller_identity" "current" {}
 
@@ -53,12 +53,13 @@ provider "aws" {
   region = "ap-northeast-2"
 }
 
-# [제거] VPC/서브넷/IGW/라우팅테이블/SG → Lambda vpc_config 미사용으로 고아 리소스 제거
-# [제거] rds_sg, lambda_to_rds, rds_from_lambda → RDS 미사용으로 제거
+# [REMOVED] VPC/Subnet/IGW/RoutingTable/SG → Removed orphaned resources as Lambda vpc_config is unused
+# [REMOVED] rds_sg, lambda_to_rds, rds_from_lambda → Removed as RDS is not used
 
 # ==========================================
-# 5. IAM 역할 (Lambda Execution Role)
+# 5. IAM Role (Lambda Execution Role)
 # ==========================================
+# IAM policy document allowing Lambda service to assume this role
 data "aws_iam_policy_document" "lambda_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -69,19 +70,22 @@ data "aws_iam_policy_document" "lambda_assume_role" {
   }
 }
 
+# IAM role for all Lambda functions with basic execution permissions
 resource "aws_iam_role" "lambda_role" {
   name               = "smartscan-lambda-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
 }
 
+# Attach basic CloudWatch logs permission to Lambda role
 resource "aws_iam_role_policy_attachment" "lambda_logs" {
   role       = aws_iam_role.lambda_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-# [제거] lambda_vpc_access → VPC 미사용으로 제거
+# [REMOVED] lambda_vpc_access → Removed as VPC is not used
 
-# [수정] EventBridge 정책 제거 → Inbound→Outbound/Remote Lambda 직접 호출 정책으로 교체
+# [MODIFIED] Removed EventBridge policy → Replaced with direct Lambda invocation policy for Inbound→Outbound/Remote
+# Policy allowing Inbound Lambda to invoke Outbound and Remote Lambdas directly
 resource "aws_iam_role_policy" "lambda_invoke_policy" {
   name   = "lambda-invoke-outbound-remote"
   role   = aws_iam_role.lambda_role.id
@@ -101,8 +105,9 @@ resource "aws_iam_role_policy" "lambda_invoke_policy" {
 }
 
 # ==========================================
-# 7. Lambda 함수
+# 7. Lambda Functions
 # ==========================================
+# Dummy deployment package for initial Lambda creation (GitHub Actions will deploy actual code)
 data "archive_file" "dummy_lambda" {
   type        = "zip"
   output_path = "${path.module}/dummy_payload.zip"
@@ -112,7 +117,8 @@ data "archive_file" "dummy_lambda" {
   }
 }
 
-# [수정] Inbound Lambda: VPC 제거 (Supabase 퍼블릭), 환경변수 Supabase로 변경
+# [MODIFIED] Inbound Lambda: Removed VPC (Supabase public), changed environment variables to Supabase
+# Lambda function for processing RFID scans from Raspberry Pi
 resource "aws_lambda_function" "inbound" {
   function_name    = "smartscan-inbound"
   role             = aws_iam_role.lambda_role.arn
@@ -123,7 +129,7 @@ resource "aws_lambda_function" "inbound" {
   source_code_hash = data.archive_file.dummy_lambda.output_base64sha256
   reserved_concurrent_executions = 5
 
-  # [수정] vpc_config 제거 (Supabase 퍼블릭 엔드포인트, NAT 불필요)
+  # [MODIFIED] Removed vpc_config (Supabase public endpoint, NAT not needed)
 
   environment {
     variables = {
@@ -133,11 +139,12 @@ resource "aws_lambda_function" "inbound" {
   }
 
   lifecycle {
-    ignore_changes = [filename, source_code_hash]  # GitHub Actions가 코드 배포
+    ignore_changes = [filename, source_code_hash]  # GitHub Actions deploys code
   }
 }
 
-# [수정] Outbound Lambda: 환경변수 Supabase + Resend로 변경 (Kakao 제거)
+# [MODIFIED] Outbound Lambda: Changed environment variables to Supabase + Resend (removed Kakao)
+# Lambda function for sending email notifications when items go missing
 resource "aws_lambda_function" "outbound" {
   function_name    = "smartscan-outbound"
   role             = aws_iam_role.lambda_role.arn
@@ -161,7 +168,7 @@ resource "aws_lambda_function" "outbound" {
   }
 }
 
-# [추가] Remote Alert Lambda
+# [ADDED] Lambda function for handling remote alert requests from web interface
 resource "aws_lambda_function" "remote" {
   function_name    = "smartscan-remote"
   role             = aws_iam_role.lambda_role.arn
@@ -185,7 +192,7 @@ resource "aws_lambda_function" "remote" {
   }
 }
 
-# [추가] Chatbot Lambda
+# [ADDED] Lambda function for Kakao chatbot skill server integration
 resource "aws_lambda_function" "chatbot" {
   function_name    = "smartscan-chatbot"
   role             = aws_iam_role.lambda_role.arn
@@ -208,20 +215,21 @@ resource "aws_lambda_function" "chatbot" {
   }
 }
 
-# [제거] EventBridge 관련 리소스 모두 제거
+# [REMOVED] All EventBridge related resources removed
 # - aws_cloudwatch_event_rule.missing_item_rule
 # - aws_cloudwatch_event_target.trigger_outbound_lambda
 # - aws_lambda_permission.allow_eventbridge
-# Inbound Lambda에서 Outbound Lambda 직접 호출 방식으로 변경
+# Changed to direct Lambda invocation from Inbound Lambda to Outbound Lambda
 
 # ==========================================
 # 8. API Gateway
 # ==========================================
+# REST API Gateway for SmartScan backend services
 resource "aws_api_gateway_rest_api" "api" {
   name = "SmartScan-API"
 }
 
-# POST /inbound — 라즈베리파이 RFID 스캔 수신
+# POST /inbound — Receive RFID scan from Raspberry Pi
 resource "aws_api_gateway_resource" "inbound" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   parent_id   = aws_api_gateway_rest_api.api.root_resource_id
@@ -252,7 +260,7 @@ resource "aws_lambda_permission" "allow_apigw_inbound" {
   source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
 }
 
-# POST /chatbot — 카카오 챗봇 스킬 서버
+# POST /chatbot — Kakao chatbot skill server
 resource "aws_api_gateway_resource" "chatbot" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   parent_id   = aws_api_gateway_rest_api.api.root_resource_id
@@ -299,7 +307,7 @@ resource "aws_lambda_permission" "allow_apigw_chatbot" {
   source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
 }
 
-# POST /remote-alert — 웹에서 원격 알림 요청
+# POST /remote-alert — Remote alert request from web
 resource "aws_api_gateway_resource" "remote_alert" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   parent_id   = aws_api_gateway_rest_api.api.root_resource_id
@@ -330,7 +338,7 @@ resource "aws_lambda_permission" "allow_apigw_remote" {
   source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
 }
 
-# API Gateway 배포 (prod 스테이지)
+# API Gateway deployment (prod stage)
 resource "aws_api_gateway_deployment" "prod" {
   rest_api_id = aws_api_gateway_rest_api.api.id
 
@@ -387,10 +395,12 @@ resource "aws_api_gateway_usage_plan" "default" {
 # ==========================================
 # 9. S3 + CloudFront
 # ==========================================
+# S3 bucket for hosting React frontend static files
 resource "aws_s3_bucket" "web" {
   bucket = "smartscan-hub-frontend"
 }
 
+# Block all public access to S3 bucket (CloudFront will access via OAC)
 resource "aws_s3_bucket_public_access_block" "web_public_access" {
   bucket                  = aws_s3_bucket.web.id
   block_public_acls       = true
@@ -399,6 +409,7 @@ resource "aws_s3_bucket_public_access_block" "web_public_access" {
   restrict_public_buckets = true
 }
 
+# Origin Access Control for secure S3 access from CloudFront
 resource "aws_cloudfront_origin_access_control" "oac" {
   name                              = "smartscan-s3-oac"
   description                       = "SmartScan S3 OAC"
@@ -407,6 +418,7 @@ resource "aws_cloudfront_origin_access_control" "oac" {
   signing_protocol                  = "sigv4"
 }
 
+# CloudFront distribution for global CDN with custom domain support
 resource "aws_cloudfront_distribution" "frontend" {
   origin {
     domain_name              = aws_s3_bucket.web.bucket_regional_domain_name
@@ -444,6 +456,7 @@ resource "aws_cloudfront_distribution" "frontend" {
   tags = { Name = "smartscan-cloudfront" }
 }
 
+# S3 bucket policy allowing CloudFront OAC to read objects
 resource "aws_s3_bucket_policy" "web_policy" {
   bucket     = aws_s3_bucket.web.id
   depends_on = [aws_s3_bucket_public_access_block.web_public_access]
@@ -469,27 +482,29 @@ resource "aws_s3_bucket_policy" "web_policy" {
 }
 
 # ==========================================
-# 10. 출력값 (Outputs)
+# 10. Outputs
 # ==========================================
 output "api_gateway_url" {
-  description = "API Gateway 베이스 URL"
+  description = "API Gateway base URL"
   value       = "https://${aws_api_gateway_rest_api.api.id}.execute-api.ap-northeast-2.amazonaws.com/prod"
 }
 
 output "cloudfront_domain" {
-  description = "CloudFront 도메인"
+  description = "CloudFront domain"
   value       = aws_cloudfront_distribution.frontend.domain_name
 }
 
 # ==========================================
 # 11. GitHub Actions OIDC (CI/CD)
 # ==========================================
+# OIDC provider for GitHub Actions to authenticate with AWS
 resource "aws_iam_openid_connect_provider" "github" {
   url             = "https://token.actions.githubusercontent.com"
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
 }
 
+# IAM role for GitHub Actions with repo-specific access
 resource "aws_iam_role" "github_actions" {
   name = "github-actions-role"
 
@@ -513,7 +528,8 @@ resource "aws_iam_role" "github_actions" {
   })
 }
 
-# [수정] Lambda 배포 권한: remote 추가 + S3 + CloudFront 추가
+# [MODIFIED] Lambda deployment permissions: added remote + S3 + CloudFront
+# Policy granting GitHub Actions permissions to deploy Lambda functions, S3 files, and invalidate CloudFront cache
 resource "aws_iam_role_policy" "github_actions_lambda" {
   name = "github-actions-lambda-deploy"
   role = aws_iam_role.github_actions.id
