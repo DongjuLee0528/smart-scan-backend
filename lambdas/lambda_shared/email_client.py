@@ -1,11 +1,33 @@
+"""
+Email Client for Lambda Functions
+
+Provides email sending functionality using Resend API for Lambda functions.
+Used for sending missing item alerts and notifications.
+"""
+
 import os
 import resend
 
+
 def send_email(to: list, subject: str, html: str) -> bool:
+    """
+    Send HTML email using Resend API
+
+    Args:
+        to: List of recipient email addresses
+        subject: Email subject line
+        html: HTML content of the email
+
+    Returns:
+        bool: True if email sent successfully, False otherwise
+    """
+    # Check for required environment variable
     api_key = os.environ.get('RESEND_API_KEY')
     if not api_key:
-        print("이메일 발송 오류: RESEND_API_KEY 환경변수가 설정되지 않았습니다")
+        print("Email send error: RESEND_API_KEY environment variable not set")
         return False
+
+    # Configure Resend API client
     resend.api_key = api_key
     try:
         resend.Emails.send({
@@ -16,5 +38,5 @@ def send_email(to: list, subject: str, html: str) -> bool:
         })
         return True
     except Exception as e:
-        print(f"이메일 발송 오류: {e}")
+        print(f"Email send error: {e}")
         return False
