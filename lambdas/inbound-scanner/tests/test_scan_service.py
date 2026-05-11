@@ -35,7 +35,7 @@ def test_invalid_tags_type(mock_logs, mock_device):
     response = process_scan(_make_event({"device_serial": "SN-001", "tags": "TAG001"}))
 
     assert response["statusCode"] == 400
-    assert "배열" in json.loads(response["body"])["message"]
+    assert json.loads(response["body"])["message"] == "tags must be an array."
 
 
 # ── test_device_not_found ─────────────────────────────────────────────────────
@@ -64,7 +64,7 @@ def test_no_missing_items(mock_device, mock_logs, mock_rpc, mock_lambda):
     response = process_scan(_make_event({"device_serial": "SN-001", "tags": ["TAG001"]}))
 
     assert response["statusCode"] == 200
-    assert "확인" in json.loads(response["body"])["message"]
+    assert json.loads(response["body"])["message"] == "All items confirmed."
     mock_lambda.invoke.assert_not_called()
 
 
