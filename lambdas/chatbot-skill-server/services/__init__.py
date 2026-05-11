@@ -1,11 +1,11 @@
 """
-Smart Scan 챗봇 스킬 서버 서비스 계층
+Smart Scan Chatbot Skill Server Service Layer
 
-카카오톡 챗봇의 비즈니스 로직을 처리하는 서비스 모듈들을 제공합니다.
-사용자 상호작용, 데이터 처리, 서비스 오케스트레이션을 담당합니다.
+Provides service modules for processing KakaoTalk chatbot business logic.
+Handles user interactions, data processing, and service orchestration.
 
-제공 서비스:
-- chatbot_service: 카카오톡 챗봇 메시지 처리 및 응답 생성
+Available Services:
+- chatbot_service: KakaoTalk chatbot message processing and response generation
 
-SmartScan 시스템의 챗봇 기능을 위한 핵심 비즈니스 로직을 구현합니다.
+Implements core business logic for chatbot functionality in the SmartScan system.
 """
