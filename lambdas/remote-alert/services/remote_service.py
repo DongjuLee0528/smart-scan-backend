@@ -3,7 +3,7 @@ from html import escape
 from common.db import get_client
 from common.email_client import send_email
 
-# CORS 응답 헤더
+# CORS response headers
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "https://smartscan-hub.com",
     "Access-Control-Allow-Headers": "Content-Type,Authorization",
@@ -12,9 +12,9 @@ CORS_HEADERS = {
 
 
 def send_remote_alert(event) -> dict:
-    """부모가 가족 구성원에게 원격 알림을 전송하는 핸들러"""
+    """Handler for parents to send remote alerts to family members"""
 
-    # OPTIONS 프리플라이트 요청 처리
+    # Handle OPTIONS preflight requests
     if event.get('httpMethod') == 'OPTIONS':
         return {"statusCode": 200, "headers": CORS_HEADERS, "body": ""}
 
