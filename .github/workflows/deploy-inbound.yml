@@ -31,7 +31,7 @@ jobs:
       - name: Run tests before deploy
         run: |
           pip install pytest supabase resend boto3 --quiet
-          PYTHONPATH=lambdas/inbound-scanner pytest lambdas/inbound-scanner/tests/ -v
+          PYTHONPATH=lambdas:lambdas/inbound-scanner pytest lambdas/inbound-scanner/tests/ -v
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

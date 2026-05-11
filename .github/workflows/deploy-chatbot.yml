@@ -52,7 +52,7 @@ jobs:
       - name: Run tests before deploy
         run: |
           pip install pytest supabase resend boto3 --quiet
-          PYTHONPATH=lambdas/chatbot-skill-server pytest lambdas/chatbot-skill-server/tests/ -v
+          PYTHONPATH=lambdas:lambdas/chatbot-skill-server pytest lambdas/chatbot-skill-server/tests/ -v
 
       # AWS 인증 설정 (OIDC를 통한 역할 기반 인증)
       - name: Configure AWS credentials
