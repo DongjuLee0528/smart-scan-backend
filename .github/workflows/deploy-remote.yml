@@ -31,7 +31,7 @@ jobs:
       - name: Run tests before deploy
         run: |
           pip install pytest supabase resend boto3 --quiet
-          PYTHONPATH=lambdas/remote-alert pytest lambdas/remote-alert/tests/ -v
+          PYTHONPATH=lambdas:lambdas/remote-alert pytest lambdas/remote-alert/tests/ -v
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
