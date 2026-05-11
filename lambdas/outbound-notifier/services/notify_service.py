@@ -6,33 +6,33 @@ from common.email_client import send_email
 
 def send_missing_alert(event) -> dict:
     """
-    inbound-scanner Lambda에서 직접 호출(payload)로 전달받은
-    누락 물건 알림을 처리한다.
+    Processes missing item alerts received through direct invocation (payload)
+    from inbound-scanner Lambda.
 
-    event 형식:
+    Event format:
     {
       "missing_by_member": [
         {
           "member_id": 1,
-          "member_name": "홍길동",
+          "member_name": "John Doe",
           "member_email": "user@example.com",
-          "missing_items": ["지갑", "열쇠"]
+          "missing_items": ["wallet", "keys"]
         },
         ...
       ]
     }
     """
-    # inbound-scanner Lambda에서 {'missing_by_member': [...]} 형태로 전달됨
+    # Delivered from inbound-scanner Lambda in {'missing_by_member': [...]} format
     members = event.get('missing_by_member', [])
     if not members:
-        return {"status": "skip", "message": "알림 대상 없음"}
+        return {"status": "skip", "message": "No alert targets"}
 
     supabase = get_client()
     results = []
 
     for member in members:
         member_id = member.get('member_id')
-        member_name = member.get('member_name', '회원')
+        member_name = member.get('member_name', 'Member')
         member_email = member.get('member_email')
         missing_items = member.get('missing_items', [])
 
@@ -40,36 +40,36 @@ def send_missing_alert(event) -> dict:
             results.append({
                 "member_id": member_id,
                 "status": "skipped",
-                "reason": "이메일 또는 누락 물건 없음"
+                "reason": "No email or missing items"
             })
             continue
 
-        # ── 이메일 HTML 생성 (XSS 방지: HTML 이스케이프 적용) ──
+        # ── Generate email HTML (XSS prevention: HTML escape applied) ──
         safe_name = escape(str(member_name))
         items_html = ''.join(
             [f'<li style="margin:6px 0">{escape(str(item))}</li>' for item in missing_items]
         )
         html = f"""
         <div style="font-family:sans-serif;max-width:480px;margin:auto">
-          <h2 style="color:#e53e3e">&#x1F6A8; SmartScan Hub 알림</h2>
-          <p><strong>{safe_name}</strong>님, 외출 시 다음 물건을 확인하세요:</p>
+          <h2 style="color:#e53e3e">&#x1F6A8; SmartScan Hub Alert</h2>
+          <p><strong>{safe_name}</strong>, please check the following items before going out:</p>
           <ul style="background:#fff5f5;padding:16px 24px;border-radius:8px">
             {items_html}
           </ul>
-          <p style="color:#718096;font-size:13px">SmartScan Hub 자동 발송</p>
+          <p style="color:#718096;font-size:13px">SmartScan Hub automated delivery</p>
         </div>
         """
 
-        # ── 이메일 발송 ──
-        subject = "누락 물건 알림 - SmartScan Hub"
+        # ── Email delivery ──
+        subject = "Missing Items Alert - SmartScan Hub"
         ok = send_email([member_email], subject, html)
 
         status = "sent" if ok else "email_failed"
         print(f"[{status}] {member_name} ({member_email}) → {missing_items}")
 
-        # ── notifications 테이블에 기록 (이메일 발송 결과와 무관하게 격리) ──
-        title = "누락 물건 알림"
-        message = f"누락 항목: {', '.join(missing_items)}"
+        # ── Record in notifications table (isolated from email delivery result) ──
+        title = "Missing Items Alert"
+        message = f"Missing items: {', '.join(missing_items)}"
         notification_payload = _build_notification_payload(member, title, message)
 
         try:
@@ -77,11 +77,11 @@ def send_missing_alert(event) -> dict:
                 supabase.table('notifications').insert(notification_payload).execute()
             else:
                 print(
-                    "알림 DB 저장 건너뜀: notifications 필수 컬럼 값이 부족합니다 "
+                    "Skipping alert DB storage: missing required notifications column values "
                     f"(member_id={member_id})"
                 )
         except Exception as db_err:
-            print(f"알림 DB 저장 오류 (member_id={member_id}): {db_err}")
+            print(f"Alert DB storage error (member_id={member_id}): {db_err}")
 
         results.append({
             "member_id": member_id,

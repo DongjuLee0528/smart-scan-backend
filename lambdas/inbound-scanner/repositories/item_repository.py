@@ -1,8 +1,15 @@
+"""
+Item Repository
+
+Repository functions for device and item-related database operations.
+Used by scan service for device lookup and missing item detection.
+"""
+
 from common.db import get_client
 
 
 def get_device_by_serial(serial_number: str):
-    """시리얼 번호로 디바이스 조회"""
+    """Find device by serial number"""
     client = get_client()
     res = (client.table('devices')
            .select('id, family_id')
@@ -13,7 +20,18 @@ def get_device_by_serial(serial_number: str):
 
 
 def check_missing_items_rpc(device_id: int, scanned_tags: list):
-    """RPC 함수 호출하여 누락 물건 확인"""
+    """Check for missing items using RPC function
+
+    Calls database RPC function that compares scanned tags against
+    registered items for the device to identify missing belongings.
+
+    Args:
+        device_id: ID of the scanning device
+        scanned_tags: List of RFID tag UIDs that were scanned
+
+    Returns:
+        List of missing item details with member information
+    """
     client = get_client()
     res = client.rpc('check_missing_items', {
         'p_device_id': device_id,

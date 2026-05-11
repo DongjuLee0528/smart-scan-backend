@@ -1,18 +1,18 @@
 """
-카카오톡 챗봇 스킬 서버 Lambda 함수
+KakaoTalk Chatbot Skill Server Lambda Function
 
-카카오톡 챗봇과의 연동을 처리하는 Lambda 함수입니다.
-API Gateway POST /chatbot 엔드포인트를 통해 호출됩니다.
+Lambda function that handles integration with KakaoTalk chatbot.
+Called through API Gateway POST /chatbot endpoint.
 
-주요 기능:
-- 카카오톡 챗봇 메시지 처리
-- 디바이스 등록 (시리얼 번호 기반)
-- 아이템 관리 (추가/삭제)
-- 디바이스 연결 해제
-- 카카오톡 사용자 등록
+Key Features:
+- KakaoTalk chatbot message processing
+- Device registration (serial number based)
+- Item management (add/delete)
+- Device disconnection
+- KakaoTalk user registration
 
-트리거: API Gateway (POST /chatbot)
-사용자: 카카오톡 챗봇 사용자
+Trigger: API Gateway (POST /chatbot)
+Users: KakaoTalk chatbot users
 """
 
 import json
@@ -24,14 +24,14 @@ from services.chatbot_service import handle_chatbot
 
 def lambda_handler(event, context):
     """
-    Lambda 진입점 - 카카오톡 챗봇 요청을 처리합니다.
+    Lambda entry point - Processes KakaoTalk chatbot requests.
 
     Args:
-        event: API Gateway 이벤트 (카카오톡 메시지 또는 웹 요청)
-        context: Lambda 실행 컨텍스트
+        event: API Gateway event (KakaoTalk message or web request)
+        context: Lambda execution context
 
     Returns:
-        HTTP 응답 (카카오톡 또는 웹 형식)
+        HTTP response (KakaoTalk or web format)
     """
     request_context = event.get('requestContext', {})
     http_info = request_context.get('http', {})
@@ -50,15 +50,15 @@ def lambda_handler(event, context):
         is_kakao = 'userRequest' in body
 
         if is_kakao or body.get('action') is not None:
-            # 카카오 챗봇 요청(userRequest 포함) 또는 명시적 action
+            # KakaoTalk chatbot request (with userRequest) or explicit action
             return handle_chatbot(body)
 
         return {
             "statusCode": 400,
             "headers": {"Access-Control-Allow-Origin": "https://smartscan-hub.com"},
-            "body": json.dumps({"success": False, "message": "action 필드가 필요합니다."}, ensure_ascii=False),
+            "body": json.dumps({"success": False, "message": "action field is required."}, ensure_ascii=False),
         }
 
     except Exception:
         print(traceback.format_exc())
-        return make_res(False, "서버 오류가 발생했습니다.", is_kakao)
+        return make_res(False, "A server error occurred.", is_kakao)
