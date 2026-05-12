@@ -54,7 +54,7 @@ def process_scan(event):
     if not isinstance(scanned_tags, list):
         return {
             "statusCode": 400,
-            "body": json.dumps({"message": "tags는 배열이어야 합니다."})
+            "body": json.dumps({"message": "tags must be an array."})
         }
 
     # 디바이스 조회
@@ -102,7 +102,7 @@ def process_scan(event):
 
     return {
         "statusCode": 200,
-        "body": json.dumps({"message": "모든 물건이 확인되었습니다."})
+        "body": json.dumps({"message": "All items confirmed."})
     }
 
 
