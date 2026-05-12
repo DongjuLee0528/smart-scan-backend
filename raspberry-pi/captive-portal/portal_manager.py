@@ -135,18 +135,35 @@ def stop_ap_mode():
     time.sleep(1)
 
 
-def save_and_connect(iface: str, ssid: str, password: str, device_serial: str, api_gw_url: str):
+def save_and_connect(iface: str, ssid: str, password: str, device_serial: str, api_gw_url: str, username: str = ""):
     """
     Wi-Fi 자격증명과 device_serial 저장 후 클라이언트 모드로 전환.
+    username 이 있으면 WPA-Enterprise(PEAP/MSCHAPv2), 없으면 WPA-PSK.
     """
-    logger.info("[WIFI] SSID=%s 로 연결 시도...", ssid)
+    logger.info("[WIFI] SSID=%s 로 연결 시도 (type=%s)...", ssid, "enterprise" if username else "personal")
 
     stop_ap_mode()
 
     # wpa_supplicant.conf 작성
     os.makedirs(os.path.dirname(WPA_CONF), exist_ok=True)
     with open(WPA_CONF, "w") as f:
-        f.write(f"""ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+        if username:
+            f.write(f"""ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+country=KR
+
+network={{
+    ssid="{ssid}"
+    key_mgmt=WPA-EAP
+    eap=PEAP
+    identity="{username}"
+    password="{password}"
+    phase2="auth=MSCHAPV2"
+    ca_cert="/etc/ssl/certs/ca-certificates.crt"
+}}
+""")
+        else:
+            f.write(f"""ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 update_config=1
 country=KR
 
