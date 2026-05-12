@@ -31,7 +31,7 @@ def send_email(to: list, subject: str, html: str) -> bool:
     resend.api_key = api_key
     try:
         resend.Emails.send({
-            "from": "SmartScan Hub <noreply@smartscan-hub.com>",
+            "from": "SmartScan Hub <noreply@devnavi.kr>",
             "to": to,
             "subject": subject,
             "html": html,
