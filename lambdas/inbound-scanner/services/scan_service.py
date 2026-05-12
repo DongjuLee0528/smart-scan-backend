@@ -1,17 +1,17 @@
 """
-RFID Scan Data Processing Service
+RFID 스캔 데이터 처리 서비스
 
-Business logic for processing scan data transmitted from Raspberry Pi RFID readers.
-Detects missing belongings by scanning UHF RFID tags when passing through doorways.
+라즈베리파이 RFID 리더기에서 전송된 스캔 데이터를 처리하는 비즈니스 로직입니다.
+UHF RFID 태그들을 대문 통과 시 스캔하여 누락된 소지품을 감지합니다.
 
-Key Features:
-- RFID scan data validation and parsing
-- User identification by device serial number
-- Missing belongings detection (using RPC function)
-- Automatic outbound-notifier Lambda invocation
-- Scan log storage in Supabase
+주요 기능:
+- RFID 스캔 데이터 검증 및 파싱
+- 디바이스 시리얼 번호로 사용자 식별
+- 누락된 소지품 감지 (RPC 함수 이용)
+- outbound-notifier Lambda 자동 호출
+- Supabase에 스캔 로그 저장
 
-Version: 2024-03-15 - RPC-based performance optimized version
+버전: 2024-03-15 - RPC 기반 성능 최적화 버전
 """
 
 import json
@@ -36,10 +36,10 @@ def process_scan(event):
         raw_body = event.get('body', '{}')
         body = json.loads(raw_body) if isinstance(raw_body, str) else raw_body
     except (json.JSONDecodeError, TypeError) as e:
-        logger.warning("Request body parsing failed: %s", str(e))
+        logger.warning("요청 body 파싱 실패: %s", str(e))
         return {
             "statusCode": 400,
-            "body": json.dumps({"message": "Invalid request format."})
+            "body": json.dumps({"message": "요청 형식이 올바르지 않습니다."})
         }
 
     serial_number = body.get('device_serial')
@@ -48,41 +48,41 @@ def process_scan(event):
     if not serial_number or not isinstance(serial_number, str):
         return {
             "statusCode": 400,
-            "body": json.dumps({"message": "device_serial value is required."})
+            "body": json.dumps({"message": "device_serial 값이 필요합니다."})
         }
 
     if not isinstance(scanned_tags, list):
         return {
             "statusCode": 400,
-            "body": json.dumps({"message": "tags must be an array."})
+            "body": json.dumps({"message": "tags는 배열이어야 합니다."})
         }
 
-    # Device lookup
+    # 디바이스 조회
     device = get_device_by_serial(serial_number)
     if not device:
         return {
             "statusCode": 400,
-            "body": json.dumps({"message": "Unregistered device."})
+            "body": json.dumps({"message": "등록되지 않은 디바이스입니다."})
         }
 
     device_id = device['id']
 
-    # Record scan logs (failure doesn't affect scan result return)
+    # 스캔 로그 기록 (실패해도 스캔 결과 반환에 영향 없음)
     _insert_scan_logs(device_id, scanned_tags)
 
-    # Check missing items via RPC
+    # RPC로 누락 물건 확인
     missing = check_missing_items_rpc(device_id, scanned_tags)
 
     if missing:
-        # Group by member
+        # 멤버별로 그룹핑
         grouped = _group_by_member(missing)
         missing_names = [item['missing_item'] for item in missing]
         logger.info(
-            "Missing detected — device_id: %s, missing items count: %d, member count: %d",
+            "누락 발생 — device_id: %s, 누락 물건 수: %d, 멤버 수: %d",
             device_id, len(missing_names), len(grouped)
         )
 
-        # Direct outbound Lambda invocation (scan result returns normally even if failed)
+        # outbound Lambda 직접 호출 (실패해도 스캔 결과 정상 반환)
         try:
             lambda_client.invoke(
                 FunctionName='smartscan-outbound',
@@ -93,38 +93,50 @@ def process_scan(event):
                 })
             )
         except Exception as e:
-            logger.error("outbound Lambda invocation failed — device_id: %s, error: %s", device_id, str(e))
+            logger.error("outbound Lambda 호출 실패 — device_id: %s, error: %s", device_id, str(e))
 
         return {
             "statusCode": 200,
-            "body": json.dumps({"message": f"Missing items: {missing_names}"})
+            "body": json.dumps({"message": f"누락 물건: {missing_names}"})
         }
 
     return {
         "statusCode": 200,
-        "body": json.dumps({"message": "All items confirmed."})
+        "body": json.dumps({"message": "모든 물건이 확인되었습니다."})
     }
 
 
 def _insert_scan_logs(device_id: int, scanned_tags: list):
-    """Record logs for each scanned tag"""
+    """스캔 태그별 로그 기록 (실제 scan_logs 스키마: user_device_id, item_id, status)"""
     if not scanned_tags:
         return
 
     try:
         client = get_client()
         now = datetime.now(timezone.utc).isoformat()
+
+        ud_res = client.table('user_devices').select('id').eq('device_id', device_id).limit(1).execute()
+        if not ud_res.data:
+            logger.warning("user_devices 없음 — device_id: %s", device_id)
+            return
+        user_device_id = ud_res.data[0]['id']
+
+        tag_res = client.table('tags').select('id,tag_uid').in_('tag_uid', scanned_tags).execute()
+        tag_map = {t['tag_uid']: t['id'] for t in (tag_res.data or [])}
+
         rows = [
-            {'device_id': device_id, 'tag_uid': tag, 'scanned_at': now}
+            {'user_device_id': user_device_id, 'item_id': tag_map[tag], 'status': 'present', 'scanned_at': now}
             for tag in scanned_tags
+            if tag in tag_map
         ]
-        client.table('scan_logs').insert(rows).execute()
+        if rows:
+            client.table('scan_logs').insert(rows).execute()
     except Exception as e:
-        logger.error("scan_logs insert failed — device_id: %s, error: %s", device_id, str(e))
+        logger.error("scan_logs insert 실패 — device_id: %s, error: %s", device_id, str(e))
 
 
 def _group_by_member(missing_items: list) -> list:
-    """Group missing items by member"""
+    """멤버별로 누락 물건 그룹핑"""
     members = {}
     for item in missing_items:
         mid = item['member_id']
