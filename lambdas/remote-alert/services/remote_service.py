@@ -19,29 +19,29 @@ def send_remote_alert(event) -> dict:
         return {"statusCode": 200, "headers": CORS_HEADERS, "body": ""}
 
     try:
-        # Authorization 헤더에서 Bearer 토큰 추출 및 검증
+        # Extract and validate Bearer token from Authorization header
         headers = event.get('headers') or {}
         auth_header = headers.get('Authorization') or headers.get('authorization', '')
         if not auth_header.startswith('Bearer '):
             return {
                 "statusCode": 401,
                 "headers": CORS_HEADERS,
-                "body": json.dumps({"error": "인증이 필요합니다."})
+                "body": json.dumps({"error": "Authentication required."})
             }
         token = auth_header[7:]
         try:
             supabase_auth = get_client()
             user_resp = supabase_auth.auth.get_user(token)
             if not user_resp or not user_resp.user:
-                raise ValueError("유효하지 않은 토큰")
+                raise ValueError("Invalid token")
         except Exception:
             return {
                 "statusCode": 401,
                 "headers": CORS_HEADERS,
-                "body": json.dumps({"error": "인증에 실패했습니다."})
+                "body": json.dumps({"error": "Authentication failed."})
             }
 
-        # 1. API Gateway 이벤트 바디 파싱
+        # 1. Parse API Gateway event body
         body = json.loads(event.get('body') or '{}')
         member_id = body.get('member_id')
         message = body.get('message', '')
@@ -50,7 +50,7 @@ def send_remote_alert(event) -> dict:
             return {
                 "statusCode": 400,
                 "headers": CORS_HEADERS,
-                "body": json.dumps({"error": "member_id와 message는 필수입니다."})
+                "body": json.dumps({"error": "member_id and message are required."})
             }
 
         MAX_MESSAGE_LEN = 500
@@ -58,12 +58,12 @@ def send_remote_alert(event) -> dict:
             return {
                 "statusCode": 400,
                 "headers": CORS_HEADERS,
-                "body": json.dumps({"error": f"메시지는 {MAX_MESSAGE_LEN}자 이하여야 합니다."})
+                "body": json.dumps({"error": f"Message must be {MAX_MESSAGE_LEN} characters or less."})
             }
 
         supabase = get_client()
 
-        # 2. family_members 테이블에서 이메일 조회
+        # 2. Query email from family_members table
         result = supabase.table('family_members') \
             .select('family_id, email, name') \
             .eq('id', member_id) \
@@ -75,66 +75,66 @@ def send_remote_alert(event) -> dict:
             return {
                 "statusCode": 404,
                 "headers": CORS_HEADERS,
-                "body": json.dumps({"error": "가족 구성원을 찾을 수 없습니다."})
+                "body": json.dumps({"error": "Family member not found."})
             }
 
         member_email = member['email']
-        member_name = escape(member.get('name', '가족'))
+        member_name = escape(member.get('name', 'Family Member'))
         safe_message = escape(message)
 
-        # 3. 알림 이메일 HTML 구성
+        # 3. Compose alert email HTML
         html = f"""
         <div style="font-family:sans-serif;max-width:480px;margin:auto">
-          <h2 style="color:#3182ce">📢 SmartScan Hub 원격 알림</h2>
-          <p><strong>{member_name}</strong>님에게 보내는 메시지입니다:</p>
+          <h2 style="color:#3182ce">📢 SmartScan Hub Remote Alert</h2>
+          <p>Message for <strong>{member_name}</strong>:</p>
           <div style="background:#ebf8ff;padding:16px 24px;border-radius:8px;
                       border-left:4px solid #3182ce;margin:16px 0">
             <p style="margin:0;font-size:15px">{safe_message}</p>
           </div>
-          <p style="color:#718096;font-size:13px">SmartScan Hub 자동 발송</p>
+          <p style="color:#718096;font-size:13px">Sent automatically by SmartScan Hub</p>
         </div>
         """
 
-        # 4. 이메일 발송
-        success = send_email([member_email], "📢 원격 알림 - SmartScan Hub", html)
+        # 4. Send email
+        success = send_email([member_email], "📢 Remote Alert - SmartScan Hub", html)
 
         if not success:
             return {
                 "statusCode": 500,
                 "headers": CORS_HEADERS,
-                "body": json.dumps({"error": "이메일 발송에 실패했습니다."})
+                "body": json.dumps({"error": "Failed to send email."})
             }
 
-        # 5. notifications 테이블에 알림 기록 저장 (이메일 성공과 독립 처리)
+        # 5. Save notification record to notifications table (independent from email success)
         try:
             supabase.table('notifications').insert({
                 "member_id": member_id,
                 "type": "remote",
-                "title": "원격 알림",
+                "title": "Remote Alert",
                 "message": escape(str(message)),
                 "sent_via": "email",
             }).execute()
         except Exception as db_err:
-            print(f"알림 기록 저장 실패 (이메일은 발송됨): {db_err}")
+            print(f"Failed to save notification record (email was sent): {db_err}")
 
-        print(f"원격 알림 발송 성공: {member_email}")
+        print(f"Remote alert sent successfully: {member_email}")
 
-        # 6. 성공 응답 반환
+        # 6. Return success response
         return {
             "statusCode": 200,
             "headers": CORS_HEADERS,
             "body": json.dumps({
                 "success": True,
-                "message": f"{member_name}님에게 알림을 발송했습니다."
+                "message": f"Alert sent to {member_name}."
             })
         }
 
     except Exception as e:
-        print(f"원격 알림 처리 오류: {e}")
+        print(f"Remote alert processing error: {e}")
         return {
             "statusCode": 500,
             "headers": CORS_HEADERS,
-            "body": json.dumps({"error": "서버 내부 오류가 발생했습니다."})
+            "body": json.dumps({"error": "Internal server error occurred."})
         }
 
 
@@ -145,7 +145,7 @@ def _build_notification_payload(sender_user_id: int, recipient_member: dict, mes
         "recipient_user_id": int(recipient_member["user_id"]),
         "type": "remote",
         "channel": "email",
-        "title": "원격 알림",
+        "title": "Remote Alert",
         "message": message,
         "is_read": False,
     }

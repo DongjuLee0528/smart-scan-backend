@@ -53,11 +53,15 @@ def setup():
     ssid          = request.form.get("ssid", "").strip()
     password      = request.form.get("password", "")
     device_serial = request.form.get("device_serial", "").strip()
+    wifi_type     = request.form.get("wifi_type", "personal")
+    username      = request.form.get("username", "").strip() if wifi_type == "enterprise" else ""
 
     # 유효성 검사
     errors = []
     if not ssid:
         errors.append("Wi-Fi 이름을 입력하세요.")
+    if wifi_type == "enterprise" and not username:
+        errors.append("WPA-Enterprise는 아이디가 필요합니다.")
     if not device_serial:
         errors.append("기기 시리얼 번호를 입력하세요.")
     elif not _SERIAL_RE.match(device_serial):
@@ -70,11 +74,11 @@ def setup():
                                ssid=ssid,
                                device_serial=device_serial), 400
 
-    logger.info("설정 저장 시작: ssid=%s, device_serial=%s", ssid, device_serial)
+    logger.info("설정 저장 시작: ssid=%s, type=%s, device_serial=%s", ssid, wifi_type, device_serial)
 
     # 백그라운드에서 Wi-Fi 연결 (응답 먼저 반환 후 처리)
     def _connect():
-        save_and_connect(_iface, ssid, password, device_serial, API_GW_URL)
+        save_and_connect(_iface, ssid, password, device_serial, API_GW_URL, username=username)
 
     threading.Thread(target=_connect, daemon=True).start()
 

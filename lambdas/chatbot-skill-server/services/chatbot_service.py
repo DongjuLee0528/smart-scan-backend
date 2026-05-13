@@ -1,19 +1,19 @@
 """
-카카오톡 챗봇 비즈니스 로직
+KakaoTalk Chatbot Business Logic
 
-카카오톡 i 오픈빌더에서 전송되는 사용자 발화를 처리하는 비즈니스 로직입니다.
-자연어 명령을 파싱하여 RFID 태그와 연결된 소지품을 관리합니다.
+Business logic to process user utterances sent from KakaoTalk i OpenBuilder.
+Parses natural language commands to manage belongings connected to RFID tags.
 
-지원 명령:
-- '목록' / '리스트': 등록된 소지품 목록 조회
-- '[물건명] 추가': 새로운 소지품 등록
-- '[물건명] 삭제': 소지품 비활성화 (스캔 제외)
-- '기기 해제': RFID 리더기 등록 해제
+Supported Commands:
+- 'list' / 'list': View registered belongings list
+- '[item name] add': Register new belongings
+- '[item name] delete': Deactivate belongings (exclude from scanning)
+- 'device disconnect': Unregister RFID reader device
 
-비즈니스 규칙:
-- 한 디바이스당 하나의 카카오 사용자만 연결 가능
-- 기기 해제 시 모든 소지품 삭제
-- 임시 전용 사용자 ID 지원 (개발/테스트용)
+Business Rules:
+- Only one Kakao user can be connected per device
+- All belongings are deleted when device is disconnected
+- Temporary dedicated user ID support (for development/testing)
 """
 
 import os
@@ -27,12 +27,12 @@ from repositories.item_repository import get_active_items, add_item, deactivate_
 
 def handle_chatbot(body: dict) -> dict:
     """
-    카카오 챗봇 발화 처리
-    utterance 키워드 기반 분기:
-      - '목록' / '리스트'  → 소지품 목록
-      - '[물건명] 추가'    → 소지품 추가
-      - '[물건명] 삭제'    → 소지품 비활성화
-      - '기기 해제'        → 기기 연결 해제
+    Handle Kakao chatbot utterances
+    Branch based on utterance keywords:
+      - 'list' / 'list'      → belongings list
+      - '[item name] add'     → add belongings
+      - '[item name] delete'  → deactivate belongings
+      - 'device disconnect'   → disconnect device
     """
     user_req = body.get('userRequest') or {}
     kakao_user_id = user_req.get('user', {}).get('id') or body.get('kakao_user_id', '')
@@ -44,7 +44,7 @@ def handle_chatbot(body: dict) -> dict:
 
     link = get_user_by_kakao_id(kakao_user_id)
     if not link:
-        # 웹 계정과 연동되지 않은 사용자 → magic link 발급 후 버튼으로 전달
+        # User not linked with web account → issue magic link and deliver via button
         token = create_kakao_link_token(kakao_user_id)
         web_base_url = os.environ.get("SMARTSCAN_WEB_URL", "https://smartscan-hub.com").rstrip("/")
         link_url = f"{web_base_url}/link-kakao.html?token={token}"
@@ -58,8 +58,8 @@ def handle_chatbot(body: dict) -> dict:
             {"label": "🔗 계정 연동하기", "action": "webLink", "webLinkUrl": link_url}
         ])
 
-    # A-full: member_id 기반 DB 직접 접근 대신 kakao_user_id 기반 HTTP API 호출로 통일.
-    # member_id는 (호환성 목적으로) link dict에 남아 있지만 이제는 사용하지 않는다.
+    # A-full: Unified to kakao_user_id-based HTTP API calls instead of member_id-based direct DB access.
+    # member_id remains in link dict (for compatibility purposes) but is no longer used.
     _ = link.get('member_id')
 
     if '목록' in utterance or '리스트' in utterance:
@@ -105,8 +105,8 @@ MAX_ITEM_NAME_LEN = 30
 
 
 def _handle_add(utterance: str, kakao_user_id: str) -> dict:
-    # "지갑 추가", "지갑추가", "추가 지갑" 등 처리
-    # 이모지/접두사 제거 후 처리: "➕ 물품 추가" → "물품 추가"
+    # Handle "wallet add", "walletadd", "add wallet" etc.
+    # Process after removing emoji/prefix: "➕ item add" → "item add"
     clean = re.sub(r'^[^\w가-힣]+', '', utterance).strip()
     m = re.search(r'(.+?)\s*추가|추가\s*(.+)', clean)
     if not m:
@@ -114,7 +114,7 @@ def _handle_add(utterance: str, kakao_user_id: str) -> dict:
                         quick_replies=MAIN_QUICK_REPLIES)
 
     name = (m.group(1) or m.group(2) or '').strip()
-    # "물품 추가" 버튼 그대로 눌렀을 때 name="물품"이 되는 경우 안내
+    # Guide when pressing "item add" button as-is results in name="item"
     if not name or name == '물품':
         return make_res(False, "물건 이름을 입력해 주세요.\n예) 지갑 추가", True,
                         quick_replies=MAIN_QUICK_REPLIES)
@@ -123,7 +123,7 @@ def _handle_add(utterance: str, kakao_user_id: str) -> dict:
         return make_res(False, f"물건 이름은 {MAX_ITEM_NAME_LEN}자 이하로 입력해 주세요.", True,
                         quick_replies=MAIN_QUICK_REPLIES)
 
-    # 중복 확인
+    # Check for duplicates
     existing = get_active_items(kakao_user_id)
     if any(item.get('name') == name for item in existing):
         return make_res(False, f"'{name}'은(는) 이미 등록되어 있습니다.", True,
@@ -135,8 +135,8 @@ def _handle_add(utterance: str, kakao_user_id: str) -> dict:
 
 
 def _handle_delete(utterance: str, kakao_user_id: str) -> dict:
-    # "지갑 삭제", "지갑 제거"
-    # 이모지/접두사 제거 후 처리: "❌ 물품 삭제" → "물품 삭제"
+    # "wallet delete", "wallet remove"
+    # Process after removing emoji/prefix: "❌ item delete" → "item delete"
     clean = re.sub(r'^[^\w가-힣]+', '', utterance).strip()
     m = re.search(r'(.+?)\s*(삭제|제거)', clean)
     if not m:
@@ -144,7 +144,7 @@ def _handle_delete(utterance: str, kakao_user_id: str) -> dict:
                         quick_replies=MAIN_QUICK_REPLIES)
 
     name = m.group(1).strip()
-    # "물품 삭제" 버튼 그대로 눌렀을 때 name="물품"이 되는 경우 안내
+    # Guide when pressing "item delete" button as-is results in name="item"
     if not name or name == '물품':
         return make_res(False, "물건 이름을 입력해 주세요.\n예) 지갑 삭제", True,
                         quick_replies=MAIN_QUICK_REPLIES)
@@ -159,7 +159,7 @@ def _handle_delete(utterance: str, kakao_user_id: str) -> dict:
 
 
 def _handle_disconnect(kakao_user_id: str) -> dict:
-    # 먼저 아이템 일괄 soft-delete (HTTP 백엔드). 그 후 users.kakao_user_id 를 pending_으로 리셋.
+    # First bulk soft-delete items (HTTP backend). Then reset users.kakao_user_id to pending_.
     delete_all_items(kakao_user_id)
     delete_user_device(kakao_user_id)
     return make_res(True, "기기 연결이 해제되었습니다.\n소지품 정보도 함께 삭제되었습니다.", True)

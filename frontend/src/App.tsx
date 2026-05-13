@@ -1,17 +1,17 @@
 /**
- * Smart Scan Hub 메인 애플리케이션 컴포넌트
+ * Smart Scan Hub main application component
  *
- * React 기반의 SPA로 Smart Scan 시스템의 웹 대시보드를 제공합니다.
- * 사이드바 네비게이션과 페이지별 컨텐츠 렌더링을 담당합니다.
+ * Provides web dashboard for Smart Scan system as React-based SPA.
+ * Handles sidebar navigation and page-specific content rendering.
  */
 
 import { useState } from "react";
 import DeviceManagement from "./components/DeviceManagement";
 
-// 애플리케이션 페이지 타입 정의
+// Application page type definition
 type Page = "대시보드" | "기기 관리" | "소지품 관리" | "구성원 관리" | "알림" | "설정";
 
-// 사이드바 네비게이션 메뉴 아이템 정의
+// Sidebar navigation menu item definition
 const navItems: { label: Page; icon: string }[] = [
   { label: "대시보드", icon: "⊞" },
   { label: "기기 관리", icon: "☐" },
@@ -22,10 +22,10 @@ const navItems: { label: Page; icon: string }[] = [
 ];
 
 /**
- * 메인 App 컴포넌트
+ * Main App component
  *
- * 좌측 사이드바와 우측 메인 컨텐츠 영역으로 구성된 레이아웃을 제공합니다.
- * 현재는 기기 관리 페이지만 구현되어 있으며, 다른 페이지들은 placeholder로 표시됩니다.
+ * Provides layout composed of left sidebar and right main content area.
+ * Currently only device management page is implemented, other pages are displayed as placeholders.
  */
 export default function App() {
   const [activePage, setActivePage] = useState<Page>("기기 관리");
@@ -97,7 +97,7 @@ export default function App() {
           padding: "10px 20px", border: "none", background: "transparent",
           color: "#6b7280", fontSize: 14, cursor: "pointer",
         }}>
-          ↩ 로그아웃
+          ↩ Logout
         </button>
       </aside>
 
@@ -114,7 +114,7 @@ export default function App() {
           padding: "0 24px",
           gap: 12,
         }}>
-          <span style={{ color: "#374151", fontSize: 14 }}>이준호네 가족</span>
+          <span style={{ color: "#374151", fontSize: 14 }}>Lee Jun Ho's Family</span>
           <button style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280", fontSize: 18 }}>☀</button>
           <div style={{
             width: 32, height: 32, borderRadius: "50%",
@@ -128,7 +128,7 @@ export default function App() {
         <main style={{ flex: 1, overflow: "auto", padding: "36px 48px" }}>
           {activePage === "기기 관리" && <DeviceManagement />}
           {activePage !== "기기 관리" && (
-            <div style={{ color: "#9ca3af", fontSize: 16 }}>{activePage} 페이지</div>
+            <div style={{ color: "#9ca3af", fontSize: 16 }}>{activePage} Page</div>
           )}
         </main>
       </div>
