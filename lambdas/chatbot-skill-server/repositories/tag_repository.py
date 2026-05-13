@@ -1,28 +1,28 @@
 """
-카카오톡 챗봇용 태그 및 디바이스 데이터 리포지토리
+Tag and device data repository for KakaoTalk chatbot
 
-카카오톡 챗봇에서 RFID 태그와 디바이스 정보를 조회하기 위한 데이터베이스 접근 계층입니다.
-물리적 RFID 태그의 연결 상태와 사용 가능한 라벨 슬롯을 관리하는 기능을 제공합니다.
+Database access layer for querying RFID tag and device information from the KakaoTalk chatbot.
+Provides functionality to manage physical RFID tag connection status and available label slots.
 
-주요 기능:
-- 시리얼 번호로 디바이스 조회 (디바이스 인증용)
-- 라벨과 디바이스 조합으로 태그 조회
-- 디바이스의 사용 가능한 라벨 슬롯 확인
+Key Features:
+- Query device by serial number (for device authentication)
+- Query tags by label and device combination
+- Check available label slots on device
 
-비즈니스 컨텍스트:
-- 카카오톡 챗봇에서 디바이스 연결 상태 확인
-- 새로운 소지품 추가 시 사용 가능한 라벨 검증
-- RFID 태그와 소지품의 물리적 연결 관리
+Business Context:
+- Check device connection status from KakaoTalk chatbot
+- Validate available labels when adding new items
+- Manage physical connection between RFID tags and items
 
-데이터 구조:
-- devices: 물리적 RFID 리더기 정보
-- tags: 디바이스에 연결된 물리적 RFID 태그
-- label: 태그의 물리적 위치 식별자 (1~N번 슬롯)
+Data Structure:
+- devices: Physical RFID reader information
+- tags: Physical RFID tags connected to devices
+- label: Physical location identifier for tags (slots 1~N)
 
-사용 시나리오:
-- 사용자가 카카오톡에서 소지품 추가 시 라벨 확인
-- 디바이스 등록 및 연결 상태 검증
-- 물리적 태그 슬롯의 사용 가능 여부 조회
+Usage Scenarios:
+- Label verification when user adds items via KakaoTalk
+- Device registration and connection status validation
+- Query availability of physical tag slots
 """
 
 from common.db import get_client
@@ -30,25 +30,25 @@ from common.db import get_client
 
 def get_device_by_serial(serial_number: str):
     """
-    시리얼 번호로 디바이스 조회
+    Query device by serial number
 
-    카카오톡 챗봇 인증에 사용되는 함수로, 사용자가 제공한
-    디바이스 시리얼 번호로 등록된 디바이스 정보를 조회합니다.
+    Function used for KakaoTalk chatbot authentication, queries registered
+    device information using the device serial number provided by the user.
 
     Args:
-        serial_number: RFID 리더기의 고유 시리얼 번호
+        serial_number: Unique serial number of the RFID reader
 
     Returns:
-        dict | None: 디바이스 정보 또는 None
-                     {id, family_id, serial_number, name} 포함
+        dict | None: Device information or None
+                     Contains {id, family_id, serial_number, name}
 
-    비즈니스 로직:
-        - 활성 상태(is_active=True)인 디바이스만 조회
-        - 가족 ID로 사용자 권한 검증 준비
-        - 디바이스 인증 및 연결 상태 확인용
+    Business Logic:
+        - Only queries devices with active status (is_active=True)
+        - Prepares user permission validation by family ID
+        - For device authentication and connection status verification
 
-    사용 예시:
-        카카오톡 챗봇 로그인 시 디바이스 소유권 검증
+    Usage Example:
+        Device ownership verification during KakaoTalk chatbot login
     """
     res = (get_client()
            .table('devices')
@@ -62,26 +62,26 @@ def get_device_by_serial(serial_number: str):
 
 def get_tag_by_label(device_id: int, label: str):
     """
-    디바이스 ID와 라벨로 태그 조회
+    Query tag by device ID and label
 
-    특정 디바이스의 지정된 라벨 슬롯에 연결된 물리적 RFID 태그 정보를 조회합니다.
-    소지품 추가/수정 시 해당 라벨의 태그 사용 가능 여부를 확인하는 데 사용됩니다.
+    Queries physical RFID tag information connected to a specified label slot of a specific device.
+    Used to check tag availability for the label when adding/modifying items.
 
     Args:
-        device_id: RFID 리더기 디바이스 ID
-        label: 물리적 태그 슬롯 번호 (1, 2, 3, ... N번)
+        device_id: RFID reader device ID
+        label: Physical tag slot number (1, 2, 3, ... N)
 
     Returns:
-        dict | None: 태그 정보 또는 None
-                     {id, tag_uid, item_id, label} 포함
+        dict | None: Tag information or None
+                     Contains {id, tag_uid, item_id, label}
 
-    데이터 구조:
-        - tag_uid: 물리적 RFID 태그의 고유 식별자
-        - item_id: 연결된 소지품 ID (NULL이면 미사용 슬롯)
-        - label: 물리적 슬롯 위치 식별자
+    Data Structure:
+        - tag_uid: Unique identifier of physical RFID tag
+        - item_id: Connected item ID (NULL if unused slot)
+        - label: Physical slot location identifier
 
-    사용 예시:
-        사용자가 "추가 지갑 3" 명령 시 3번 라벨 사용 가능 여부 확인
+    Usage Example:
+        Check availability of label 3 when user commands "add wallet 3"
     """
     res = (get_client()
            .table('tags')
@@ -96,25 +96,25 @@ def get_tag_by_label(device_id: int, label: str):
 
 def get_available_labels(device_id: int) -> list:
     """
-    디바이스에서 사용 가능한 라벨 슬롯 목록 조회
+    Query available label slot list on device
 
-    지정된 디바이스에서 현재 등록된 모든 태그의 라벨 목록을 반환합니다.
-    카카오톡 챗봇에서 소지품 추가 시 사용 가능한 라벨을 안내하는 데 사용됩니다.
+    Returns the label list of all currently registered tags on the specified device.
+    Used to guide available labels when adding items via KakaoTalk chatbot.
 
     Args:
-        device_id: RFID 리더기 디바이스 ID
+        device_id: RFID reader device ID
 
     Returns:
-        list: 등록된 태그의 라벨 목록 ([문자열] 형태)
+        list: Label list of registered tags (string format)
 
-    비즈니스 로직:
-        - 활성 상태의 태그만 조회
-        - item_id가 NULL인 태그는 없다고 가정
-        - 웹에서 미사용 슬롯 관리 수행
+    Business Logic:
+        - Only queries tags with active status
+        - Assumes no tags with NULL item_id exist
+        - Unused slot management performed on web
 
-    사용 예시:
-        사용자가 "추가" 명령 시 사용 가능한 라벨 안내
-        "현재 1, 2, 3번 라벨에 소지품이 등록되어 있습니다"
+    Usage Example:
+        Guide available labels when user commands "add"
+        "Currently items are registered on labels 1, 2, 3"
     """
     res = (get_client()
            .table('tags')
@@ -123,5 +123,5 @@ def get_available_labels(device_id: int) -> list:
            .eq('is_active', True)
            .execute())
     tags = res.data or []
-    # item_id가 NULL인 태그는 없으므로, 태그가 없는 슬롯은 웹에서 관리
+    # No tags with NULL item_id, so slots without tags are managed on the web
     return [t['label'] for t in tags if t.get('label')]
