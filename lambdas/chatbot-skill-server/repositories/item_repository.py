@@ -1,14 +1,14 @@
 """
-카카오톡 챗봇용 아이템 리포지토리 (HTTP 클라이언트)
+Item repository for KakaoTalk chatbot (HTTP client)
 
-A-full (2026-04-18): 스키마 드리프트로 인한 500 오류(`items.is_required`, `items.member_id` 존재 X)를
-제거하기 위해 Supabase 직접 접근 → SmartScan FastAPI `/api/chatbot/*` HTTP 호출로 전환.
+A-full (2026-04-18): To eliminate 500 errors due to schema drift (`items.is_required`, `items.member_id` not existing),
+changed from direct Supabase access → SmartScan FastAPI `/api/chatbot/*` HTTP calls.
 
-인증: 공유 비밀키를 `X-Chatbot-Key` 헤더로 전달. (JWT와 격리된 별도 시크릿)
+Authentication: Pass shared secret via `X-Chatbot-Key` header. (Separate secret isolated from JWT)
 
-환경변수:
-- SMARTSCAN_API_BASE: FastAPI 베이스 URL (기본: https://smartscan-hub.com)
-- CHATBOT_SHARED_KEY: 공유 비밀키 (서버와 동일 값)
+Environment variables:
+- SMARTSCAN_API_BASE: FastAPI base URL (default: https://smartscan-hub.com)
+- CHATBOT_SHARED_KEY: Shared secret (same value as server)
 """
 
 import json
@@ -25,7 +25,7 @@ _DEFAULT_TIMEOUT_SEC = 8.0
 
 
 class ChatbotApiError(RuntimeError):
-    """백엔드 호출 실패를 명시적으로 시그널링."""
+    """Explicitly signal backend call failure."""
 
 
 def _request(method: str, path: str, *, params: dict | None = None, body: dict | None = None) -> Any:
@@ -67,7 +67,7 @@ def _request(method: str, path: str, *, params: dict | None = None, body: dict |
 
 def get_active_items(kakao_user_id: str) -> list:
     """
-    활성 아이템 목록 조회 (pending 포함).
+    Query active item list (including pending).
 
     Returns:
         list[dict]: [{id, name, is_pending, label_id, ...}]
@@ -79,7 +79,7 @@ def get_active_items(kakao_user_id: str) -> list:
 
 
 def add_item(name: str, kakao_user_id: str) -> dict | None:
-    """이름만으로 pending 아이템 추가."""
+    """Add pending item by name only."""
     return _request(
         "POST",
         "/api/chatbot/items",
@@ -88,7 +88,7 @@ def add_item(name: str, kakao_user_id: str) -> dict | None:
 
 
 def deactivate_item(name: str, kakao_user_id: str) -> int:
-    """이름으로 활성 아이템을 찾아 soft-delete. 삭제된 개수 반환 (0 or 1)."""
+    """Find active item by name and soft-delete. Return deleted count (0 or 1)."""
     try:
         data = _request(
             "POST",
@@ -103,7 +103,7 @@ def deactivate_item(name: str, kakao_user_id: str) -> int:
 
 
 def delete_all_items(kakao_user_id: str) -> int:
-    """해당 사용자의 모든 활성 아이템 일괄 soft-delete."""
+    """Batch soft-delete all active items for the user."""
     data = _request(
         "POST",
         "/api/chatbot/device/unlink",
