@@ -44,6 +44,20 @@
       </div>
 
       <div class="mb-3">
+        <label class="form-label fw-semibold">Wi-Fi 유형</label>
+        <select name="wifi_type" id="wifiType" class="form-select" onchange="toggleWifiType()">
+          <option value="personal">일반 (WPA-Personal)</option>
+          <option value="enterprise">학교/기업 (WPA-Enterprise, 아이디+비밀번호)</option>
+        </select>
+      </div>
+
+      <div id="usernameField" class="mb-3" style="display:none">
+        <label class="form-label fw-semibold">Wi-Fi 아이디 (학번/사번)</label>
+        <input type="text" name="username" id="usernameInput" class="form-control"
+               placeholder="Wi-Fi 로그인 아이디" autocomplete="off">
+      </div>
+
+      <div class="mb-3">
         <label class="form-label fw-semibold">Wi-Fi 비밀번호</label>
         <div class="input-group">
           <input type="password" name="password" id="pwInput" class="form-control"
@@ -75,6 +89,11 @@
 function togglePw() {
   const el = document.getElementById('pwInput');
   el.type = el.type === 'password' ? 'text' : 'password';
+}
+function toggleWifiType() {
+  const isEnterprise = document.getElementById('wifiType').value === 'enterprise';
+  document.getElementById('usernameField').style.display = isEnterprise ? 'block' : 'none';
+  document.getElementById('usernameInput').required = isEnterprise;
 }
 document.getElementById('setupForm').addEventListener('submit', function() {
   const btn = document.getElementById('submitBtn');
