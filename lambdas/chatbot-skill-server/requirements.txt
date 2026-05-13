@@ -1,5 +1,5 @@
-# Smart Scan 챗봇 스킬 서버 Lambda 의존성
-# 카카오톡 챗봇 스킬 서버에서 필요한 Python 라이브러리 목록
+# Smart Scan Chatbot Skill Server Lambda Dependencies
+# Python libraries required for the KakaoTalk chatbot skill server
 
-supabase          # Supabase 클라이언트 라이브러리 (데이터베이스 연결용)
-PyJWT             # 매직링크 JWT 발급/검증용
+supabase          # Supabase client library (for database connections)
+PyJWT             # Magic link JWT generation/verification
