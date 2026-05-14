@@ -1,3 +1,10 @@
+"""
+Test configuration for remote-alert Lambda function
+
+Sets up test environment with mock external dependencies and environment variables.
+Mocks Supabase client, boto3, and Resend email service for isolated unit testing.
+"""
+
 import os
 import sys
 from unittest.mock import MagicMock

@@ -1,21 +1,14 @@
 """
-FI-805F UHF RFID 리더기 드라이버
+FI-805F UHF RFID 리더기 드라이버 (ASCII 프로토콜)
 
-프레임 구조 (UHF RFID 공통 프로토콜):
-  [0xBB] [Type] [Cmd] [PL_H] [PL_L] [Payload...] [Checksum] [0x7E]
-  Checksum = (Type + Cmd + PL_H + PL_L + sum(Payload)) & 0xFF
-
-Inventory 명령: BB 00 22 00 00 22 7E
-태그 응답:      BB 02 22 00 [len] [RSSI] [PC_H] [PC_L] [EPC 12B] [CRC] 7E
-
-실기기 프로토콜 검증 방법 (내일 연결 후):
-  python -c "
-  import serial, time
-  s = serial.Serial('/dev/ttyUSB0', 57600, timeout=2)
-  s.write(bytes([0xBB,0x00,0x22,0x00,0x00,0x22,0x7E]))
-  time.sleep(1); print(s.read(100).hex())
-  "
-  응답이 안 오면 baud=115200 시도
+통신 설정: 38400 baud, 8N1
+커맨드:
+  <LF>U<CR>  → 멀티태그 EPC 읽기 (권장)
+  <LF>Q<CR>  → 단일태그 EPC 읽기
+응답 형식 (U 커맨드):
+  \nU<PC(4hex)><EPC><CRC16(4hex)>\r\n  (태그 1개당 1줄)
+  \nU\r\n                               (응답 종료 마커)
+EPC 추출: data[4:-4]  (PC 앞 4자, CRC16 뒤 4자 제거)
 """
 
 import serial
@@ -25,17 +18,12 @@ import os
 
 logger = logging.getLogger(__name__)
 
-# Inventory 단일 라운드 명령
-INVENTORY_CMD = bytes([0xBB, 0x00, 0x22, 0x00, 0x00, 0x22, 0x7E])
-
-FRAME_START = 0xBB
-FRAME_END   = 0x7E
-RESP_TYPE   = 0x02
-RESP_CMD    = 0x22
+CMD_MULTI  = b"U\r\n"   # Multi-tag inventory
+CMD_SINGLE = b"Q\r\n"   # Single-tag EPC query
 
 
 class FI805FReader:
-    def __init__(self, port="/dev/ttyUSB0", baud=57600, timeout=1.0):
+    def __init__(self, port="/dev/ttyUSB0", baud=38400, timeout=1.0):
         self.port    = port
         self.baud    = baud
         self.timeout = timeout
@@ -56,88 +44,58 @@ class FI805FReader:
             logger.error("FI-805F 연결 실패: %s", e)
             return False
 
-    def _send_inventory(self):
-        if self._ser and self._ser.is_open:
-            self._ser.write(INVENTORY_CMD)
-
-    def _read_frame(self) -> bytes | None:
-        """0xBB ~ 0x7E 한 프레임 읽기. 타임아웃 또는 파싱 실패 시 None."""
-        if not self._ser:
-            return None
+    def _parse_epc_line(self, line: bytes) -> str | None:
+        """
+        응답 라인에서 EPC 추출.
+        형식: U<PC(4hex)><EPC><CRC16(4hex)>  (strip 후)
+        """
         try:
-            # 시작 바이트 탐색
-            deadline = time.time() + self.timeout
-            while time.time() < deadline:
-                b = self._ser.read(1)
-                if b and b[0] == FRAME_START:
-                    break
-            else:
+            decoded = line.decode("ascii", errors="replace").strip()
+            if not decoded or decoded[0] not in ("U", "Q"):
                 return None
-
-            # 헤더 4바이트 읽기 (Type, Cmd, PL_H, PL_L)
-            header = self._ser.read(4)
-            if len(header) < 4:
+            data = decoded[1:]          # 커맨드 문자 제거
+            # PC(4) + EPC(최소 8) + CRC16(4) → 최소 16자
+            if len(data) < 16:
                 return None
-
-            pl_len = (header[2] << 8) | header[3]
-            if pl_len > 64:  # 비정상 프레임 방어
+            epc = data[4:-4]            # PC 앞 4자, CRC16 뒤 4자 제거
+            if len(epc) < 8:
                 return None
-
-            # Payload + Checksum(1) + End(1)
-            rest = self._ser.read(pl_len + 2)
-            if len(rest) < pl_len + 2:
-                return None
-
-            frame = bytes([FRAME_START]) + header + rest
-            if frame[-1] != FRAME_END:
-                return None
-            return frame
-        except serial.SerialException as e:
-            logger.warning("시리얼 읽기 오류: %s", e)
+            return epc.upper()
+        except Exception:
             return None
-
-    def _parse_epc(self, frame: bytes) -> str | None:
-        """
-        프레임에서 EPC 추출.
-        응답 구조: BB 02 22 [PL_H] [PL_L] [RSSI] [PC_H] [PC_L] [EPC...] [CRC_H] [CRC_L] [Checksum] 7E
-        EPC 시작 인덱스: 8 (BB=0, Type=1, Cmd=2, PL_H=3, PL_L=4, RSSI=5, PC_H=6, PC_L=7)
-        """
-        if len(frame) < 10:
-            return None
-        if frame[1] != RESP_TYPE or frame[2] != RESP_CMD:
-            return None
-
-        pl_len = (frame[3] << 8) | frame[4]
-        # Payload: RSSI(1) + PC(2) + EPC(pl_len - 5) + CRC(2)
-        epc_len = pl_len - 5
-        if epc_len <= 0:
-            return None
-
-        epc_start = 8  # BB Type Cmd PL_H PL_L RSSI PC_H PC_L
-        epc_bytes = frame[epc_start: epc_start + epc_len]
-        return epc_bytes.hex().upper()
 
     def collect_tags(self, window_sec: float = 3.0) -> list[str]:
         """
-        window_sec 동안 inventory 명령을 반복 전송하며 태그 수집.
-        FI-805F는 inventory 1회에 여러 태그 응답을 연속 전송하므로
-        각 명령 후 응답이 None이 될 때까지 모두 드레인.
+        window_sec 동안 멀티태그 인벤토리 반복 수행.
+        각 U 커맨드 이후 응답 종료 마커 또는 2초 타임아웃까지 수집.
         """
         tags: set[str] = set()
         deadline = time.time() + window_sec
 
         while time.time() < deadline:
-            self._send_inventory()
-            # 이번 inventory 라운드의 모든 응답 프레임 수집 (드레인)
-            drain_until = time.time() + 0.3
-            while time.time() < drain_until:
-                frame = self._read_frame()
-                if frame is None:
-                    continue
-                epc = self._parse_epc(frame)
+            if not self._ser or not self._ser.is_open:
+                break
+
+            self._ser.reset_input_buffer()
+            self._ser.write(CMD_MULTI)
+
+            # 응답 버퍼 수집 (최대 2초 또는 종료 마커 도달 시 종료)
+            buf = b""
+            scan_dl = time.time() + 2.0
+            while time.time() < scan_dl:
+                chunk = self._ser.read(256)
+                if chunk:
+                    buf += chunk
+                    if b"\nU\r\n" in buf:   # 종료 마커 확인
+                        break
+
+            # 줄 단위 파싱
+            for segment in buf.split(b"\n"):
+                epc = self._parse_epc_line(segment)
                 if epc:
                     tags.add(epc)
-            time.sleep(0.1)
+
+            time.sleep(0.5)
 
         return list(tags)
 
@@ -173,7 +131,7 @@ class MockFI805FReader:
         pass
 
 
-def create_reader(port: str = "/dev/ttyUSB0", baud: int = 57600) -> FI805FReader | MockFI805FReader:
+def create_reader(port: str = "/dev/ttyUSB0", baud: int = 38400) -> FI805FReader | MockFI805FReader:
     """
     환경에 맞는 리더 인스턴스 반환.
     MOCK_MODE=true 이거나 포트가 없으면 MockFI805FReader 반환.
