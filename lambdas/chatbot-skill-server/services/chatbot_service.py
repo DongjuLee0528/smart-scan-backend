@@ -1,7 +1,7 @@
 """
 KakaoTalk Chatbot Business Logic
 
-Business logic to process user utterances sent from KakaoTalk i OpenBuilder.
+Business logic to process user utterances sent from KakaoTalk's OpenBuilder.
 Parses natural language commands to manage belongings connected to RFID tags.
 
 Supported Commands:
@@ -28,7 +28,7 @@ from repositories.item_repository import get_active_items, add_item, deactivate_
 def handle_chatbot(body: dict) -> dict:
     """
     Handle Kakao chatbot utterances
-    Branch based on utterance keywords:
+    Routes based on utterance keywords:
       - 'list' / 'list'      → belongings list
       - '[item name] add'     → add belongings
       - '[item name] delete'  → deactivate belongings
@@ -40,7 +40,7 @@ def handle_chatbot(body: dict) -> dict:
 
     print(f"[DEBUG] kakao_user_id={kakao_user_id}")
     if not kakao_user_id:
-        return make_res(False, "카카오 사용자 ID를 확인할 수 없습니다.", True)
+        return make_res(False, "Cannot verify Kakao user ID.", True)
 
     link = get_user_by_kakao_id(kakao_user_id)
     if not link:
@@ -58,7 +58,7 @@ def handle_chatbot(body: dict) -> dict:
             {"label": "🔗 계정 연동하기", "action": "webLink", "webLinkUrl": link_url}
         ])
 
-    # A-full: Unified to kakao_user_id-based HTTP API calls instead of member_id-based direct DB access.
+    # Unified to kakao_user_id-based HTTP API calls instead of member_id-based direct DB access.
     # member_id remains in link dict (for compatibility purposes) but is no longer used.
     _ = link.get('member_id')
 
