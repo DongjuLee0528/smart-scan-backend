@@ -1,7 +1,7 @@
 """
 Item repository for KakaoTalk chatbot (HTTP client)
 
-A-full (2026-04-18): To eliminate 500 errors due to schema drift (`items.is_required`, `items.member_id` not existing),
+Refactored (2026-04-18): To eliminate 500 errors due to schema drift (`items.is_required`, `items.member_id` not existing),
 changed from direct Supabase access → SmartScan FastAPI `/api/chatbot/*` HTTP calls.
 
 Authentication: Pass shared secret via `X-Chatbot-Key` header. (Separate secret isolated from JWT)
