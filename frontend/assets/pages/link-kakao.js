@@ -1,3 +1,10 @@
+/**
+ * Kakao account linking page functionality
+ *
+ * Handles magic link token verification and Kakao account linking process.
+ * Processes JWT tokens for secure account association between web and KakaoTalk.
+ */
+
 // Initialize page components
 smartscanCommon.initLucideIcons();
 smartscanCommon.initDarkModeToggle();
