@@ -32,8 +32,10 @@ async function loadDashboard() {
     if (!d.members || d.members.length === 0) {
       tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400">No registered members.</td></tr>`;
     } else {
+      // Render member rows with dynamic status badges and item counts
       tbody.innerHTML = d.members.map((m) => {
         const initial = esc(m.name || '?').charAt(0);
+        // Determine status badge based on member's item status
         const status = m.lost_count > 0
           ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>Missing ${m.lost_count} items</span>`
           : m.tag_count === 0
