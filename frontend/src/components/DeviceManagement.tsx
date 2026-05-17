@@ -1,41 +1,41 @@
 /**
- * RFID 디바이스 관리 컴포넌트
+ * RFID Device Management Component
  *
- * Smart Scan 시스템에 연결된 RFID 리더기 디바이스들을 등록하고 관리하는 페이지입니다.
- * 새로운 디바이스 등록, 기존 디바이스 목록 조회, 디바이스 삭제 기능을 제공합니다.
+ * Manages RFID reader devices connected to the Smart Scan system.
+ * Provides functionality for registering new devices, viewing existing device lists, and deleting devices.
  */
 
 import { useState } from "react";
 
-// RFID 디바이스 정보 인터페이스
+// RFID device information interface
 interface Device {
-  id: string;          // 고유 식별자
-  name: string;        // 사용자 정의 디바이스 이름 (예: "현관 리더기")
-  serial: string;      // 하드웨어 시리얼 번호
-  status: "활성" | "비활성";  // 디바이스 동작 상태
-  registeredAt: string;     // 등록 날짜
+  id: string;          // Unique identifier
+  name: string;        // User-defined device name (e.g., "Entrance Reader")
+  serial: string;      // Hardware serial number
+  status: "활성" | "비활성";  // Device operation status (Active/Inactive)
+  registeredAt: string;     // Registration date
 }
 
-// 초기 등록된 디바이스 데이터 (임시 데이터)
+// Initial registered device data (temporary data)
 const initialDevices: Device[] = [
   { id: "1", name: "현관 리더기", serial: "SH-0001", status: "활성", registeredAt: "2023.10.27" },
 ];
 
 /**
- * 디바이스 관리 메인 컴포넌트
+ * Device Management Main Component
  *
- * 디바이스 등록 폼과 기존 등록된 디바이스 목록을 테이블 형태로 표시합니다.
- * 실제 환경에서는 백엔드 API와 연동하여 데이터를 관리해야 합니다.
+ * Displays device registration form and existing registered device list in table format.
+ * In production environment, this should be connected with backend API for data management.
  */
 export default function DeviceManagement() {
-  const [devices, setDevices] = useState<Device[]>(initialDevices);  // 디바이스 목록 상태
-  const [serial, setSerial] = useState("SH-0001");                   // 입력 중인 시리얼 번호
-  const [deviceName, setDeviceName] = useState("현관 리더기");        // 입력 중인 디바이스 이름
+  const [devices, setDevices] = useState<Device[]>(initialDevices);  // Device list state
+  const [serial, setSerial] = useState("SH-0001");                   // Serial number being input
+  const [deviceName, setDeviceName] = useState("현관 리더기");        // Device name being input
 
   /**
-   * 새 디바이스 등록 핸들러
+   * New device registration handler
    *
-   * 시리얼 번호와 디바이스 이름을 검증한 후 새로운 디바이스를 목록에 추가합니다.
+   * Validates serial number and device name, then adds new device to the list.
    */
   const handleRegister = () => {
     if (!serial || !deviceName) return;
@@ -167,7 +167,7 @@ export default function DeviceManagement() {
                 width: 28, height: 28, background: "#dbeafe",
                 borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
                 color: "#2563eb", fontSize: 14,
-              }}>☐</div>
+              }}>Device</div>
               <span style={{ fontSize: 14, color: "#111827", fontWeight: 500 }}>{device.name}</span>
             </div>
             <span style={{ fontSize: 14, color: "#374151" }}>{device.serial}</span>
