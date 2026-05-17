@@ -1,3 +1,10 @@
+/**
+ * Login page functionality
+ *
+ * Handles user authentication form submission and UI state management.
+ * Integrates with SmartScan backend API for user login and token management.
+ */
+
 // Initialize page components
 smartscanCommon.initLucideIcons();
 smartscanCommon.initDarkModeToggle();
