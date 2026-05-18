@@ -1,17 +1,17 @@
 """
-RFID 스캔 데이터 처리 서비스
+RFID Scan Data Processing Service
 
-라즈베리파이 RFID 리더기에서 전송된 스캔 데이터를 처리하는 비즈니스 로직입니다.
-UHF RFID 태그들을 대문 통과 시 스캔하여 누락된 소지품을 감지합니다.
+Business logic for processing scan data sent from Raspberry Pi RFID readers.
+Scans UHF RFID tags when passing through doorway to detect missing belongings.
 
-주요 기능:
-- RFID 스캔 데이터 검증 및 파싱
-- 디바이스 시리얼 번호로 사용자 식별
-- 누락된 소지품 감지 (RPC 함수 이용)
-- outbound-notifier Lambda 자동 호출
-- Supabase에 스캔 로그 저장
+Main Features:
+- RFID scan data validation and parsing
+- User identification by device serial number
+- Missing belongings detection (using RPC functions)
+- Automatic outbound-notifier Lambda invocation
+- Scan log storage in Supabase
 
-버전: 2024-03-15 - RPC 기반 성능 최적화 버전
+Version: 2024-03-15 - RPC-based performance optimized version
 """
 
 import json
@@ -40,10 +40,10 @@ def process_scan(event):
         raw_body = event.get('body', '{}')
         body = json.loads(raw_body) if isinstance(raw_body, str) else raw_body
     except (json.JSONDecodeError, TypeError) as e:
-        logger.warning("요청 body 파싱 실패: %s", str(e))
+        logger.warning("Request body parsing failed: %s", str(e))
         return {
             "statusCode": 400,
-            "body": json.dumps({"message": "요청 형식이 올바르지 않습니다."})
+            "body": json.dumps({"message": "Invalid request format"})
         }
 
     serial_number = body.get('device_serial')
@@ -52,7 +52,7 @@ def process_scan(event):
     if not serial_number or not isinstance(serial_number, str):
         return {
             "statusCode": 400,
-            "body": json.dumps({"message": "device_serial 값이 필요합니다."})
+            "body": json.dumps({"message": "device_serial value is required"})
         }
 
     if not isinstance(scanned_tags, list):
@@ -61,32 +61,32 @@ def process_scan(event):
             "body": json.dumps({"message": "tags must be an array."})
         }
 
-    # 디바이스 조회
+    # Device lookup
     device = get_device_by_serial(serial_number)
     if not device:
         return {
             "statusCode": 400,
-            "body": json.dumps({"message": "등록되지 않은 디바이스입니다."})
+            "body": json.dumps({"message": "Unregistered device"})
         }
 
     device_id = device['id']
 
-    # 스캔 로그 기록 (실패해도 스캔 결과 반환에 영향 없음)
+    # Record scan logs (failure does not affect scan result response)
     _insert_scan_logs(device_id, scanned_tags)
 
-    # RPC로 누락 물건 확인
+    # Check missing items via RPC
     missing = check_missing_items_rpc(device_id, scanned_tags)
 
     if missing:
-        # 멤버별로 그룹핑
+        # Group by member
         grouped = _group_by_member(missing)
         missing_names = [item['missing_item'] for item in missing]
         logger.info(
-            "누락 발생 — device_id: %s, 누락 물건 수: %d, 멤버 수: %d",
+            "Missing items detected — device_id: %s, missing count: %d, member count: %d",
             device_id, len(missing_names), len(grouped)
         )
 
-        # outbound Lambda 직접 호출 — 쿨다운(30분) 이내 재호출 차단
+        # Direct outbound Lambda invocation — block re-invocation within cooldown (30 minutes)
         now = time.time()
         if now - _last_notified.get(device_id, 0) >= NOTIFY_COOLDOWN_SEC:
             _last_notified[device_id] = now
@@ -100,14 +100,14 @@ def process_scan(event):
                     })
                 )
             except Exception as e:
-                logger.error("outbound Lambda 호출 실패 — device_id: %s, error: %s", device_id, str(e))
+                logger.error("Outbound Lambda invocation failed — device_id: %s, error: %s", device_id, str(e))
         else:
             remaining = int(NOTIFY_COOLDOWN_SEC - (now - _last_notified[device_id]))
-            logger.info("알림 쿨다운 중 — device_id: %s, 남은 시간: %ds", device_id, remaining)
+            logger.info("Notification cooldown active — device_id: %s, remaining: %ds", device_id, remaining)
 
         return {
             "statusCode": 200,
-            "body": json.dumps({"message": f"누락 물건: {missing_names}"})
+            "body": json.dumps({"message": f"Missing items: {missing_names}"})
         }
 
     return {
@@ -117,7 +117,7 @@ def process_scan(event):
 
 
 def _insert_scan_logs(device_id: int, scanned_tags: list):
-    """스캔 태그별 로그 기록 (실제 scan_logs 스키마: user_device_id, item_id, status)"""
+    """Record logs for each scanned tag (actual scan_logs schema: user_device_id, item_id, status)"""
     if not scanned_tags:
         return
 
@@ -127,7 +127,7 @@ def _insert_scan_logs(device_id: int, scanned_tags: list):
 
         ud_res = client.table('user_devices').select('id').eq('device_id', device_id).limit(1).execute()
         if not ud_res.data:
-            logger.warning("user_devices 없음 — device_id: %s", device_id)
+            logger.warning("user_devices not found — device_id: %s", device_id)
             return
         user_device_id = ud_res.data[0]['id']
 
@@ -142,11 +142,11 @@ def _insert_scan_logs(device_id: int, scanned_tags: list):
         if rows:
             client.table('scan_logs').insert(rows).execute()
     except Exception as e:
-        logger.error("scan_logs insert 실패 — device_id: %s, error: %s", device_id, str(e))
+        logger.error("scan_logs insert failed — device_id: %s, error: %s", device_id, str(e))
 
 
 def _group_by_member(missing_items: list) -> list:
-    """멤버별로 누락 물건 그룹핑"""
+    """Group missing items by member"""
     members = {}
     for item in missing_items:
         mid = item['member_id']
