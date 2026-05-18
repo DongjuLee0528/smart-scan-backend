@@ -50,8 +50,8 @@ Implement UI on SmartScan Hub website's signup page (`/signup.html`) to enable c
 
 ### 1.3 Related Documents
 
-- Backend 엔드포인트: `backend/routes/auth_route.py` (line 45, 77)
-- 관련 커밋:
+- Backend endpoints: `backend/routes/auth_route.py` (line 45, 77)
+- Related commits:
   - `6b9cd50` feat: add user registration with email verification
   - `e564732` feat(auth): Kakao magic-link integration + web auth frontend
   - `be6270c` feat(signup): wire email verification flow to backend endpoints ← Implementation commit for this Plan

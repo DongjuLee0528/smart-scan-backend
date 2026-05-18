@@ -1,3 +1,10 @@
+/**
+ * User registration page functionality
+ *
+ * Handles user signup with email verification flow.
+ * Includes email verification code sending, validation, and account creation.
+ */
+
 // Initialize page components
 smartscanCommon.initLucideIcons();
 smartscanCommon.initDarkModeToggle();

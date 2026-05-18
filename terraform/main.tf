@@ -15,29 +15,34 @@ terraform {
 # ==========================================
 
 # [MODIFIED] Removed db_password, kakao_token → Replaced with Supabase variables
+# Database connection URL for Supabase PostgreSQL service
 variable "supabase_url" {
   description = "Supabase project URL"
   type        = string
 }
 
+# Service role key with full database access for backend operations
 variable "supabase_service_key" {
   description = "Supabase Service Role Key (server-side only)"
   type        = string
   sensitive   = true
 }
 
+# API key for Resend service to send email notifications
 variable "resend_api_key" {
   description = "Resend email API Key"
   type        = string
   sensitive   = true
 }
 
+# SSL certificate ARN for custom domain HTTPS support
 variable "acm_cert_arn" {
   description = "ACM certificate ARN for CloudFront (must be issued in us-east-1 region)"
   type        = string
 }
 
 # [MODIFIED] github_repo default value: smart-scan-backend → smart-scan
+# GitHub repository identifier for OIDC authentication in CI/CD pipeline
 variable "github_repo" {
   description = "GitHub repository path (owner/repo format)"
   type        = string
@@ -47,8 +52,10 @@ variable "github_repo" {
 # ==========================================
 # 1. Provider and basic VPC setup
 # ==========================================
+# Retrieve current AWS account ID for resource references
 data "aws_caller_identity" "current" {}
 
+# Configure AWS provider to use Seoul region for all resources
 provider "aws" {
   region = "ap-northeast-2"
 }
@@ -71,6 +78,7 @@ data "aws_iam_policy_document" "lambda_assume_role" {
 }
 
 # IAM role for all Lambda functions with basic execution permissions
+# Primary execution role shared across all Lambda functions with minimal required permissions
 resource "aws_iam_role" "lambda_role" {
   name               = "smartscan-lambda-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
@@ -86,6 +94,7 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
 
 # [MODIFIED] Removed EventBridge policy → Replaced with direct Lambda invocation policy for Inbound→Outbound/Remote
 # Policy allowing Inbound Lambda to invoke Outbound and Remote Lambdas directly
+# Grants inbound Lambda permission to trigger notification and alert functions
 resource "aws_iam_role_policy" "lambda_invoke_policy" {
   name   = "lambda-invoke-outbound-remote"
   role   = aws_iam_role.lambda_role.id
@@ -131,6 +140,7 @@ resource "aws_lambda_function" "inbound" {
 
   # [MODIFIED] Removed vpc_config (Supabase public endpoint, NAT not needed)
 
+  # Environment variables for database access and service configuration
   environment {
     variables = {
       SUPABASE_URL         = var.supabase_url
@@ -155,6 +165,7 @@ resource "aws_lambda_function" "outbound" {
   source_code_hash = data.archive_file.dummy_lambda.output_base64sha256
   reserved_concurrent_executions = 5
 
+  # Environment variables for database access and email service configuration
   environment {
     variables = {
       SUPABASE_URL         = var.supabase_url
@@ -179,6 +190,7 @@ resource "aws_lambda_function" "remote" {
   source_code_hash = data.archive_file.dummy_lambda.output_base64sha256
   reserved_concurrent_executions = 5
 
+  # Environment variables for database access and email service configuration
   environment {
     variables = {
       SUPABASE_URL         = var.supabase_url
@@ -203,6 +215,7 @@ resource "aws_lambda_function" "chatbot" {
   source_code_hash = data.archive_file.dummy_lambda.output_base64sha256
   reserved_concurrent_executions = 5
 
+  # Environment variables for database access and chatbot service configuration
   environment {
     variables = {
       SUPABASE_URL         = var.supabase_url
@@ -378,6 +391,7 @@ resource "aws_api_gateway_stage" "prod" {
   stage_name    = "prod"
 }
 
+# API throttling configuration to prevent abuse and control costs
 resource "aws_api_gateway_usage_plan" "default" {
   name = "smartscan-default"
 
@@ -396,6 +410,7 @@ resource "aws_api_gateway_usage_plan" "default" {
 # 9. S3 + CloudFront
 # ==========================================
 # S3 bucket for hosting React frontend static files
+# S3 bucket for hosting static React frontend files
 resource "aws_s3_bucket" "web" {
   bucket = "smartscan-hub-frontend"
 }
@@ -428,6 +443,7 @@ resource "aws_cloudfront_distribution" "frontend" {
 
   enabled             = true
   default_root_object = "index.html"
+  # Configure custom domain only if SSL certificate is provided
   aliases             = var.acm_cert_arn != "" ? ["smartscan-hub.com"] : []
 
   default_cache_behavior {
@@ -447,6 +463,7 @@ resource "aws_cloudfront_distribution" "frontend" {
     geo_restriction { restriction_type = "none" }
   }
 
+  # SSL/TLS configuration with modern security standards
   viewer_certificate {
     acm_certificate_arn      = var.acm_cert_arn
     ssl_support_method       = "sni-only"
@@ -471,6 +488,7 @@ resource "aws_s3_bucket_policy" "web_policy" {
         }
         Action   = "s3:GetObject"
         Resource = "${aws_s3_bucket.web.arn}/*"
+        # Restrict S3 access to only the specific CloudFront distribution
         Condition = {
           StringEquals = {
             "AWS:SourceArn" = aws_cloudfront_distribution.frontend.arn
@@ -498,6 +516,7 @@ output "cloudfront_domain" {
 # 11. GitHub Actions OIDC (CI/CD)
 # ==========================================
 # OIDC provider for GitHub Actions to authenticate with AWS
+# OpenID Connect provider for secure GitHub Actions authentication without long-lived credentials
 resource "aws_iam_openid_connect_provider" "github" {
   url             = "https://token.actions.githubusercontent.com"
   client_id_list  = ["sts.amazonaws.com"]
@@ -516,6 +535,7 @@ resource "aws_iam_role" "github_actions" {
         Federated = aws_iam_openid_connect_provider.github.arn
       }
       Action = "sts:AssumeRoleWithWebIdentity"
+      # Restrict role assumption to specific repository and GitHub Actions audience
       Condition = {
         StringEquals = {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"

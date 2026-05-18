@@ -1,15 +1,15 @@
 """
 Unit tests for outbound-notifier services/notify_service.py
 
-PYTHONPATH 설정 가정: lambdas/outbound-notifier/
-실행: pytest lambdas/outbound-notifier/tests/
+PYTHONPATH setting assumption: lambdas/outbound-notifier/
+Execute: pytest lambdas/outbound-notifier/tests/
 """
 import pytest
 from unittest.mock import patch, MagicMock
 
 
 # ---------------------------------------------------------------------------
-# 헬퍼: 기본 member dict 생성
+# Helper: Create basic member dict
 # ---------------------------------------------------------------------------
 
 def _make_member(

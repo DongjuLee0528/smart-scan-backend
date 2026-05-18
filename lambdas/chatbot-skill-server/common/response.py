@@ -33,10 +33,10 @@ _HEADERS = {
 
 # Main menu quick reply buttons
 MAIN_QUICK_REPLIES = [
-    {"label": "📋 목록 확인",  "action": "message", "messageText": "목록"},
-    {"label": "➕ 물품 추가",  "action": "message", "messageText": "추가"},
-    {"label": "❌ 물품 삭제",  "action": "message", "messageText": "삭제"},
-    {"label": "❌ 기기 해제",  "action": "message", "messageText": "기기 해제"},
+    {"label": "목록 확인",  "action": "message", "messageText": "목록"},
+    {"label": "물품 추가",  "action": "message", "messageText": "추가"},
+    {"label": "물품 삭제",  "action": "message", "messageText": "삭제"},
+    {"label": "기기 해제",  "action": "message", "messageText": "기기 해제"},
 ]
 
 
