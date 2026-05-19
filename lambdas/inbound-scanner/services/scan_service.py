@@ -125,20 +125,25 @@ def _insert_scan_logs(device_id: int, scanned_tags: list):
         client = get_client()
         now = datetime.now(timezone.utc).isoformat()
 
-        ud_res = client.table('user_devices').select('id').eq('device_id', device_id).limit(1).execute()
+        ud_res = client.table('user_devices').select('id,user_id').eq('device_id', device_id).execute()
         if not ud_res.data:
             logger.warning("user_devices not found — device_id: %s", device_id)
             return
-        user_device_id = ud_res.data[0]['id']
+        user_device_map = {ud['user_id']: ud['id'] for ud in ud_res.data}
 
-        tag_res = client.table('tags').select('id,tag_uid').in_('tag_uid', scanned_tags).execute()
-        tag_map = {t['tag_uid']: t['id'] for t in (tag_res.data or [])}
+        tag_res = client.table('tags').select('id,tag_uid,owner_user_id').in_('tag_uid', scanned_tags).eq('device_id', device_id).execute()
 
-        rows = [
-            {'user_device_id': user_device_id, 'item_id': tag_map[tag], 'status': 'present', 'scanned_at': now}
-            for tag in scanned_tags
-            if tag in tag_map
-        ]
+        rows = []
+        for tag in (tag_res.data or []):
+            user_device_id = user_device_map.get(tag['owner_user_id'])
+            if user_device_id:
+                rows.append({
+                    'user_device_id': user_device_id,
+                    'item_id': tag['id'],
+                    'status': 'present',
+                    'scanned_at': now
+                })
+
         if rows:
             client.table('scan_logs').insert(rows).execute()
     except Exception as e:

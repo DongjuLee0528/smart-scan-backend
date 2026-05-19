@@ -3,12 +3,21 @@ FI-805F UHF RFID 리더기 드라이버 (ASCII 프로토콜)
 
 통신 설정: 38400 baud, 8N1
 커맨드:
-  <LF>U<CR>  → 멀티태그 EPC 읽기 (권장)
-  <LF>Q<CR>  → 단일태그 EPC 읽기
+  <LF>U<CR>        → 멀티태그 EPC 읽기 (권장)
+  <LF>Q<CR>        → 단일태그 EPC 읽기
+  <LF>N0,00<CR>    → 현재 파워 읽기
+  <LF>N1,<XX><CR>  → 파워 설정 (00~1B hex = -2~25 dBm)
 응답 형식 (U 커맨드):
   \nU<PC(4hex)><EPC><CRC16(4hex)>\r\n  (태그 1개당 1줄)
   \nU\r\n                               (응답 종료 마커)
 EPC 추출: data[4:-4]  (PC 앞 4자, CRC16 뒤 4자 제거)
+
+파워 vs 거리 참고 (4dBi 안테나 기준):
+  1B (25 dBm) → ~5m   기본값
+  14 (20 dBm) → ~3m
+  0E (14 dBm) → ~1m
+  08 (8 dBm)  → ~0.3m
+  00 (-2 dBm) → 최소
 """
 
 import serial
@@ -20,13 +29,15 @@ logger = logging.getLogger(__name__)
 
 CMD_MULTI  = b"U\r\n"   # Multi-tag inventory
 CMD_SINGLE = b"Q\r\n"   # Single-tag EPC query
+CMD_READ_POWER = b"N0,00\r\n"  # Read current power
 
 
 class FI805FReader:
-    def __init__(self, port="/dev/ttyUSB0", baud=38400, timeout=1.0):
+    def __init__(self, port="/dev/ttyUSB0", baud=38400, timeout=1.0, power: str | None = None):
         self.port    = port
         self.baud    = baud
         self.timeout = timeout
+        self.power   = power   # hex string "00"~"1B", None = 변경 안 함
         self._ser    = None
 
     def connect(self) -> bool:
@@ -39,10 +50,26 @@ class FI805FReader:
                 timeout=self.timeout
             )
             logger.info("FI-805F 연결 완료: %s @ %d baud", self.port, self.baud)
+            if self.power is not None:
+                self._set_power(self.power)
             return True
         except serial.SerialException as e:
             logger.error("FI-805F 연결 실패: %s", e)
             return False
+
+    def _set_power(self, hex_value: str):
+        """
+        RF 출력 파워 설정.
+        hex_value: "00"~"1B" (00=-2dBm, 1B=25dBm)
+        """
+        hex_value = hex_value.upper().zfill(2)
+        cmd = f"N1,{hex_value}\r\n".encode("ascii")
+        self._ser.reset_input_buffer()
+        self._ser.write(cmd)
+        time.sleep(0.1)
+        resp = self._ser.read(32).decode("ascii", errors="replace").strip()
+        dbm = int(hex_value, 16) - 2
+        logger.info("RF 파워 설정: %s hex (%d dBm) → 응답: %s", hex_value, dbm, resp)
 
     def _parse_epc_line(self, line: bytes) -> str | None:
         """
@@ -131,20 +158,27 @@ class MockFI805FReader:
         pass
 
 
-def create_reader(port: str = "/dev/ttyUSB0", baud: int = 38400) -> FI805FReader | MockFI805FReader:
+def create_reader(port: str = "/dev/ttyUSB0", baud: int = 38400, power: str | None = None) -> FI805FReader | MockFI805FReader:
     """
     환경에 맞는 리더 인스턴스 반환.
     MOCK_MODE=true 이거나 포트가 없으면 MockFI805FReader 반환.
+
+    power: RFID_POWER 환경변수 또는 config.env 값 (hex "00"~"1B").
+           None이면 리더 기본값 유지 (변경 안 함).
     """
     mock_mode = os.getenv("MOCK_MODE", "false").lower() == "true"
     port_exists = os.path.exists(port)
+
+    # 환경변수 fallback
+    if power is None:
+        power = os.getenv("RFID_POWER") or None
 
     if mock_mode or not port_exists:
         reason = "MOCK_MODE=true" if mock_mode else f"{port} 없음"
         logger.warning("Mock 모드 진입 (%s)", reason)
         return MockFI805FReader()
 
-    reader = FI805FReader(port, baud)
+    reader = FI805FReader(port, baud, power=power)
     if not reader.connect():
         logger.warning("FI-805F 연결 실패 → Mock 모드로 전환")
         return MockFI805FReader()

@@ -30,6 +30,7 @@ services:
       - API_GW_URL=${API_GW_URL:-https://f7o6rm5r6a.execute-api.ap-northeast-2.amazonaws.com/prod}
       - MOCK_MODE=${MOCK_MODE:-false}
       - SCAN_WINDOW_SEC=${SCAN_WINDOW_SEC:-3}
+      - PYTHONUNBUFFERED=1
     depends_on:
       - captive-portal
     restart: unless-stopped
