@@ -69,7 +69,7 @@ def main():
     rfid_port     = cfg.get("RFID_PORT", "/dev/ttyUSB0")
     rfid_baud     = int(cfg.get("RFID_BAUD", "38400"))
     rfid_power     = cfg.get("RFID_POWER") or None   # hex "00"~"1B", 없으면 리더 기본값 유지
-    clear_wait_sec = int(cfg.get("CLEAR_WAIT_SEC", "10"))
+    clear_wait_sec = int(cfg.get("CLEAR_WAIT_SEC", "60"))
 
     if not api_gw_url:
         logger.error("API_GW_URL 미설정. 종료.")

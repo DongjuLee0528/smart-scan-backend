@@ -47,29 +47,29 @@ def send_missing_alert(event) -> dict:
         # ── Generate email HTML (XSS prevention: HTML escape applied) ──
         safe_name = escape(str(member_name))
         items_html = ''.join(
-            [f'<li style="margin:6px 0">{escape(str(item))}</li>' for item in missing_items]
+            [f'<li style="margin:8px 0;font-size:15px"><strong>{escape(str(item))}</strong> 깜빡하시지 않으셨나요?</li>' for item in missing_items]
         )
         html = f"""
-        <div style="font-family:sans-serif;max-width:480px;margin:auto">
-          <h2 style="color:#e53e3e">&#x1F6A8; SmartScan Hub Alert</h2>
-          <p><strong>{safe_name}</strong>, please check the following items before going out:</p>
-          <ul style="background:#fff5f5;padding:16px 24px;border-radius:8px">
+        <div style="font-family:'Apple SD Gothic Neo',sans-serif;max-width:480px;margin:auto;padding:24px">
+          <h2 style="color:#034EA2;margin-bottom:8px">&#x1F514; SmartScan Hub 알림</h2>
+          <p style="font-size:16px;margin-bottom:20px"><strong>{safe_name}</strong>님, 외출하실 때 혹시 아래 물건을 깜빡하시지 않으셨나요?</p>
+          <ul style="background:#f0f6ff;padding:16px 24px;border-radius:8px;list-style:none">
             {items_html}
           </ul>
-          <p style="color:#718096;font-size:13px">SmartScan Hub automated delivery</p>
+          <p style="color:#718096;font-size:12px;margin-top:20px">본 메일은 SmartScan Hub에서 자동 발송되었습니다.</p>
         </div>
         """
 
         # ── Email delivery ──
-        subject = "Missing Items Alert - SmartScan Hub"
+        subject = f"[SmartScan Hub] {safe_name}님, 깜빡하신 물건이 있어요!"
         ok = send_email([member_email], subject, html)
 
         status = "sent" if ok else "email_failed"
         print(f"[{status}] {member_name} ({member_email}) → {missing_items}")
 
         # ── Record in notifications table (isolated from email delivery result) ──
-        title = "Missing Items Alert"
-        message = f"Missing items: {', '.join(missing_items)}"
+        title = "깜빡하신 물건이 있어요!"
+        message = f"다음 물건을 확인해 주세요: {', '.join(missing_items)}"
         notification_payload = _build_notification_payload(member, title, message)
 
         try:
