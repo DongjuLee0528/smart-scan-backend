@@ -49,3 +49,12 @@ Thumbs.db
 
 # Claude Code
 .claude/
+
+# React Native / Expo
+smart-scan-app/node_modules/
+smart-scan-app/.expo/
+smart-scan-app/dist/
+smart-scan-app/.env
+smart-scan-app/.env.*
+smart-scan-app/android/
+smart-scan-app/ios/
