@@ -32,7 +32,7 @@ logger.setLevel(logging.INFO)
 lambda_client = boto3.client('lambda', region_name='ap-northeast-2')
 
 _last_notified: dict[int, float] = {}
-NOTIFY_COOLDOWN_SEC = 1800  # 30 minutes per device
+NOTIFY_COOLDOWN_SEC = 60  # 1 minute per device
 
 
 def process_scan(event):
