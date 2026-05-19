@@ -63,13 +63,14 @@ def main():
     api_gw_url    = cfg.get("API_GW_URL", os.getenv("API_GW_URL", ""))
     scan_window   = float(cfg.get("SCAN_WINDOW_SEC", "3"))
     rfid_port     = cfg.get("RFID_PORT", "/dev/ttyUSB0")
-    rfid_baud     = int(cfg.get("RFID_BAUD", "57600"))
+    rfid_baud     = int(cfg.get("RFID_BAUD", "38400"))
+    rfid_power    = cfg.get("RFID_POWER") or None   # hex "00"~"1B", 없으면 리더 기본값 유지
 
     if not api_gw_url:
         logger.error("API_GW_URL 미설정. 종료.")
         sys.exit(1)
 
-    reader = create_reader(port=rfid_port, baud=rfid_baud)
+    reader = create_reader(port=rfid_port, baud=rfid_baud, power=rfid_power)
     client = SmartScanClient(device_serial, api_gw_url)
 
     def _shutdown(sig, frame):
