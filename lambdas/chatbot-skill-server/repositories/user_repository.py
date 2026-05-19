@@ -1,10 +1,10 @@
 """
-사용자 조회 리포지토리
+User query repository
 
-`users` 테이블 기반 신규 스키마만 사용한다.
-(magic link 연동 완료 사용자 = `users.kakao_user_id`에 실제 카카오 UID가 저장된 사용자)
+Uses only the new schema based on the `users` table.
+(magic link integration completed user = user with actual Kakao UID stored in `users.kakao_user_id`)
 
-조회 시 `pending_` 접두사는 웹 가입은 했지만 카카오 연동 미완료 상태이므로 None 반환.
+When querying, `pending_` prefix indicates web signup completed but Kakao integration incomplete, so returns None.
 """
 import uuid
 
@@ -12,16 +12,16 @@ from common.db import get_client
 
 
 # ---------------------------------------------------------------------------
-# 내부: users 테이블 → family_members → user_devices 조인 조회
+# Internal: users table → family_members → user_devices join query
 # ---------------------------------------------------------------------------
 
 def _get_user_from_users_table(kakao_user_id: str):
     """
-    users 테이블에서 kakao_user_id 조회 →
-    family_members, user_devices 를 순차 조회하여
-    {kakao_user_id, member_id, device_id, user_id} 반환.
+    Query kakao_user_id from users table →
+    Query family_members, user_devices sequentially to
+    return {kakao_user_id, member_id, device_id, user_id}.
 
-    pending_ 으로 시작하는 값은 아직 미연동 상태이므로 None 반환.
+    Values starting with pending_ indicate incomplete integration, so return None.
     """
     client = get_client()
 
@@ -71,20 +71,20 @@ def _get_user_from_users_table(kakao_user_id: str):
 
 
 # ---------------------------------------------------------------------------
-# 공개 인터페이스
+# Public interface
 # ---------------------------------------------------------------------------
 
 def get_user_by_kakao_id(kakao_user_id: str):
     """
-    kakao_user_id 로 사용자 조회 → {kakao_user_id, user_id, device_id, member_id} 또는 None
+    Query user by kakao_user_id → {kakao_user_id, user_id, device_id, member_id} or None
     """
     return _get_user_from_users_table(kakao_user_id)
 
 
 def delete_user_device(kakao_user_id: str):
     """
-    카카오 연동 해제. users.kakao_user_id 를 `pending_<uuid>` 로 리셋하여
-    해당 사용자가 다시 magic link 로 재연동할 수 있도록 한다.
+    Disconnect Kakao integration. Reset users.kakao_user_id to `pending_<uuid>` so
+    the user can re-integrate using magic link again.
     """
     new_pending = f"pending_{uuid.uuid4().hex}"
     (

@@ -1,9 +1,9 @@
 {
-  "feature": "signup-email-verification",
+  "feature": "scanner-event-trigger",
   "phase": "plan",
-  "startedAt": "2026-04-20T08:45:00Z",
-  "updatedAt": "2026-04-20T08:45:00Z",
+  "startedAt": "2026-05-19T06:25:00Z",
+  "updatedAt": "2026-05-19T06:25:00Z",
   "matchRate": null,
   "iterationCount": 0,
-  "notes": "Retroactive plan — implementation was completed by Agent 2 in parallel session (commit be6270c). Plan documents the intent, scope, and rationale after-the-fact for traceability."
+  "notes": "RFID 스캐너 이벤트 기반 트리거 — 연속 폴링 → 상태 머신(IDLE/SCANNING/WAITING_CLEAR) 전환. 외출·귀가 양방향 자동 처리."
 }
