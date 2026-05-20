@@ -44,8 +44,22 @@ form.addEventListener('submit', async (e) => {
     showError('Name, email, and password are required fields.');
     return;
   }
+  const passwordErrors = [];
   if (password.length < 8) {
-    showError('Password must be at least 8 characters long.');
+    passwordErrors.push('8자 이상 입력해주세요');
+  }
+  if (!/[a-zA-Z]/.test(password)) {
+    passwordErrors.push('영문자를 1개 이상 포함해주세요');
+  }
+  if (!/[0-9]/.test(password)) {
+    passwordErrors.push('숫자를 1개 이상 포함해주세요');
+  }
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    passwordErrors.push('특수문자를 1개 이상 포함해주세요 (!@#$%^&* 등)');
+  }
+
+  if (passwordErrors.length > 0) {
+    showError(`비밀번호 조건을 충족해주세요:\n${passwordErrors.join('\n')}`);
     return;
   }
   if (password !== passwordConfirm) {
