@@ -14,26 +14,36 @@ export interface SignupRequest {
   age: number;
 }
 
-export interface AuthResponse {
-  access_token: string;
-  refresh_token: string;
-  user: {
-    id: string;
+export interface AuthApiResponse {
+  success: boolean;
+  message: string;
+  data: {
+    access_token: string;
+    refresh_token: string;
     name: string;
     email: string;
+    user_id: number;
   };
 }
 
+export interface AuthResponse {
+  access_token: string;
+  refresh_token: string;
+  name: string;
+  email: string;
+  user_id: number;
+}
+
 export const login = async (email: string, password: string): Promise<AuthResponse> => {
-  const response = await apiClient.post<AuthResponse>('/api/auth/login', {
+  const response = await apiClient.post<AuthApiResponse>('/api/auth/login', {
     email,
     password,
   });
 
-  const { access_token, refresh_token } = response.data;
+  const { access_token, refresh_token } = response.data.data;
   await saveTokens(access_token, refresh_token);
 
-  return response.data;
+  return response.data.data;
 };
 
 export const signup = async (
@@ -53,14 +63,14 @@ export const signup = async (
 };
 
 export const refreshToken = async (refreshToken: string): Promise<AuthResponse> => {
-  const response = await apiClient.post<AuthResponse>('/api/auth/refresh', {
+  const response = await apiClient.post<AuthApiResponse>('/api/auth/refresh', {
     refresh_token: refreshToken,
   });
 
-  const { access_token, refresh_token: newRefreshToken } = response.data;
+  const { access_token, refresh_token: newRefreshToken } = response.data.data;
   await saveTokens(access_token, newRefreshToken);
 
-  return response.data;
+  return response.data.data;
 };
 
 export const logout = async (): Promise<void> => {

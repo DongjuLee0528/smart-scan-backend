@@ -5,8 +5,8 @@ const REFRESH_TOKEN_KEY = 'refresh_token';
 
 export const saveTokens = async (accessToken: string, refreshToken: string): Promise<void> => {
   try {
-    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
-    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
+    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, String(accessToken));
+    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, String(refreshToken));
   } catch (error) {
     console.error('Failed to save tokens:', error);
     throw new Error('토큰 저장에 실패했습니다.');

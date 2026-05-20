@@ -55,7 +55,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
     setIsLoading(true);
     try {
       const response = await login(email.trim(), password);
-      console.log('로그인 성공:', response.user.name);
+      console.log('로그인 성공:', response.name);
     } catch (error: any) {
       let message = '로그인에 실패했습니다.';
 
