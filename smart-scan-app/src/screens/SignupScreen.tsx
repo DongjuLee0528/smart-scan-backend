@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,15 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { signup } from '../api/auth';
+import { validateEmail, validatePassword, validatePhone, formatPhoneNumber } from '../utils/validation';
 
 type AuthStackParamList = {
   Login: undefined;
@@ -34,6 +38,75 @@ export const SignupScreen: React.FC<Props> = ({ navigation }) => {
   const [phone, setPhone] = useState('');
   const [age, setAge] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handlePhoneChange = useCallback((text: string) => {
+    const formatted = formatPhoneNumber(text);
+    setPhone(formatted);
+  }, []);
+
+  const handleSignup = useCallback(async () => {
+    if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim() || !phone.trim() || !age.trim()) {
+      Alert.alert('오류', '모든 필드를 입력해주세요.');
+      return;
+    }
+
+    if (!validateEmail(email.trim())) {
+      Alert.alert('오류', '유효한 이메일 형식을 입력해주세요.');
+      return;
+    }
+
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      Alert.alert('오류', `비밀번호 조건을 충족해주세요:\n${passwordValidation.errors.join('\n')}`);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('오류', '비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
+    if (!validatePhone(phone.trim())) {
+      Alert.alert('오류', '올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)');
+      return;
+    }
+
+    if (!agreeToTerms) {
+      Alert.alert('오류', '이용약관 및 개인정보처리방침에 동의해주세요.');
+      return;
+    }
+
+    const ageNumber = parseInt(age);
+    if (isNaN(ageNumber) || ageNumber < 1 || ageNumber > 150) {
+      Alert.alert('오류', '유효한 나이를 입력해주세요.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await signup(name.trim(), email.trim(), password, phone.trim(), ageNumber);
+      Alert.alert('회원가입 성공', '회원가입이 완료되었습니다. 로그인해주세요.', [
+        { text: '확인', onPress: () => navigation.navigate('Login') }
+      ]);
+    } catch (error: any) {
+      let message = '회원가입에 실패했습니다.';
+
+      if (error.code === 'NETWORK_ERROR' || !error.response) {
+        message = '네트워크 연결을 확인해주세요.';
+      } else if (error.response?.status === 409) {
+        message = '이미 사용 중인 이메일입니다.';
+      } else if (error.response?.status >= 500) {
+        message = '서버에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
+      } else if (error.response?.data?.detail) {
+        message = error.response.data.detail;
+      }
+
+      Alert.alert('회원가입 실패', message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [name, email, password, confirmPassword, phone, age, agreeToTerms]);
 
   const styles = StyleSheet.create({
     container: {
@@ -133,6 +206,7 @@ export const SignupScreen: React.FC<Props> = ({ navigation }) => {
       paddingVertical: 16,
       alignItems: 'center',
       marginBottom: 24,
+      opacity: isLoading ? 0.7 : 1,
     },
     signupButtonText: {
       color: '#FFFFFF',
@@ -273,7 +347,7 @@ export const SignupScreen: React.FC<Props> = ({ navigation }) => {
                     placeholder="전화번호"
                     placeholderTextColor={colors.subtext}
                     value={phone}
-                    onChangeText={setPhone}
+                    onChangeText={handlePhoneChange}
                     keyboardType="phone-pad"
                   />
                 </View>
@@ -308,8 +382,16 @@ export const SignupScreen: React.FC<Props> = ({ navigation }) => {
                 <Text style={styles.checkboxText}>이용약관 및 개인정보처리방침에 동의합니다</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.signupButton}>
-                <Text style={styles.signupButtonText}>회원가입</Text>
+              <TouchableOpacity
+                style={styles.signupButton}
+                onPress={handleSignup}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.signupButtonText}>회원가입</Text>
+                )}
               </TouchableOpacity>
 
               <View style={styles.loginContainer}>
