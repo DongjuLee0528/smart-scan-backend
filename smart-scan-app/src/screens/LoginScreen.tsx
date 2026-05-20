@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,15 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { login } from '../api/auth';
+import { validateEmail } from '../utils/validation';
 
 type AuthStackParamList = {
   Login: undefined;
@@ -30,6 +34,46 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = useCallback(async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('오류', '이메일과 비밀번호를 모두 입력해주세요.');
+      return;
+    }
+
+    if (!validateEmail(email.trim())) {
+      Alert.alert('오류', '유효한 이메일 형식을 입력해주세요.');
+      return;
+    }
+
+    if (password.length < 8) {
+      Alert.alert('오류', '비밀번호는 8자 이상이어야 합니다.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await login(email.trim(), password);
+      console.log('로그인 성공:', response.user.name);
+    } catch (error: any) {
+      let message = '로그인에 실패했습니다.';
+
+      if (error.code === 'NETWORK_ERROR' || !error.response) {
+        message = '네트워크 연결을 확인해주세요.';
+      } else if (error.response?.status === 401) {
+        message = '이메일 또는 비밀번호가 올바르지 않습니다.';
+      } else if (error.response?.status >= 500) {
+        message = '서버에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
+      } else if (error.response?.data?.detail) {
+        message = error.response.data.detail;
+      }
+
+      Alert.alert('로그인 실패', message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [email, password]);
 
   const styles = StyleSheet.create({
     container: {
@@ -132,6 +176,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
       paddingVertical: 16,
       alignItems: 'center',
       marginBottom: 24,
+      opacity: isLoading ? 0.7 : 1,
     },
     loginButtonText: {
       color: '#FFFFFF',
@@ -240,8 +285,16 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
                 <Text style={styles.checkboxText}>로그인 상태 유지</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.loginButton}>
-                <Text style={styles.loginButtonText}>로그인</Text>
+              <TouchableOpacity
+                style={styles.loginButton}
+                onPress={handleLogin}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.loginButtonText}>로그인</Text>
+                )}
               </TouchableOpacity>
 
               <View style={styles.signupContainer}>
